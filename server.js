@@ -33,6 +33,7 @@ function handleRequest(req, res) {
   res.setHeader('X-Debug-CleanUrl', cleanUrl);
   res.setHeader('X-Debug-FilePath', filePath);
   res.setHeader('X-Debug-Exists', exists ? 'yes' : 'no');
+  res.setHeader('X-Debug-Readdir', fs.readdirSync(__dirname).join(','));
 
   if (exists && fs.statSync(filePath).isFile()) {
     const ext = path.extname(filePath).toLowerCase();
