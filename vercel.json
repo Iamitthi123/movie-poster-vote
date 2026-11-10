@@ -1,3 +1,14 @@
 {
-  "cleanUrls": true
+  "version": 2,
+  "functions": {
+    "server.js": {
+      "includeFiles": "css/**,js/**,index.html"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/server.js"
+    }
+  ]
 }
