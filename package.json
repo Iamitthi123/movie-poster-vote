@@ -2,9 +2,9 @@
   "name": "movie-poster-vote",
   "version": "1.0.0",
   "description": "1v1 Knockout Tournament Movie Poster Voting Web Application (Ideal Type WorldCup)",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "dev": "node scripts/local-server.js",
+    "serve": "node scripts/local-server.js",
     "test": "node test/tournament.test.js"
   },
   "keywords": [
