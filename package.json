@@ -4,7 +4,9 @@
   "description": "1v1 Knockout Tournament Movie Poster Voting Web Application (Ideal Type WorldCup)",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "echo 'Static build ready'",
+    "test": "node test/tournament.test.js"
   },
   "keywords": [
     "voting",
