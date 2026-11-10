@@ -1,0 +1,245 @@
+/* CineVote Dark Cinema Theme Stylesheet */
+@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+:root {
+  --cinema-bg: #0a0a0f;
+  --cinema-surface: #12131c;
+  --cinema-surface-hover: #1a1b28;
+  --cinema-card: #151624;
+  --cinema-border: #27283d;
+  --cinema-border-glow: rgba(245, 158, 11, 0.3);
+  --cinema-gold: #f59e0b;
+  --cinema-gold-light: #fbbf24;
+  --cinema-rose: #f43f5e;
+  --cinema-rose-dark: #be123c;
+}
+
+body {
+  font-family: 'Kanit', sans-serif;
+  background-color: var(--cinema-bg);
+  color: #f3f4f6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 55%),
+    radial-gradient(circle at 85% 90%, rgba(244, 63, 94, 0.06) 0%, transparent 45%),
+    radial-gradient(circle at 15% 85%, rgba(56, 189, 248, 0.04) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+
+/* Custom 2:3 Aspect Ratio for Movie Posters */
+.aspect-poster {
+  aspect-ratio: 2 / 3;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom Cinema Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0d0e17;
+}
+::-webkit-scrollbar-thumb {
+  background: #27283d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #f59e0b;
+}
+
+/* Glow effects */
+.glow-gold {
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.35);
+}
+.glow-rose {
+  box-shadow: 0 0 25px rgba(244, 63, 94, 0.35);
+}
+.glow-vs {
+  box-shadow: 0 0 35px rgba(244, 63, 94, 0.5), inset 0 0 15px rgba(245, 158, 11, 0.4);
+}
+.text-glow-gold {
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+}
+.text-glow-rose {
+  text-shadow: 0 0 12px rgba(244, 63, 94, 0.5);
+}
+
+/* Poster Card Interactive States */
+.poster-card {
+  transition: all 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform, box-shadow;
+}
+.poster-card:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.7), 0 0 20px rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.6);
+}
+.poster-card:active {
+  transform: scale(0.985);
+}
+
+/* Selected state animation */
+.poster-card.selected {
+  transform: scale(1.04);
+  box-shadow: 0 0 40px rgba(245, 158, 11, 0.6), 0 0 80px rgba(244, 63, 94, 0.3);
+  border-color: #fbbf24 !important;
+}
+
+/* Pulse animation for VS Badge */
+@keyframes pulse-vs {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.6));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 22px rgba(245, 158, 11, 0.8));
+  }
+}
+.animate-vs {
+  animation: pulse-vs 2.4s ease-in-out infinite;
+}
+
+/* Cinema Filmstrip Border effect */
+.filmstrip-border {
+  position: relative;
+}
+.filmstrip-border::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, #f59e0b, #f59e0b 8px, transparent 8px, transparent 14px);
+  opacity: 0.7;
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 90vw;
+  width: 380px;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(18, 19, 28, 0.96);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--cinema-border);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+  color: #f3f4f6;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  opacity: 0;
+  transform: translateX(50px);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast.hide {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.95);
+}
+
+.toast-success {
+  border-left: 4px solid #10b981;
+}
+.toast-error {
+  border-left: 4px solid #f43f5e;
+}
+.toast-warning {
+  border-left: 4px solid #f59e0b;
+}
+.toast-info {
+  border-left: 4px solid #38bdf8;
+}
+
+/* Modal Backdrop & Window */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 5, 8, 0.82);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  padding: 16px;
+}
+
+.modal-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-window {
+  background: #131420;
+  border: 1px solid #2e3047;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.12);
+  border-radius: 20px;
+  max-width: 580px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: scale(0.92) translateY(20px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-backdrop.active .modal-window {
+  transform: scale(1) translateY(0);
+}
+
+/* Key Cap Style */
+.key-cap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fbbf24;
+  background: #1e1f2e;
+  border: 1px solid #383952;
+  border-bottom: 2px solid #383952;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* Shimmer Loading Animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
