@@ -21,6 +21,20 @@ const MIME_TYPES = {
 function handleRequest(req, res) {
   let cleanUrl = req.url.split('?')[0];
 
+  if (cleanUrl === '/api/debug-info') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      url: req.url,
+      headers: req.headers,
+      __dirname,
+      cwd: process.cwd(),
+      filesInDir: fs.readdirSync(__dirname),
+      hasCss: fs.existsSync(path.join(__dirname, 'css')),
+      cssFiles: fs.existsSync(path.join(__dirname, 'css')) ? fs.readdirSync(path.join(__dirname, 'css')) : []
+    }, null, 2));
+    return;
+  }
+
   if (cleanUrl === '/' || cleanUrl === '') {
     cleanUrl = '/index.html';
   }
