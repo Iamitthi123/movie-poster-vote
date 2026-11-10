@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "description": "1v1 Knockout Tournament Movie Poster Voting Web Application (Ideal Type WorldCup)",
   "scripts": {
-    "start": "node local-server.js",
-    "build": "echo 'Static build ready'",
+    "start": "node scripts/local-server.js",
     "test": "node test/tournament.test.js"
   },
   "keywords": [
