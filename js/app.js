@@ -142,6 +142,7 @@ const Modal = {
 function launchConfetti() {
   const canvas = document.getElementById('confetti-canvas');
   if (!canvas) return;
+  canvas.style.display = 'block';
   const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -187,6 +188,7 @@ function launchConfetti() {
       animationFrame = requestAnimationFrame(update);
     } else {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.style.display = 'none';
       cancelAnimationFrame(animationFrame);
     }
   }
@@ -516,6 +518,10 @@ function renderVoteGate() {
   noticeEl.classList.add('hidden');
 
   studentInput.oninput = () => {
+    const errorEl = document.getElementById('student-id-error');
+    if (errorEl) errorEl.classList.add('hidden');
+    studentInput.classList.remove('border-rose-500');
+
     const val = studentInput.value.trim();
     if (!val) {
       noticeEl.classList.add('hidden');
@@ -544,7 +550,13 @@ function startTournamentFromGate() {
 
   if (!studentId) {
     Toast.show('กรุณากรอกรหัสนักศึกษาก่อนเริ่มโหวต', 'warning');
+    studentInput.classList.add('border-rose-500', 'shake');
+    const errorEl = document.getElementById('student-id-error');
+    if (errorEl) errorEl.classList.remove('hidden');
     studentInput.focus();
+    setTimeout(() => {
+      studentInput.classList.remove('shake');
+    }, 450);
     return;
   }
 
@@ -1318,6 +1330,17 @@ async function initApp() {
   document.getElementById('student-id-input').onkeydown = (e) => {
     if (e.key === 'Enter') startTournamentFromGate();
   };
+
+  // Quick sample student ID helper
+  const quickSampleBtn = document.getElementById('btn-quick-sample-id');
+  if (quickSampleBtn) {
+    quickSampleBtn.onclick = () => {
+      const input = document.getElementById('student-id-input');
+      input.value = '66010001';
+      input.dispatchEvent(new Event('input'));
+      startTournamentFromGate();
+    };
+  }
 
   // Match poster click
   document.getElementById('poster-card-left').onclick = () => choosePoster('left');
