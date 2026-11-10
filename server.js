@@ -21,24 +21,6 @@ const MIME_TYPES = {
 function handleRequest(req, res) {
   let cleanUrl = req.url.split('?')[0];
 
-  if (cleanUrl.startsWith('/api/check')) {
-    const testUrl = req.url.replace('/api/check', '') || '/css/style.css';
-    const testClean = testUrl.split('?')[0];
-    const testRel = testClean.replace(/^\/+/, '');
-    const testPath = path.resolve(__dirname, testRel);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      reqUrl: req.url,
-      testUrl,
-      testPath,
-      exists: fs.existsSync(testPath),
-      isFile: fs.existsSync(testPath) ? fs.statSync(testPath).isFile() : false,
-      filesInCss: fs.existsSync(path.join(__dirname, 'css')) ? fs.readdirSync(path.join(__dirname, 'css')) : [],
-      filesInJs: fs.existsSync(path.join(__dirname, 'js')) ? fs.readdirSync(path.join(__dirname, 'js')) : []
-    }, null, 2));
-    return;
-  }
-
   if (cleanUrl === '/' || cleanUrl === '') {
     cleanUrl = '/index.html';
   }
