@@ -650,6 +650,46 @@ function updateLightboxView() {
   }
 }
 
+let toastTimer = null;
+
+/**
+ * Display a brief accessible status toast notification.
+ */
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.hidden = false;
+  window.requestAnimationFrame(() => {
+    toast.classList.add('is-visible');
+  });
+  if (toastTimer !== null) {
+    window.clearTimeout(toastTimer);
+  }
+  toastTimer = window.setTimeout(() => {
+    toast.classList.remove('is-visible');
+    window.setTimeout(() => {
+      if (!toast.classList.contains('is-visible')) {
+        toast.hidden = true;
+      }
+    }, 260);
+  }, 2400);
+}
+
+/**
+ * Toggle poster zoom inspection state inside Lightbox.
+ */
+function setLightboxZoom(zoomed) {
+  const wrap = document.getElementById('lightbox-swipe-area');
+  const zoomBtn = document.getElementById('lightbox-zoom');
+  if (!wrap) return;
+  wrap.classList.toggle('is-zoomed', zoomed);
+  if (zoomBtn) {
+    zoomBtn.setAttribute('aria-pressed', String(zoomed));
+    zoomBtn.textContent = zoomed ? 'ย่อขนาดปกติ (1x)' : 'ขยายดูรายละเอียด (Zoom)';
+  }
+}
+
 /**
  * Open fullscreen poster Lightbox.
  */
@@ -662,6 +702,7 @@ function openLightbox(index, triggerEl) {
   lightboxState.currentIndex = ((index % MOVIES.length) + MOVIES.length) % MOVIES.length;
   lightboxState.lastTrigger = triggerEl || document.activeElement;
 
+  setLightboxZoom(false);
   updateLightboxView();
   lightbox.hidden = false;
   document.body.style.overflow = 'hidden';
@@ -678,6 +719,7 @@ function closeLightbox() {
   const lightbox = document.getElementById('lightbox');
   if (!lightbox || !lightboxState.isOpen) return;
 
+  setLightboxZoom(false);
   lightbox.hidden = true;
   lightboxState.isOpen = false;
   document.body.style.overflow = '';
@@ -690,6 +732,7 @@ function closeLightbox() {
 
 function stepLightbox(delta) {
   if (!lightboxState.isOpen) return;
+  setLightboxZoom(false);
   lightboxState.currentIndex =
     (lightboxState.currentIndex + delta + MOVIES.length) % MOVIES.length;
   updateLightboxView();
@@ -703,6 +746,9 @@ function initLightbox() {
   const closeBtn = document.getElementById('lightbox-close');
   const prevBtn = document.getElementById('lightbox-prev');
   const nextBtn = document.getElementById('lightbox-next');
+  const zoomBtn = document.getElementById('lightbox-zoom');
+  const zoomImg = document.getElementById('lightbox-img');
+  const zoomWrap = document.getElementById('lightbox-swipe-area');
   const swipeArea = document.getElementById('lightbox-dialog');
 
   if (!lightbox) return;
@@ -710,6 +756,13 @@ function initLightbox() {
   if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
   if (prevBtn) prevBtn.addEventListener('click', () => stepLightbox(-1));
   if (nextBtn) nextBtn.addEventListener('click', () => stepLightbox(1));
+
+  const toggleZoom = () => {
+    if (!zoomWrap) return;
+    setLightboxZoom(!zoomWrap.classList.contains('is-zoomed'));
+  };
+  if (zoomBtn) zoomBtn.addEventListener('click', toggleZoom);
+  if (zoomImg) zoomImg.addEventListener('click', toggleZoom);
 
   lightbox.addEventListener('click', (event) => {
     if (event.target.hasAttribute('data-lightbox-close')) {
@@ -876,6 +929,143 @@ function initCardTilt() {
 }
 
 /**
+ * Drifting ambient dust & crimson ember particles on the Hero canvas,
+ * paused automatically offscreen via IntersectionObserver.
+ */
+function initHeroParticles() {
+  const canvas = document.getElementById('hero-particles');
+  const hero = document.getElementById('hero');
+  if (!canvas || !hero || REDUCED_MOTION_QUERY.matches) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const COUNT = 26;
+  const particles = Array.from({ length: COUNT }, (_, i) => ({
+    x: Math.random(),
+    y: Math.random(),
+    r: 1 + Math.random() * 2.1,
+    vx: (Math.random() - 0.5) * 0.00025,
+    vy: -(0.00025 + Math.random() * 0.00045),
+    alpha: 0.18 + Math.random() * 0.32,
+    isRed: i % 3 === 0
+  }));
+
+  let width = 0;
+  let height = 0;
+  let visible = true;
+  let rafId = null;
+
+  function resizeCanvas() {
+    const rect = hero.getBoundingClientRect();
+    width = Math.max(1, Math.floor(rect.width));
+    height = Math.max(1, Math.floor(rect.height));
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+  function tick() {
+    rafId = null;
+    if (!visible || REDUCED_MOTION_QUERY.matches) return;
+
+    ctx.clearRect(0, 0, width, height);
+    particles.forEach((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.y < -0.05) {
+        p.y = 1.05;
+        p.x = Math.random();
+      }
+      if (p.x < -0.05) p.x = 1.05;
+      if (p.x > 1.05) p.x = -0.05;
+
+      ctx.beginPath();
+      ctx.arc(p.x * width, p.y * height, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.isRed
+        ? `rgba(210, 58, 58, ${p.alpha})`
+        : `rgba(110, 178, 172, ${p.alpha * 0.75})`;
+      ctx.fill();
+    });
+
+    rafId = window.requestAnimationFrame(tick);
+  }
+
+  function startLoop() {
+    if (visible && !REDUCED_MOTION_QUERY.matches && rafId === null) {
+      rafId = window.requestAnimationFrame(tick);
+    }
+  }
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas, { passive: true });
+
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        visible = Boolean(entries[0]?.isIntersecting);
+        startLoop();
+      },
+      { threshold: 0 }
+    );
+    obs.observe(hero);
+  }
+
+  startLoop();
+}
+
+/**
+ * Screening Room / Lights-Off Cinema Mode toggle in header.
+ */
+function initCinemaMode() {
+  const btn = document.getElementById('cinema-mode-btn');
+  if (!btn) return;
+  const labelEl = btn.querySelector('.cinema-toggle-label');
+
+  btn.addEventListener('click', () => {
+    const isCinema = document.documentElement.classList.toggle('cinema-mode');
+    btn.setAttribute('aria-pressed', String(isCinema));
+    btn.setAttribute(
+      'aria-label',
+      isCinema ? 'ปิดโหมดโรงภาพยนตร์ (เปิดไฟปกติ)' : 'เปิดโหมดโรงภาพยนตร์ (ปิดไฟรอบข้าง)'
+    );
+    if (labelEl) {
+      labelEl.textContent = isCinema ? 'LIGHTS ON' : 'LIGHTS OFF';
+    }
+    showToast(isCinema ? 'เปิดโหมดโรงภาพยนตร์ (Cinema Mode)' : 'กลับสู่โหมดแสดงผลปกติ');
+  });
+}
+
+/**
+ * One-click copy contact email button with clipboard fallback.
+ */
+function initCopyEmail() {
+  const copyBtn = document.getElementById('copy-email-btn');
+  if (!copyBtn) return;
+
+  copyBtn.addEventListener('click', async () => {
+    const email = copyBtn.dataset.email || 'studio@group6.com';
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(email);
+      } else {
+        const tmp = document.createElement('textarea');
+        tmp.value = email;
+        tmp.setAttribute('readonly', '');
+        tmp.style.position = 'fixed';
+        tmp.style.opacity = '0';
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand('copy');
+        tmp.remove();
+      }
+      showToast(`คัดลอกอีเมล ${email} แล้ว`);
+    } catch {
+      showToast(`อีเมลติดต่อ: ${email}`);
+    }
+  });
+}
+
+/**
  * Application bootstrap with fallback safety:
  * `js-enabled` is added only inside JS initialization so that if JS fails,
  * all `.reveal` elements stay visible by default.
@@ -894,6 +1084,9 @@ function initApp() {
     initParallax();
     initCursorSpotlight();
     initCardTilt();
+    initHeroParticles();
+    initCinemaMode();
+    initCopyEmail();
 
     REDUCED_MOTION_QUERY.addEventListener('change', () => {
       if (REDUCED_MOTION_QUERY.matches) {

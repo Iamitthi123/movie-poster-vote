@@ -40,12 +40,25 @@
         <span class="brand-text">MOVIE PORTFOLIO</span>
       </a>
 
-      <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
-        aria-label="เปิดเมนูนำทาง">
-        <span class="nav-toggle-bar" aria-hidden="true"></span>
-        <span class="nav-toggle-bar" aria-hidden="true"></span>
-        <span class="nav-toggle-bar" aria-hidden="true"></span>
-      </button>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="cinema-toggle"
+          id="cinema-mode-btn"
+          aria-pressed="false"
+          aria-label="เปิดโหมดโรงภาพยนตร์ (ปิดไฟรอบข้าง)"
+        >
+          <span class="cinema-toggle-dot" aria-hidden="true"></span>
+          <span class="cinema-toggle-label">LIGHTS OFF</span>
+        </button>
+
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
+          aria-label="เปิดเมนูนำทาง">
+          <span class="nav-toggle-bar" aria-hidden="true"></span>
+          <span class="nav-toggle-bar" aria-hidden="true"></span>
+          <span class="nav-toggle-bar" aria-hidden="true"></span>
+        </button>
+      </div>
 
       <nav class="primary-nav" id="primary-nav" aria-label="เมนูหลัก">
         <ul class="nav-list">
@@ -67,6 +80,7 @@
           fetchpriority="high" />
         <div class="hero-fog hero-fog--one"></div>
         <div class="hero-fog hero-fog--two"></div>
+        <canvas class="hero-particles" id="hero-particles" aria-hidden="true"></canvas>
       </div>
       <div class="hero-vignette" aria-hidden="true"></div>
 
@@ -77,7 +91,8 @@
         <h1 class="hero-title reveal" id="hero-title" data-reveal="fade-up">
           MOVIE PORTFOLIO
         </h1>
-        <span class="hero-lens-flare reveal" data-reveal="fade-in" style="--reveal-delay: 120ms" aria-hidden="true"></span>
+        <span class="hero-lens-flare reveal" data-reveal="fade-in" style="--reveal-delay: 120ms"
+          aria-hidden="true"></span>
         <p class="hero-subtitle reveal" data-reveal="fade-up" style="--reveal-delay: 140ms">
           รวมผลงานโปสเตอร์และทีเซอร์ภาพยนตร์
         </p>
@@ -217,9 +232,17 @@
           </p>
 
           <div class="contact-links">
-            <a href="mailto:studio@darknightvisuals.example" class="btn btn-primary contact-email-btn">
+            <a href="mailto:studio@group6.com" class="btn btn-primary contact-email-btn">
               studio@group6.com
             </a>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              id="copy-email-btn"
+              data-email="studio@group6.com"
+            >
+              คัดลอกอีเมล
+            </button>
           </div>
 
           <ul class="social-links" aria-label="ช่องทางโซเชียลมีเดีย">
@@ -283,6 +306,14 @@
           <h2 class="lightbox-title" id="lightbox-title"></h2>
           <p class="lightbox-synopsis" id="lightbox-synopsis"></p>
           <p class="lightbox-counter" id="lightbox-counter"></p>
+          <button
+            type="button"
+            class="btn btn-ghost lightbox-zoom-btn"
+            id="lightbox-zoom"
+            aria-pressed="false"
+          >
+            ขยายดูรายละเอียด (Zoom)
+          </button>
         </figcaption>
       </figure>
 
@@ -291,6 +322,9 @@
       </button>
     </div>
   </div>
+
+  <!-- Accessible Live Toast Feedback -->
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>
 
 </html>
