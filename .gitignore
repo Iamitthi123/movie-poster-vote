@@ -6,3 +6,6 @@ Desktop.ini
 # Editor configs
 .vscode/
 .idea/
+
+# Vercel local build cache
+.vercel/
