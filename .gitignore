@@ -1,23 +1,8 @@
-# Dependencies
-node_modules/
-
-# Environment and local configs
-.env
-.env.local
-
-# Logs and databases
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Vercel deployment folder
-.vercel
-
 # Operating System files
 .DS_Store
 Thumbs.db
 Desktop.ini
 
-.vercel
-.env*
+# Editor configs
+.vscode/
+.idea/
