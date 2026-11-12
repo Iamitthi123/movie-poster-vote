@@ -24,12 +24,12 @@ const MOVIES = [
     englishTitle: "DON'T DARE THE DARK",
     genre: 'สยองขวัญ | HORROR',
     year: '2569',
-    posterPath: 'assets/posters/poster-01-dont-dare.jpg',
-    posterAlt: 'โปสเตอร์ภาพยนตร์ ผีบอกว่าอย่าหาทำ แนวสยองขวัญ บ้านไม้ร้างในหมอกยามค่ำคืนพร้อมแสงสีแดงหม่น',
-    teaserPath: 'assets/teasers/teaser-01-dont-dare.mp4',
+    posterPath: 'assets/posters/messageImage_1794368583295.jpg',
+    posterAlt: 'โปสเตอร์ภาพยนตร์ ผีบอกว่าอย่าหาทำ แนวสยองขวัญ ผีนางรำเปื้อนเลือดในบ้านร้างและกลุ่มเพื่อนสี่คน',
+    teaserPath: 'assets/teasers/ผีบอกว่าอย่าหาทำ.mp4',
     teaserType: 'mp4', // 'mp4' for local video file, or 'youtube' for YouTube embed URL/ID
     teaserThumb: 'assets/images/teaser-01-thumb.jpg',
-    teaserDuration: '00:08',
+    teaserDuration: '01:21',
     teaserTitle: 'ผีบอกว่าอย่าหาทำ — Official Teaser',
     studio: 'BLACK MOON PICTURES ร่วมกับ DARK NIGHT STUDIO',
     cast: 'ธนกร วัฒนศิริ, พิมพ์ชนก รัตนาวดี, กิตติพงษ์ ศรีสวัสดิ์, ปวีณ์ณัฐ ชัยมงคล, นัทธมน วงศ์สกุล',
@@ -37,27 +37,35 @@ const MOVIES = [
     synopsis:
       'เมื่อกลุ่มเพื่อน 4 คน ตัดสินใจเข้าไปลองของในบ้านร้างกลางหมู่บ้าน พวกเขาคิดว่าทุกอย่างเป็นเพียงเรื่องล้อเล่น... จนกระทั่งมีเสียงปริศนากระซิบเรียกชื่อทีละคน และสิ่งที่พวกเขาปลุกขึ้นมา กลับไม่ยอมให้ใครกลับออกไปอีกเลย',
     synopsisLines: [
-      'เมื่อกลุ่มเพื่อน 4 คน ตัดสินใจเข้าไปลองของในบ้านร้างกลางหมู่บ้าน',
-      'พวกเขาคิดว่าทุกอย่างเป็นเพียงเรื่องล้อเล่น... จนกระทั่งมีเสียงปริศนากระซิบเรียกชื่อทีละคน',
-      'และสิ่งที่พวกเขาปลุกขึ้นมา กลับไม่ยอมให้ใครกลับออกไปอีกเลย'
+      'ตอนแรกก็ไม่เชื่อ... ตอนนี้ไม่กล้ากลับบ้าน',
+      'เมื่อกลุ่มเพื่อน 4 คน ตัดสินใจเข้าไปลองของในบ้านร้างกลางหมู่บ้าน พวกเขาคิดว่าทุกอย่างเป็นเพียงเรื่องล้อเล่น...',
+      'จนกระทั่งมีเสียงปริศนากระซิบเรียกชื่อทีละคน และสิ่งที่พวกเขาปลุกขึ้นมา กลับไม่ยอมให้ใครกลับออกไปอีกเลย'
     ],
     featured: true
   },
   {
-    id: 'silent-rain',
-    title: 'เสียงเงียบใต้เงาฝน',
-    englishTitle: 'SILENT RAIN',
-    genre: 'ระทึกขวัญ | THRILLER',
-    year: '2569',
-    posterPath: 'assets/posters/poster-02-silent-rain.jpg',
-    posterAlt: 'โปสเตอร์ภาพยนตร์ เสียงเงียบใต้เงาฝน แนวระทึกขวัญ เงาชายในชุดโค้ทใต้แสงไฟถนนท่ามกลางสายฝนยามดึก',
-    teaserPath: 'assets/teasers/teaser-02-silent-rain.mp4',
+    id: 'bloodland',
+    title: 'แผ่นดินเลือด',
+    englishTitle: 'BLOODLAND : มหาศึกแห่งแผ่นดิน',
+    genre: 'ประวัติศาสตร์ • สงคราม • ดราม่า | HISTORICAL • WAR • DRAMA',
+    year: '2026',
+    posterPath: 'assets/posters/แผ่นดินเลือด_ มหาศึกแห่งแผ่นดิน.png',
+    posterAlt: 'โปสเตอร์ภาพยนตร์ แผ่นดินเลือด แนวประวัติศาสตร์ สงคราม ดราม่า แม่ทัพหนุ่มถือดาบและธงรบท่ามกลางสมรภูมิเพลิง',
+    teaserPath: 'assets/teasers/teaser-02-bloodland.mp4',
     teaserType: 'mp4',
     teaserThumb: 'assets/images/teaser-02-thumb.jpg',
-    teaserDuration: '00:08',
-    teaserTitle: 'เสียงเงียบใต้เงาฝน — Teaser Trailer',
+    teaserDuration: '00:06',
+    teaserTitle: 'แผ่นดินเลือด — Official Teaser',
+    studio: 'Heritage Flame Studio',
+    cast: 'Chakrit Anon, Veena Ratt, Petch Surin',
+    releaseDate: '13 พฤศจิกายน 2026 ในโรงภาพยนตร์',
     synopsis:
-      'นักสืบคดีอาชญากรรมต้องตามแกะรอยฆาตกรต่อเนื่องที่ทิ้งร่องรอยไว้เฉพาะคืนฝนตกหนัก ก่อนที่พยานคนสุดท้ายจะหายตัวไปอย่างไร้ร่องรอย'
+      'เมื่อแม่ทัพหนุ่มต้องนำกองทัพปกป้องแผ่นดินจากศัตรูผู้รุกราน เขาต้องเลือกระหว่างหน้าที่ต่อบ้านเมืองกับหญิงที่เขารัก',
+    synopsisLines: [
+      'เมื่อแม่ทัพหนุ่มต้องนำกองทัพปกป้องแผ่นดินจากศัตรูผู้รุกราน',
+      'ท่ามกลางเปลวไฟสงครามและชะตากรรมของอาณาจักรที่กำลังสั่นคลอน',
+      'เขาต้องเลือกระหว่างหน้าที่ต่อบ้านเมืองกับหญิงที่เขารัก'
+    ]
   }
 ];
 
@@ -72,6 +80,10 @@ let lightboxState = {
 /**
  * Safely escape HTML text when inserting into DOM attributes or templates.
  */
+function safeAssetUrl(pathStr) {
+  return encodeURI(String(pathStr ?? ''));
+}
+
 function escapeHTML(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -129,7 +141,7 @@ function applyPosterStagger(gridEl) {
   cards.forEach((card, index) => {
     if (!card.classList.contains('is-visible')) {
       const colIndex = index % colCount;
-      card.style.setProperty('--reveal-delay', `${colIndex * 120}ms`);
+      card.style.setProperty('--reveal-delay', `${120 + colIndex * 180}ms`);
     }
   });
 }
@@ -153,7 +165,7 @@ function renderPosterGallery(movies) {
         >
           <div class="poster-media">
             <img
-              src="${escapeHTML(movie.posterPath)}"
+              src="${escapeHTML(safeAssetUrl(movie.posterPath))}"
               alt="${escapeHTML(movie.posterAlt || `โปสเตอร์ภาพยนตร์ ${movie.title}`)}"
               width="800"
               height="1200"
@@ -231,7 +243,9 @@ function mountTeaserPlayer(mediaEl, title) {
 
   mediaEl.appendChild(video);
   video.play().catch(() => {
-    // Browser autoplay guard fallback: native controls remain visible for manual play.
+    // Fallback if strict autoplay policy blocks unmuted playback on click.
+    video.muted = true;
+    video.play().catch(() => {});
   });
 }
 
@@ -245,16 +259,18 @@ function renderTeaserSection(movies) {
   const teasers = movies.filter((movie) => Boolean(movie.teaserPath));
   list.innerHTML = teasers
     .map(
-      (movie) => `
-      <article class="teaser-card reveal" data-reveal="fade-up">
+      (movie, index) => {
+        const baseDelay = 120 + index * 200;
+        return `
+      <article class="teaser-card reveal" data-reveal="fade-up" style="--reveal-delay: ${baseDelay}ms">
         <div
           class="teaser-media"
           data-video-type="${escapeHTML(movie.teaserType || 'mp4')}"
-          data-video-src="${escapeHTML(movie.teaserPath)}"
+          data-video-src="${escapeHTML(safeAssetUrl(movie.teaserPath))}"
           data-teaser-title="${escapeHTML(movie.title)}"
         >
           <img
-            src="${escapeHTML(movie.teaserThumb || movie.posterPath)}"
+            src="${escapeHTML(safeAssetUrl(movie.teaserThumb || movie.posterPath))}"
             alt="ภาพปกทีเซอร์ภาพยนตร์ ${escapeHTML(movie.title)}"
             width="1280"
             height="720"
@@ -277,12 +293,13 @@ function renderTeaserSection(movies) {
           }
         </div>
         <div class="teaser-body">
-          <p class="teaser-meta">${escapeHTML(movie.genre)} • ${escapeHTML(movie.year)}</p>
-          <h3 class="teaser-title">${escapeHTML(movie.teaserTitle || movie.title)}</h3>
-          <p class="teaser-synopsis">${escapeHTML(movie.synopsis)}</p>
+          <p class="teaser-meta reveal" data-reveal="fade-up" style="--reveal-delay: ${baseDelay + 140}ms">${escapeHTML(movie.genre)} • ${escapeHTML(movie.year)}</p>
+          <h3 class="teaser-title reveal" data-reveal="fade-up" style="--reveal-delay: ${baseDelay + 260}ms">${escapeHTML(movie.teaserTitle || movie.title)}</h3>
+          <p class="teaser-synopsis reveal" data-reveal="fade-up" style="--reveal-delay: ${baseDelay + 380}ms">${escapeHTML(movie.synopsis)}</p>
         </div>
       </article>
-    `
+    `;
+      }
     )
     .join('');
 
@@ -298,15 +315,51 @@ function renderTeaserSection(movies) {
 /**
  * Render the Featured Project section with sequential synopsis reveal lines.
  */
-function renderFeaturedProject(movies) {
+function renderFeaturedProject(movies, selectedIndex) {
   const container = document.getElementById('featured-project');
+  const switcher = document.getElementById('featured-switcher');
   if (!container || movies.length === 0) return;
 
-  const featuredIndex = Math.max(
+  const defaultIndex = Math.max(
     0,
     movies.findIndex((movie) => Boolean(movie.featured))
   );
+  const featuredIndex =
+    typeof selectedIndex === 'number' && selectedIndex >= 0 && selectedIndex < movies.length
+      ? selectedIndex
+      : defaultIndex;
+  const isSwitchAction = typeof selectedIndex === 'number';
   const movie = movies[featuredIndex];
+
+  if (switcher) {
+    switcher.innerHTML = movies
+      .map(
+        (item, idx) => `
+        <button
+          type="button"
+          role="tab"
+          aria-selected="${idx === featuredIndex}"
+          class="featured-tab${idx === featuredIndex ? ' is-active' : ''}"
+          data-featured-index="${idx}"
+        >
+          0${idx + 1} / ${escapeHTML(item.title)}
+        </button>
+      `
+      )
+      .join('');
+
+    if (!switcher.dataset.bound) {
+      switcher.dataset.bound = 'true';
+      switcher.addEventListener('click', (event) => {
+        const tab = event.target.closest('[data-featured-index]');
+        if (!tab) return;
+        const idx = Number(tab.getAttribute('data-featured-index'));
+        if (Number.isInteger(idx)) {
+          renderFeaturedProject(movies, idx);
+        }
+      });
+    }
+  }
 
   const lines =
     Array.isArray(movie.synopsisLines) && movie.synopsisLines.length > 0
@@ -317,13 +370,35 @@ function renderFeaturedProject(movies) {
     .map(
       (line, idx) => `
       <p class="featured-synopsis-line reveal" data-reveal="fade-up" style="--reveal-delay: ${
-        idx * 140
+        420 + idx * 160
       }ms">
         ${escapeHTML(line)}
       </p>
     `
     )
     .join('');
+
+  const metaItems = [
+    movie.studio ? { label: 'สตูดิโอ / ผู้สร้าง', value: movie.studio } : null,
+    movie.cast ? { label: 'นักแสดงนำ', value: movie.cast } : null,
+    movie.releaseDate ? { label: 'กำหนดฉาย', value: movie.releaseDate } : null
+  ].filter(Boolean);
+
+  const metaStartDelay = 420 + lines.length * 160;
+  const metaMarkup = metaItems
+    .map(
+      (item, idx) => `
+      <div class="featured-meta-row reveal" data-reveal="fade-up" style="--reveal-delay: ${
+        metaStartDelay + idx * 120
+      }ms">
+        <dt>${escapeHTML(item.label)}</dt>
+        <dd>${escapeHTML(item.value)}</dd>
+      </div>
+    `
+    )
+    .join('');
+
+  const actionsDelay = metaStartDelay + metaItems.length * 120 + 60;
 
   container.innerHTML = `
     <div class="featured-poster-reveal reveal" data-reveal="zoom-in">
@@ -335,7 +410,7 @@ function renderFeaturedProject(movies) {
           aria-label="ขยายดูโปสเตอร์ ${escapeHTML(movie.title)}"
         >
           <img
-            src="${escapeHTML(movie.posterPath)}"
+            src="${escapeHTML(safeAssetUrl(movie.posterPath))}"
             alt="${escapeHTML(movie.posterAlt || `โปสเตอร์ภาพยนตร์ ${movie.title}`)}"
             width="800"
             height="1200"
@@ -348,10 +423,10 @@ function renderFeaturedProject(movies) {
     </div>
 
     <div class="featured-details">
-      <p class="featured-genre-tag reveal" data-reveal="fade-left">
+      <p class="featured-genre-tag reveal" data-reveal="fade-left" style="--reveal-delay: 140ms">
         ${escapeHTML(movie.genre)}
       </p>
-      <h3 class="featured-title reveal" data-reveal="fade-left" style="--reveal-delay: 80ms">
+      <h3 class="featured-title reveal" data-reveal="fade-left" style="--reveal-delay: 280ms">
         ${escapeHTML(movie.title)}
       </h3>
 
@@ -359,40 +434,13 @@ function renderFeaturedProject(movies) {
         ${synopsisMarkup}
       </div>
 
-      <dl class="featured-meta-list reveal" data-reveal="fade-up" style="--reveal-delay: 180ms">
-        ${
-          movie.studio
-            ? `
-          <div class="featured-meta-row">
-            <dt>สตูดิโอ / ผู้สร้าง</dt>
-            <dd>${escapeHTML(movie.studio)}</dd>
-          </div>
-        `
-            : ''
-        }
-        ${
-          movie.cast
-            ? `
-          <div class="featured-meta-row">
-            <dt>นักแสดงนำ</dt>
-            <dd>${escapeHTML(movie.cast)}</dd>
-          </div>
-        `
-            : ''
-        }
-        ${
-          movie.releaseDate
-            ? `
-          <div class="featured-meta-row">
-            <dt>กำหนดฉาย</dt>
-            <dd>${escapeHTML(movie.releaseDate)}</dd>
-          </div>
-        `
-            : ''
-        }
+      <dl class="featured-meta-list reveal" data-reveal="fade-up" style="--reveal-delay: ${
+        metaStartDelay - 60
+      }ms">
+        ${metaMarkup}
       </dl>
 
-      <div class="featured-actions reveal" data-reveal="fade-up" style="--reveal-delay: 260ms">
+      <div class="featured-actions reveal" data-reveal="fade-up" style="--reveal-delay: ${actionsDelay}ms">
         <a href="#teasers" class="btn btn-primary">รับชมทีเซอร์</a>
         <button type="button" class="btn btn-ghost" id="featured-zoom-btn">
           ดูโปสเตอร์ขนาดเต็ม
@@ -408,6 +456,15 @@ function renderFeaturedProject(movies) {
   }
   if (zoomBtn) {
     zoomBtn.addEventListener('click', () => openLightbox(featuredIndex, zoomBtn));
+  }
+
+  if (isSwitchAction) {
+    const newReveals = container.querySelectorAll('.reveal');
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        newReveals.forEach((el) => el.classList.add('is-visible'));
+      });
+    });
   }
 }
 
@@ -452,7 +509,7 @@ function initScrollReveal() {
           target.removeEventListener('transitionend', cleanup);
         };
         target.addEventListener('transitionend', cleanup, { once: true });
-        window.setTimeout(cleanup, 1200);
+        window.setTimeout(cleanup, 2500);
       });
     },
     {
@@ -476,9 +533,8 @@ function initParallax() {
   const heroSection = document.getElementById('hero');
   const heroBg = document.getElementById('hero-parallax');
   const featuredSection = document.getElementById('featured');
-  const featuredPoster = document.getElementById('featured-parallax');
 
-  if (!heroBg && !featuredPoster) return;
+  if (!heroBg && !featuredSection) return;
 
   let heroVisible = true;
   let featuredVisible = false;
@@ -487,7 +543,8 @@ function initParallax() {
 
   function resetTransforms() {
     if (heroBg) heroBg.style.transform = '';
-    if (featuredPoster) featuredPoster.style.transform = '';
+    const currentFeaturedPoster = document.getElementById('featured-parallax');
+    if (currentFeaturedPoster) currentFeaturedPoster.style.transform = '';
   }
 
   function updateParallaxFrame() {
@@ -507,11 +564,12 @@ function initParallax() {
         heroBg.style.transform = `translate3d(0, ${heroOffset.toFixed(2)}px, 0)`;
       }
 
-      if (featuredVisible && featuredPoster && featuredSection) {
+      const currentFeaturedPoster = document.getElementById('featured-parallax');
+      if (featuredVisible && currentFeaturedPoster && featuredSection) {
         const rect = featuredSection.getBoundingClientRect();
         const centerDelta = rect.top + rect.height * 0.5 - vh * 0.5;
         const posterOffset = Math.max(-22, Math.min(22, centerDelta * -0.045));
-        featuredPoster.style.transform = `translate3d(0, ${posterOffset.toFixed(2)}px, 0)`;
+        currentFeaturedPoster.style.transform = `translate3d(0, ${posterOffset.toFixed(2)}px, 0)`;
       }
     }
 
@@ -631,7 +689,7 @@ function updateLightboxView() {
   const counter = document.getElementById('lightbox-counter');
 
   if (img) {
-    img.src = movie.posterPath;
+    img.src = safeAssetUrl(movie.posterPath);
     img.alt = movie.posterAlt || `โปสเตอร์ภาพยนตร์ ${movie.title}`;
   }
   if (meta) {

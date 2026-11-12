@@ -27,9 +27,10 @@
 <body>
   <a class="skip-link" href="#main-content">ข้ามไปยังเนื้อหาหลัก</a>
 
-  <!-- Atmospheric Film Grain & Subtle Cursor Spotlight -->
+  <!-- Atmospheric Film Grain, Cursor Spotlight & Cinema Blackout Overlay -->
   <div class="film-grain" aria-hidden="true"></div>
   <div class="cursor-spotlight" id="cursor-spotlight" aria-hidden="true"></div>
+  <div class="cinema-dim-overlay" aria-hidden="true"></div>
 
   <!-- Sticky Top Navigation -->
   <header class="site-header" id="top">
@@ -41,13 +42,8 @@
       </a>
 
       <div class="header-actions">
-        <button
-          type="button"
-          class="cinema-toggle"
-          id="cinema-mode-btn"
-          aria-pressed="false"
-          aria-label="เปิดโหมดโรงภาพยนตร์ (ปิดไฟรอบข้าง)"
-        >
+        <button type="button" class="cinema-toggle" id="cinema-mode-btn" aria-pressed="false"
+          aria-label="เปิดโหมดโรงภาพยนตร์ (ปิดไฟรอบข้าง)">
           <span class="cinema-toggle-dot" aria-hidden="true"></span>
           <span class="cinema-toggle-label">LIGHTS OFF</span>
         </button>
@@ -86,17 +82,17 @@
 
       <div class="container hero-content">
         <p class="hero-kicker reveal" data-reveal="fade-in">
-          DARK CINEMA &amp; VISUAL ARCHIVE
+          CINEMA &amp; KEY ART ARCHIVE
         </p>
-        <h1 class="hero-title reveal" id="hero-title" data-reveal="fade-up">
+        <h1 class="hero-title reveal" id="hero-title" data-reveal="fade-up" style="--reveal-delay: 120ms">
           MOVIE PORTFOLIO
         </h1>
-        <span class="hero-lens-flare reveal" data-reveal="fade-in" style="--reveal-delay: 120ms"
+        <span class="hero-lens-flare reveal" data-reveal="fade-in" style="--reveal-delay: 240ms"
           aria-hidden="true"></span>
-        <p class="hero-subtitle reveal" data-reveal="fade-up" style="--reveal-delay: 140ms">
+        <p class="hero-subtitle reveal" data-reveal="fade-up" style="--reveal-delay: 340ms">
           รวมผลงานโปสเตอร์และทีเซอร์ภาพยนตร์
         </p>
-        <div class="hero-actions reveal" data-reveal="fade-up" style="--reveal-delay: 260ms">
+        <div class="hero-actions reveal" data-reveal="fade-up" style="--reveal-delay: 460ms">
           <a href="#posters" class="btn btn-primary">ชมคลังโปสเตอร์</a>
           <a href="#teasers" class="btn btn-ghost">รับชมทีเซอร์</a>
         </div>
@@ -118,40 +114,43 @@
         </div>
 
         <div class="about-grid">
-          <div class="about-portrait-wrap reveal" data-reveal="fade-right">
-            <div class="about-portrait-frame">
+          <div class="about-portrait-wrap">
+            <div class="about-portrait-frame reveal" data-reveal="zoom-in">
               <img src="assets/images/creator-portrait.jpg"
                 alt="ภาพพอร์ตเทรตผู้กำกับและนักออกแบบโปสเตอร์ภาพยนตร์ในสตูดิโอแสงโทนมืด" width="800" height="800"
                 loading="lazy" decoding="async" class="about-portrait-img" />
             </div>
-            <p class="about-badge">DARK NIGHT VISUALS • BANGKOK</p>
+            <p class="about-badge reveal" data-reveal="fade-up" style="--reveal-delay: 180ms">
+              DARK NIGHT VISUALS • BANGKOK
+            </p>
           </div>
 
           <div class="about-copy">
-            <h3 class="about-lead reveal" data-reveal="fade-up">
-              ออกแบบความกลัวผ่านภาพนิ่งและจังหวะความเงียบ
+            <h3 class="about-lead reveal" data-reveal="fade-up" style="--reveal-delay: 120ms">
+              ถ่ายทอดอารมณ์ภาพยนตร์ผ่านภาพนิ่งและจังหวะการเล่าเรื่อง
             </h3>
-            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 100ms">
-              พอร์ตโฟลิโอนี้รวบรวมผลงานการออกแบบ Key Visual โปสเตอร์ภาพยนตร์ และการตัดต่อทีเซอร์โทนมืดหม่น
-              โดยเฉพาะงานแนวสยองขวัญ ระทึกขวัญ และดราม่าเชิงจิตวิทยา ที่เน้นการจัดแสงเงาแบบภาพยนตร์
-              บรรยากาศอึมครึม และการเล่าเรื่องผ่านอารมณ์ในเสี้ยววินาที
+            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 260ms">
+              พอร์ตโฟลิโอนี้รวบรวมผลงานการออกแบบ Key Visual โปสเตอร์ภาพยนตร์ และการตัดต่อทีเซอร์
+              ครอบคลุมทั้งแนวสยองขวัญเชิงบรรยากาศ (Horror) อย่าง “ผีบอกว่าอย่าหาทำ”
+              ไปจนถึงมหากาพย์อิงประวัติศาสตร์–สงคราม–ดราม่าอย่าง “แผ่นดินเลือด”
             </p>
-            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 200ms">
-              ทุกโปรเจกต์เริ่มต้นจากแนวคิดภาพหลัก (Key Art Concept) การคัดเลือกคู่สีแดงเลือดหมูและเขียวหม่น
-              ไปจนถึงจังหวะการตัดต่อภาพและเสียงเพื่อสร้างแรงดึงดูดก่อนที่ผู้ชมจะก้าวเข้าสู่โรงภาพยนตร์
+            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 400ms">
+              ทุกโปรเจกต์เริ่มต้นจากการวางองค์ประกอบภาพหลัก (Key Art Concept)
+              การออกแบบโทนสีและแสงเงาเฉพาะตัวของแต่ละเรื่อง
+              ไปจนถึงจังหวะการตัดต่อภาพและเสียงเพื่อสร้างแรงดึงดูดก่อนก้าวเข้าสู่โรงภาพยนตร์
             </p>
-            <dl class="about-stats reveal" data-reveal="fade-up" style="--reveal-delay: 280ms">
-              <div class="stat-item">
+            <dl class="about-stats">
+              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 480ms">
                 <dt>POSTER WORKS</dt>
                 <dd>02</dd>
               </div>
-              <div class="stat-item">
+              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 620ms">
                 <dt>TEASER REELS</dt>
                 <dd>02</dd>
               </div>
-              <div class="stat-item">
+              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 760ms">
                 <dt>FOCUS GENRE</dt>
-                <dd>HORROR / THRILLER</dd>
+                <dd>HORROR / WAR DRAMA</dd>
               </div>
             </dl>
           </div>
@@ -167,7 +166,7 @@
           <h2 class="section-title" id="posters-heading">POSTER GALLERY</h2>
           <span class="section-accent-line" aria-hidden="true"></span>
         </div>
-        <p class="section-intro reveal" data-reveal="fade-in">
+        <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 140ms">
           คลิกที่โปสเตอร์เพื่อเปิดดูภาพขนาดเต็ม พร้อมรองรับการเลื่อนด้วยคีย์บอร์ดและการปัดหน้าจอบนมือถือ
         </p>
 
@@ -190,7 +189,7 @@
           <h2 class="section-title" id="teasers-heading">OFFICIAL TEASERS</h2>
           <span class="section-accent-line" aria-hidden="true"></span>
         </div>
-        <p class="section-intro reveal" data-reveal="fade-in">
+        <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 140ms">
           ตัวอย่างภาพยนตร์สัดส่วน 16:9 โหลดไฟล์วิดีโอเฉพาะเมื่อกดเล่นเพื่อความเร็วสูงสุดในการเปิดหน้าเว็บ
         </p>
 
@@ -208,7 +207,9 @@
           <span class="section-accent-line" aria-hidden="true"></span>
         </div>
 
-        <!-- Populated dynamically from featured entry in MOVIES array in js/main.js -->
+        <!-- Switcher & Spotlight details populated from MOVIES array in js/main.js -->
+        <div class="featured-switcher reveal" id="featured-switcher" data-reveal="fade-up" role="tablist"
+          aria-label="เลือกดูรายละเอียดภาพยนตร์เด่น"></div>
         <div class="featured-layout" id="featured-project"></div>
       </div>
     </section>
@@ -223,29 +224,27 @@
         </div>
 
         <div class="contact-card reveal" data-reveal="zoom-in">
-          <p class="contact-cta-label">LET'S WORK TOGETHER</p>
-          <h3 class="contact-headline">
+          <p class="contact-cta-label reveal" data-reveal="fade-up" style="--reveal-delay: 140ms">
+            LET'S WORK TOGETHER
+          </p>
+          <h3 class="contact-headline reveal" data-reveal="fade-up" style="--reveal-delay: 280ms">
             พร้อมร่วมสร้างงานโปสเตอร์และทีเซอร์ภาพยนตร์เรื่องต่อไปของคุณ
           </h3>
-          <p class="contact-desc">
+          <p class="contact-desc reveal" data-reveal="fade-up" style="--reveal-delay: 420ms">
             ติดต่อสอบถามงานออกแบบ Key Visual โปสเตอร์ภาพยนตร์ ทีเซอร์ประชาสัมพันธ์ หรือร่วมงานด้านภาพยนตร์อิสระ
           </p>
 
-          <div class="contact-links">
+          <div class="contact-links reveal" data-reveal="fade-up" style="--reveal-delay: 560ms">
             <a href="mailto:studio@group6.com" class="btn btn-primary contact-email-btn">
               studio@group6.com
             </a>
-            <button
-              type="button"
-              class="btn btn-ghost"
-              id="copy-email-btn"
-              data-email="studio@group6.com"
-            >
+            <button type="button" class="btn btn-ghost" id="copy-email-btn" data-email="studio@group6.com">
               คัดลอกอีเมล
             </button>
           </div>
 
-          <ul class="social-links" aria-label="ช่องทางโซเชียลมีเดีย">
+          <ul class="social-links reveal" data-reveal="fade-up" style="--reveal-delay: 700ms"
+            aria-label="ช่องทางโซเชียลมีเดีย">
             <li>
               <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-link">
                 Instagram
@@ -276,7 +275,7 @@
   <footer class="site-footer">
     <div class="container footer-inner">
       <p class="footer-copy">
-        &copy; 2026 MOVIE PORTFOLIO. All rights reserved.
+        &copy; 2026 MOVIE PORTFOLIO.
       </p>
       <a href="#hero" class="back-to-top" id="back-to-top" aria-label="กลับขึ้นด้านบนสุด">
         BACK TO TOP <span aria-hidden="true">&uarr;</span>
@@ -306,12 +305,7 @@
           <h2 class="lightbox-title" id="lightbox-title"></h2>
           <p class="lightbox-synopsis" id="lightbox-synopsis"></p>
           <p class="lightbox-counter" id="lightbox-counter"></p>
-          <button
-            type="button"
-            class="btn btn-ghost lightbox-zoom-btn"
-            id="lightbox-zoom"
-            aria-pressed="false"
-          >
+          <button type="button" class="btn btn-ghost lightbox-zoom-btn" id="lightbox-zoom" aria-pressed="false">
             ขยายดูรายละเอียด (Zoom)
           </button>
         </figcaption>
