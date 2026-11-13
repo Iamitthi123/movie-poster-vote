@@ -1124,6 +1124,36 @@ function initCopyEmail() {
 }
 
 /**
+ * Scroll-triggered Peekaboo Ghost animation.
+ * Slides in from bottom-right when scrollY is between 800px and 1500px,
+ * and slides back off-screen if < 800px or > 1500px.
+ */
+function initPeekabooGhost() {
+  const ghost = document.getElementById('peekaboo-ghost');
+  if (!ghost) return;
+
+  let ticking = false;
+
+  const handleGhostScroll = () => {
+    const scrollY = window.scrollY || window.pageYOffset;
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        if (scrollY >= 800 && scrollY <= 1500) {
+          ghost.classList.add('is-visible');
+        } else {
+          ghost.classList.remove('is-visible');
+        }
+        ticking = false;
+      });
+      ticking = true;
+    }
+  };
+
+  window.addEventListener('scroll', handleGhostScroll, { passive: true });
+  handleGhostScroll();
+}
+
+/**
  * Application bootstrap with fallback safety:
  * `js-enabled` is added only inside JS initialization so that if JS fails,
  * all `.reveal` elements stay visible by default.
@@ -1145,6 +1175,7 @@ function initApp() {
     initHeroParticles();
     initCinemaMode();
     initCopyEmail();
+    initPeekabooGhost();
 
     REDUCED_MOTION_QUERY.addEventListener('change', () => {
       if (REDUCED_MOTION_QUERY.matches) {
