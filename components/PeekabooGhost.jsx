@@ -86,7 +86,7 @@ export default function PeekabooGhostDemo() {
           PEEKABOO GHOST OVERLAY (Fixed Bottom-Right)
           ========================================================================= */}
       <div
-        className={`fixed bottom-0 right-0 z-50 pointer-events-none select-none transition-transform duration-700 ease-in-out ${
+        className={`fixed -bottom-8 right-0 z-50 pointer-events-none select-none transition-transform duration-700 ease-in-out ${
           isVisible ? 'translate-x-0' : 'translate-x-full'
         }`}
         aria-hidden={!isVisible}

@@ -1786,7 +1786,7 @@ html.js-enabled .reveal.is-visible {
    ========================================================================== */
 .peekaboo-ghost {
   position: fixed;
-  bottom: -6px;
+  bottom: clamp(-45px, -5vh, -25px);
   right: 0;
   z-index: 950;
   pointer-events: none;
