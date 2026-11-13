@@ -1125,24 +1125,41 @@ function initCopyEmail() {
 
 /**
  * Scroll-triggered Peekaboo Ghost animation.
- * Slides in from bottom-right when scrollY is between 800px and 1500px,
- * and slides back off-screen if < 800px or > 1500px.
+ * - Shows when scrolled past Hero section (scrollY >= 500px)
+ * - Tucks away smoothly when reaching near the bottom of the page (near Contact / Footer)
+ * - Tucks away when scrolled back to the top Hero
  */
 function initPeekabooGhost() {
   const ghost = document.getElementById('peekaboo-ghost');
   if (!ghost) return;
 
+  const contactSection = document.getElementById('contact') || document.querySelector('.site-footer');
   let ticking = false;
 
   const handleGhostScroll = () => {
-    const scrollY = window.scrollY || window.pageYOffset;
     if (!ticking) {
       window.requestAnimationFrame(() => {
-        if (scrollY >= 800 && scrollY <= 1500) {
+        const scrollY = window.scrollY || window.pageYOffset;
+        const docHeight = document.documentElement.scrollHeight;
+        const winHeight = window.innerHeight;
+        const distFromBottom = docHeight - (scrollY + winHeight);
+
+        // Near bottom of website check (approaching Contact section or within 650px of page end)
+        let isNearBottom = distFromBottom < 650;
+        if (contactSection) {
+          const contactRect = contactSection.getBoundingClientRect();
+          if (contactRect.top < winHeight + 120) {
+            isNearBottom = true;
+          }
+        }
+
+        // Visible in the active middle content, tucks away at top and near bottom
+        if (scrollY >= 500 && !isNearBottom) {
           ghost.classList.add('is-visible');
         } else {
           ghost.classList.remove('is-visible');
         }
+
         ticking = false;
       });
       ticking = true;
@@ -1150,6 +1167,7 @@ function initPeekabooGhost() {
   };
 
   window.addEventListener('scroll', handleGhostScroll, { passive: true });
+  window.addEventListener('resize', handleGhostScroll, { passive: true });
   handleGhostScroll();
 }
 

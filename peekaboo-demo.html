@@ -1,22 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Peekaboo Ghost Animation Demo</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: '#e50914'
-          }
-        }
-      }
-    }
-  </script>
 </head>
 <body class="bg-neutral-950 text-neutral-100 font-sans selection:bg-red-700 selection:text-white">
 
@@ -27,10 +16,14 @@
       <span id="hud-scrollY" class="font-mono font-bold text-red-400">0px</span>
     </div>
     <div class="flex items-center gap-2">
-      <span class="text-neutral-400">Ghost Status:</span>
+      <span class="text-neutral-400">ระยะห่างจากท้ายเว็บ:</span>
+      <span id="hud-distBottom" class="font-mono font-bold text-neutral-300">0px</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-neutral-400">สถานะผี:</span>
       <span id="hud-status" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-neutral-400 border border-neutral-800">
         <span class="w-2 h-2 rounded-full bg-neutral-600"></span>
-        HIDDEN (Scroll to 800px)
+        ซ่อนอยู่ (อยู่ที่ส่วนบนของเว็บ)
       </span>
     </div>
   </aside>
@@ -41,27 +34,25 @@
     class="fixed bottom-0 right-0 z-50 pointer-events-none select-none translate-x-full transition-transform duration-700 ease-in-out"
   >
     <div class="relative">
-      <div id="ghost-glow" class="absolute -inset-4 bg-red-600/20 blur-2xl rounded-full opacity-0 transition-opacity duration-1000"></div>
+      <div id="ghost-glow" class="absolute top-[10%] left-[5%] right-[5%] bottom-[20%] bg-red-600/20 blur-3xl rounded-full opacity-0 transition-opacity duration-1000"></div>
       <img
         src="assets/images/ghost-transparent.png"
         alt="Peekaboo Ghost"
-        class="relative w-56 sm:w-72 md:w-88 lg:w-96 max-h-[85vh] object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)] [mask-image:linear-gradient(to_top,transparent_0%,rgba(0,0,0,0.4)_4%,black_16%,black_100%)] [-webkit-mask-image:linear-gradient(to_top,transparent_0%,rgba(0,0,0,0.4)_4%,black_16%,black_100%)]"
+        class="relative w-56 sm:w-72 md:w-80 lg:w-92 max-h-[82vh] object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] [mask-image:linear-gradient(to_top,transparent_0%,rgba(0,0,0,0.5)_4%,black_16%,black_100%)] [-webkit-mask-image:linear-gradient(to_top,transparent_0%,rgba(0,0,0,0.5)_4%,black_16%,black_100%)]"
       />
-      <!-- Bottom dark fog blend -->
-      <div class="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent pointer-events-none"></div>
     </div>
   </div>
 
-  <!-- Hero Section (0 - 800px) -->
-  <header class="min-h-[800px] flex flex-col justify-center items-center text-center px-6 relative border-b border-neutral-800/80 bg-gradient-to-b from-neutral-900 via-neutral-950 to-neutral-950">
+  <!-- Hero Section -->
+  <header class="min-h-[700px] flex flex-col justify-center items-center text-center px-6 relative border-b border-neutral-800/80 bg-gradient-to-b from-neutral-900 via-neutral-950 to-neutral-950">
     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs uppercase tracking-wider text-neutral-400 bg-neutral-800/60 border border-neutral-700 mb-6">
       Scroll-Triggered Ghost Effect Demo
     </div>
     <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-3xl leading-tight">
       Peekaboo Ghost <span class="text-red-600">Animation</span>
     </h1>
-    <p class="mt-6 text-neutral-400 max-w-xl text-base sm:text-lg">
-      เลื่อนหน้าจอลงไปเกิน <span class="text-red-400 font-semibold font-mono">800px</span> ผีจะค่อยๆ สไลด์โผล่มาจากขวาล่าง และเมื่อเลื่อนเกิน <span class="text-red-400 font-semibold font-mono">1500px</span> ผีจะสไลด์กลับออกไป
+    <p class="mt-4 text-neutral-400 max-w-xl text-base sm:text-lg">
+      เลื่อนหน้าจอลงมาเกิน 500px ผีจะโผล่ และเมื่อเลื่อนลงไปใกล้ท้ายเว็บ ผีจะหุบกลับออกไปทันที
     </p>
     <div class="mt-12 flex flex-col items-center gap-2 text-neutral-500 animate-bounce">
       <span class="text-xs uppercase tracking-widest">Scroll Down</span>
@@ -71,73 +62,68 @@
     </div>
   </header>
 
-  <!-- 800px Marker -->
-  <div class="relative border-t-2 border-dashed border-red-600/70 bg-red-950/20 py-3 px-6 text-center">
-    <span class="inline-block px-4 py-1 rounded-md bg-red-900/60 border border-red-600 text-red-200 font-mono text-sm font-bold shadow-lg">
-      ▼ 800px Trigger Point — ผีเริ่มโผล่ตรงนี้ ▼
-    </span>
-  </div>
-
-  <!-- Haunted Section (800px - 1500px) -->
-  <section class="min-h-[700px] flex flex-col justify-center items-center px-6 text-center relative bg-gradient-to-b from-neutral-950 via-neutral-900/60 to-neutral-950">
+  <!-- Middle Content (Ghost Active) -->
+  <section class="min-h-[1600px] flex flex-col justify-center items-center px-6 text-center relative bg-gradient-to-b from-neutral-950 via-neutral-900/60 to-neutral-950">
     <div class="max-w-2xl space-y-6">
-      <span class="text-xs font-bold uppercase tracking-widest text-red-500">Active Zone (800px - 1500px)</span>
-      <h2 class="text-3xl sm:text-5xl font-bold">มองที่มุมขวาล่างของจอ</h2>
+      <span class="text-xs font-bold uppercase tracking-widest text-red-500">Active Content Zone</span>
+      <h2 class="text-3xl sm:text-5xl font-bold">ผีจะปรากฏอยู่ที่มุมขวาล่าง</h2>
       <p class="text-neutral-300 text-base sm:text-lg leading-relaxed">
-        ผีสไลด์เข้ามาอย่างนุ่มนวลด้วย <code class="bg-neutral-800 text-red-400 px-2 py-0.5 rounded font-mono text-sm">transition-transform duration-700 ease-in-out</code> และไม่ขวางการคลิกเพราะมี <code class="bg-neutral-800 text-red-400 px-2 py-0.5 rounded font-mono text-sm">pointer-events-none</code>
+        ขอบตัวผีได้รับการลบ White fringe และ Anti-aliased เรียบร้อยแล้ว ไม่มีเหลี่ยมกล่องสีดำมาบังเนื้อหา และด้านล่างละลายเข้ากับหน้าจออย่างเนียนตา
       </p>
     </div>
   </section>
 
-  <!-- 1500px Marker -->
-  <div class="relative border-t-2 border-dashed border-neutral-700 bg-neutral-900/40 py-3 px-6 text-center">
-    <span class="inline-block px-4 py-1 rounded-md bg-neutral-800 border border-neutral-700 text-neutral-300 font-mono text-sm font-bold shadow-lg">
-      ▲ 1500px Trigger Point — ผีสไลด์กลับออกไป ▲
-    </span>
-  </div>
-
-  <!-- Beyond 1500px Section -->
-  <section class="min-h-[900px] flex flex-col justify-center items-center px-6 text-center bg-neutral-950">
-    <div class="max-w-2xl space-y-6">
-      <span class="text-xs font-bold uppercase tracking-widest text-neutral-500">Safe Zone (&gt; 1500px)</span>
-      <h2 class="text-3xl sm:text-4xl font-bold text-neutral-300">ผีมุดกลับออกไปแล้ว</h2>
+  <!-- Bottom / Footer (Ghost Tucks Away) -->
+  <footer id="bottom-zone" class="min-h-[800px] flex flex-col justify-center items-center px-6 text-center bg-black border-t border-neutral-800">
+    <div class="max-w-2xl space-y-4">
+      <span class="text-xs font-bold uppercase tracking-widest text-neutral-500">Near Bottom Zone</span>
+      <h2 class="text-3xl sm:text-4xl font-bold text-neutral-200">เข้าใกล้ด้านล่างของเว็บ: ผีหุบกลับไปแล้ว</h2>
       <p class="text-neutral-400">
-        เมื่อเลื่อนเกิน 1500px หรือเลื่อนกลับขึ้นด้านบน ผีจะสไลด์หายไปด้วย <code class="bg-neutral-800 text-neutral-300 px-2 py-0.5 rounded font-mono text-sm">translate-x-full</code>
+        เมื่อระยะห่างจากก้นเว็บน้อยกว่า 650px ตัวผีจะสไลด์หดกลับเข้าไปนอกขอบจอทันที เพื่อไม่ให้เกะกะส่วนท้ายของหน้า
       </p>
-      <button onclick="window.scrollTo({ top: 1100, behavior: 'smooth' })" class="px-6 py-3 rounded-xl bg-red-700 hover:bg-red-600 active:scale-95 transition font-semibold text-white shadow-lg shadow-red-950 cursor-pointer">
-        เลื่อนกลับไปช่วงหลอน (1100px)
+      <button onclick="window.scrollTo({ top: 900, behavior: 'smooth' })" class="mt-4 px-6 py-3 rounded-xl bg-red-700 hover:bg-red-600 active:scale-95 transition font-semibold text-white shadow-lg shadow-red-950 cursor-pointer">
+        เลื่อนกลับไปดูผี (กลางหน้า)
       </button>
     </div>
-  </section>
+  </footer>
 
   <script>
     const ghost = document.getElementById('peekaboo-ghost');
     const glow = document.getElementById('ghost-glow');
     const hudY = document.getElementById('hud-scrollY');
+    const hudDist = document.getElementById('hud-distBottom');
     const hudStatus = document.getElementById('hud-status');
 
     function checkScroll() {
       const y = Math.round(window.scrollY || window.pageYOffset);
-      hudY.textContent = y + 'px';
+      const docHeight = document.documentElement.scrollHeight;
+      const winHeight = window.innerHeight;
+      const distFromBottom = Math.round(docHeight - (y + winHeight));
 
-      if (y >= 800 && y <= 1500) {
+      hudY.textContent = y + 'px';
+      hudDist.textContent = distFromBottom + 'px';
+
+      const isNearBottom = distFromBottom < 650;
+
+      if (y >= 500 && !isNearBottom) {
         ghost.classList.remove('translate-x-full');
         ghost.classList.add('translate-x-0');
         glow.classList.remove('opacity-0');
-        glow.classList.add('opacity-80');
+        glow.classList.add('opacity-70');
         hudStatus.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-950/80 text-red-300 border border-red-700 animate-pulse';
-        hudStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span> PEEKING (800px - 1500px)';
+        hudStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span> ผีโผล่ (กลางเว็บ)';
       } else {
         ghost.classList.add('translate-x-full');
         ghost.classList.remove('translate-x-0');
         glow.classList.add('opacity-0');
-        glow.classList.remove('opacity-80');
+        glow.classList.remove('opacity-70');
         hudStatus.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-900 text-neutral-400 border border-neutral-800';
-        hudStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-neutral-600"></span> HIDDEN (' + (y < 800 ? 'Scroll to 800px' : 'Past 1500px') + ')';
+        hudStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-neutral-600"></span> หุบไปแล้ว (' + (y < 500 ? 'อยู่บนสุด' : 'ใกล้ล่างสุดของเว็บ') + ')';
       }
     }
 
     window.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll, { passive: true });
     checkScroll();
   </script>
 </body>
