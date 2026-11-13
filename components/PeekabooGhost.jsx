@@ -88,12 +88,15 @@ export default function PeekabooGhostDemo() {
             }`}
           />
 
-          {/* Ghost Image from /public/ghost-transparent.png */}
+          {/* Ghost Image from /public/ghost-transparent.png with bottom smooth feathering */}
           <img
             src="/ghost-transparent.png"
             alt="Peekaboo Ghost"
-            className="relative w-56 sm:w-72 md:w-88 lg:w-96 max-h-[85vh] object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)]"
+            className="relative w-56 sm:w-72 md:w-88 lg:w-96 max-h-[85vh] object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.9)] [mask-image:linear-gradient(to_top,transparent_0%,rgba(0,0,0,0.4)_4%,black_16%,black_100%)] [-webkit-mask-image:linear-gradient(to_top,transparent_0%,rgba(0,0,0,0.4)_4%,black_16%,black_100%)]"
           />
+
+          {/* Bottom ambient shadow/mist to ground the ghost smoothly */}
+          <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent pointer-events-none" />
         </div>
       </div>
 
