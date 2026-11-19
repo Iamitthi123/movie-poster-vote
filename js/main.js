@@ -413,7 +413,7 @@ function initGhostScrollytelling() {
     const alpha = fadeIn * fadeOut;
     if (alpha <= 0.01) return;
 
-    const radius = Math.min(stageW * 0.22, 235) * lerp(0.82, 1.12, invLerp(p, 0.2, 0.58));
+    const radius = Math.min(stageW * 0.255, 285) * lerp(0.84, 1.12, invLerp(p, 0.2, 0.58));
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -614,16 +614,16 @@ function initGhostScrollytelling() {
     const reveal = easeOutCubic(invLerp(p, 0.79, 0.92));
     if (reveal <= 0.01) return;
 
-    const scaleR = Math.min(stageW * 0.21, 220);
+    const scaleR = Math.min(stageW * 0.255, 295);
     const configs =
       layer === 'back'
         ? [
-            { yOff: -0.26, rx: 1.08, ry: 0.26, tilt: -0.28, width: 15, phase: 0.4, color: '#5c090e' },
-            { yOff: 0.18, rx: 1.18, ry: 0.24, tilt: 0.22, width: 12, phase: 2.3, color: '#3b0508' }
+            { yOff: -0.28, rx: 1.08, ry: 0.26, tilt: -0.26, width: 17, phase: 0.4, color: '#5c090e' },
+            { yOff: 0.20, rx: 1.16, ry: 0.24, tilt: 0.22, width: 14, phase: 2.3, color: '#3b0508' }
           ]
         : [
-            { yOff: -0.04, rx: 1.04, ry: 0.28, tilt: -0.18, width: 16, phase: 1.2, color: '#8f1319' },
-            { yOff: 0.34, rx: 0.95, ry: 0.22, tilt: 0.16, width: 11, phase: 3.7, color: '#690b10' }
+            { yOff: -0.02, rx: 1.04, ry: 0.28, tilt: -0.18, width: 18, phase: 1.2, color: '#8f1319' },
+            { yOff: 0.36, rx: 0.96, ry: 0.22, tilt: 0.16, width: 13, phase: 3.7, color: '#690b10' }
           ];
 
     ctx.save();
@@ -757,13 +757,13 @@ function initGhostScrollytelling() {
     /* ------------------------------------------------------------------
        A. ANTIQUE THAI SILVER RITUAL BOWL CHOREOGRAPHY (Stages 1 -> 3)
        ------------------------------------------------------------------ */
-    const bowlExitT = easeInOutCubic(invLerp(p, 0.41, 0.59));
-    const bowlStage2T = easeInOutSine(invLerp(p, 0.16, 0.40));
+    const bowlExitT = easeInOutCubic(invLerp(p, 0.37, 0.53));
+    const bowlStage2T = easeInOutSine(invLerp(p, 0.16, 0.38));
     const bowlBaseY = isMobile ? 42 : 76;
-    const bowlY = lerp(bowlBaseY, bowlBaseY - 22, bowlStage2T) - bowlExitT * (stageH * 0.85);
+    const bowlY = lerp(bowlBaseY, bowlBaseY - 22, bowlStage2T) - bowlExitT * (stageH * 0.96);
     const bowlScale = lerp(1.06, 1.0, invLerp(p, 0, 0.2)) * lerp(1.0, 1.06, bowlStage2T) * lerp(1.0, 0.84, bowlExitT);
     const bowlRot = lerp(0, -2.5, bowlStage2T) - bowlExitT * 6 + mRot * 0.45;
-    const bowlOpacity = clamp(1 - easeInOutCubic(invLerp(p, 0.46, 0.59)), 0, 1);
+    const bowlOpacity = clamp(1 - easeInOutCubic(invLerp(p, 0.42, 0.53)), 0, 1);
 
     const bowlTransform = `translate3d(calc(-50% + ${(mxPx * 0.55).toFixed(1)}px), calc(-50% + ${(
       bowlY +
@@ -796,13 +796,13 @@ function initGhostScrollytelling() {
     // Stage 5 (0.80 -> 0.94): Rises heroically back up out of blood & levitates!
     const s5Rise = easeInOutCubic(invLerp(p, 0.80, 0.94));
 
-    // Piecewise continuous Y offset (px relative to stageCenterY)
-    const ghostYStart = isMobile ? 64 : 118;
-    const ghostYStage1 = isMobile ? 36 : 74;
-    const ghostYStage2 = isMobile ? 2 : 12;
-    const ghostYStage3 = isMobile ? 12 : 18;
-    const ghostYDip = isMobile ? 100 : 196;
-    const ghostYFinale = isMobile ? 10 : 8;
+    // Piecewise continuous Y offset (px relative to stageCenterY) tuned for monumental 86vh portrait Ghost
+    const ghostYStart = isMobile ? 76 : 132;
+    const ghostYStage1 = isMobile ? 48 : 88;
+    const ghostYStage2 = isMobile ? 16 : 26;
+    const ghostYStage3 = isMobile ? 8 : 6;
+    const ghostYDip = isMobile ? 132 : 258;
+    const ghostYFinale = isMobile ? 8 : 8;
 
     let ghostY = lerp(ghostYStart, ghostYStage1, s1);
     ghostY = lerp(ghostY, ghostYStage2, s2);
@@ -814,12 +814,12 @@ function initGhostScrollytelling() {
     const floatWeight = clamp(s3 * (1 - s4Dip * 0.85) + s5Rise, 0, 1);
     const levitateY = Math.sin(time * 1.9) * 8.5 * floatWeight;
 
-    // Piecewise continuous Scale
-    let ghostScale = lerp(0.54, 0.72, s1);
-    ghostScale = lerp(ghostScale, 1.06, s2);
-    ghostScale = lerp(ghostScale, isMobile ? 1.02 : 1.15, s3);
-    ghostScale = lerp(ghostScale, isMobile ? 1.08 : 1.24, s4Dip);
-    ghostScale = lerp(ghostScale, isMobile ? 1.02 : 1.16, s5Rise);
+    // Piecewise continuous Scale (grows from tucked inside silver bowl -> FULL-SCREEN 90vh monumental hero!)
+    let ghostScale = lerp(0.35, 0.46, s1);
+    ghostScale = lerp(ghostScale, 0.66, s2);
+    ghostScale = lerp(ghostScale, isMobile ? 0.94 : 1.0, s3);
+    ghostScale = lerp(ghostScale, isMobile ? 1.02 : 1.12, s4Dip);
+    ghostScale = lerp(ghostScale, isMobile ? 0.96 : 1.04, s5Rise);
 
     // Subtle dramatic tilt across chapters
     let ghostRot = lerp(-3.5, -1.5, s1);

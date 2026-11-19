@@ -682,7 +682,7 @@ html.cinema-mode .stage-radial-light {
   position: absolute;
   left: 63%;
   top: 56%;
-  width: clamp(320px, 42vw, 620px);
+  width: clamp(360px, 46vw, 680px);
   aspect-ratio: 1 / 1;
   transform-origin: center center;
   will-change: transform, opacity;
@@ -707,7 +707,7 @@ html.cinema-mode .stage-radial-light {
   filter: none;
 }
 
-/* Ghost Centerpiece Mask & Rig */
+/* Ghost Centerpiece Mask & Monumental Full-Screen Rig (500x1339 Portrait) */
 .prop-ghost-mask {
   position: absolute;
   inset: 0;
@@ -718,17 +718,18 @@ html.cinema-mode .stage-radial-light {
 
 .prop-ghost-rig {
   position: absolute;
-  left: 63%;
+  left: 64%;
   top: 52%;
-  width: clamp(320px, 38vw, 560px);
-  aspect-ratio: 1 / 1;
-  transform-origin: center 45%;
+  height: clamp(540px, 86vh, 880px);
+  width: auto;
+  aspect-ratio: 500 / 1339;
+  transform-origin: 45% 46%;
   will-change: transform, opacity, filter;
 }
 
 .prop-ghost-aura {
   position: absolute;
-  inset: 12% 20% 18% 20%;
+  inset: 6% -22% 8% -22%;
   border-radius: 50%;
   background: radial-gradient(
     ellipse at center,
@@ -736,7 +737,7 @@ html.cinema-mode .stage-radial-light {
     rgba(110, 12, 12, 0.12) 48%,
     transparent 74%
   );
-  filter: blur(36px);
+  filter: blur(42px);
   opacity: 0;
   will-change: opacity, transform;
 }
@@ -748,36 +749,34 @@ html.cinema-mode .stage-radial-light {
   height: 100%;
   object-fit: contain;
   filter: var(--ghost-shadow);
-  -webkit-mask-image: linear-gradient(to top, transparent 8%, rgba(0, 0, 0, 0.55) 14%, black 22%, black 100%);
-  mask-image: linear-gradient(to top, transparent 8%, rgba(0, 0, 0, 0.55) 14%, black 22%, black 100%);
 }
 
-/* Subtle pulsing red eye highlight precisely aligned over ghost eyes */
+/* Subtle pulsing red eye highlight precisely aligned over ghost eyes (44.5%, 20.3%) */
 .prop-ghost-eyes-glow {
   position: absolute;
   z-index: 3;
-  left: 50%;
-  top: 19.6%;
-  width: 10%;
-  height: 3.2%;
+  left: 44.5%;
+  top: 20.3%;
+  width: 24%;
+  height: 3.6%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle at 29% 50%, rgba(255, 42, 42, 0.85) 0%, transparent 45%),
-              radial-gradient(circle at 71% 50%, rgba(255, 42, 42, 0.85) 0%, transparent 45%);
-  filter: blur(4px);
+  background: radial-gradient(circle at 26% 50%, rgba(255, 42, 42, 0.88) 0%, transparent 46%),
+              radial-gradient(circle at 74% 50%, rgba(255, 42, 42, 0.88) 0%, transparent 46%);
+  filter: blur(5px);
   mix-blend-mode: screen;
   opacity: 0;
   will-change: opacity;
 }
 
-/* Curved Orbital Editorial Badge (Wide outer arcs framing crown & shoulders with zero overlap) */
+/* Curved Orbital Editorial Badge (Wide monumental arcs framing full-height ghost) */
 .prop-curved-badge {
   position: absolute;
-  left: 63%;
-  top: 47%;
+  left: 63.5%;
+  top: 48%;
   z-index: 4;
-  width: clamp(380px, 42vw, 560px);
-  height: clamp(380px, 42vw, 560px);
-  transform: translate(-50%, -50%) scale(0.86);
+  width: clamp(460px, 47vw, 680px);
+  height: clamp(460px, 47vw, 680px);
+  transform: translate(-50%, -50%) scale(0.88);
   opacity: 0;
   will-change: transform, opacity;
 }
@@ -1015,20 +1014,22 @@ html.cinema-mode .stage-radial-light {
   .prop-bowl {
     left: 50%;
     top: 34%;
-    width: min(74vw, 370px);
+    width: min(76vw, 390px);
   }
 
   .prop-ghost-rig {
     left: 50%;
-    top: 32%;
-    width: min(72vw, 360px);
+    top: 34%;
+    height: min(62vh, 520px);
+    width: auto;
+    aspect-ratio: 500 / 1339;
   }
 
   .prop-curved-badge {
     left: 50%;
-    top: 26%;
-    width: min(68vw, 310px);
-    height: min(68vw, 310px);
+    top: 29%;
+    width: min(82vw, 390px);
+    height: min(82vw, 390px);
   }
 
   .stage-crimson-halo {
