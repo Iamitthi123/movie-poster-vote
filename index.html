@@ -140,12 +140,14 @@
           <!-- Hero Mid Canvas (z=2): Pouring Crimson Blood Stream & Swirling Liquid Inside Bowl -->
           <canvas class="stage-canvas stage-canvas--mid" id="hero-canvas-mid" aria-hidden="true"></canvas>
 
-          <!-- Ghost Emerging Inside Silver Bowl (z=3) -->
-          <div class="prop-ghost-rig hero-ghost-rig" id="hero-ghost-rig">
-            <div class="prop-ghost-aura" id="hero-ghost-aura"></div>
-            <img src="assets/images/ghost-transparent.png" alt="ผีนางรำเปื้อนเลือดจากภาพยนตร์ ผีบอกว่าอย่าหาทำ"
-              width="500" height="1339" class="prop-ghost-img" decoding="async" fetchpriority="high" />
-            <div class="prop-ghost-eyes-glow" id="hero-ghost-eyes"></div>
+          <!-- Ghost Emerging Cleanly Inside Silver Bowl (z=3, clipped to bowl waterline so skirt never pokes out!) -->
+          <div class="hero-ghost-mask" id="hero-ghost-mask">
+            <div class="prop-ghost-rig hero-ghost-rig" id="hero-ghost-rig">
+              <div class="prop-ghost-aura" id="hero-ghost-aura"></div>
+              <img src="assets/images/ghost-transparent.png" alt="ผีนางรำเปื้อนเลือดจากภาพยนตร์ ผีบอกว่าอย่าหาทำ"
+                width="500" height="1339" class="prop-ghost-img" decoding="async" fetchpriority="high" />
+              <div class="prop-ghost-eyes-glow" id="hero-ghost-eyes"></div>
+            </div>
           </div>
 
           <!-- Antique Thai Silver Bowl Front Rim Mask (z=4) -->

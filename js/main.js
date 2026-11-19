@@ -364,7 +364,10 @@ const SmoothScroller = (() => {
 })();
 
 /* ==========================================================================
-   ACT 1: COMPACT HERO SUMMONING (Pouring Crimson Stream -> Ghost Emerging)
+   ACT 1: SMOOTH 3-PHASE HERO SUMMONING (ZERO OVERLAP CHOREOGRAPHY)
+   - Phase A (0.00–0.40): Crimson blood pours into antique silver bowl & finishes draining cleanly
+   - Phase B (0.34–0.72): Ghost rises out of rippling crimson pool, cleanly masked behind front silver rim
+   - Phase C (0.72–1.00): Silver bowl descends DOWNWARD & fades away while Ghost rises unobstructed!
    ========================================================================== */
 function initAct1HeroSummoning() {
   const section = document.getElementById('story');
@@ -373,6 +376,7 @@ function initAct1HeroSummoning() {
   const midCanvas = document.getElementById('hero-canvas-mid');
   const bowlBack = document.getElementById('hero-bowl-back');
   const bowlFront = document.getElementById('hero-bowl-front');
+  const ghostMask = document.getElementById('hero-ghost-mask');
   const ghostRig = document.getElementById('hero-ghost-rig');
   const ghostAura = document.getElementById('hero-ghost-aura');
   const ghostEyes = document.getElementById('hero-ghost-eyes');
@@ -386,7 +390,7 @@ function initAct1HeroSummoning() {
   if (!backCtx || !midCtx) return;
 
   let w = 1280, h = 720, dpr = 1;
-  let headerOffset = 68, sectionTop = 34, scrollDist = 800, bowlSizePx = 540;
+  let headerOffset = 68, sectionTop = 34, scrollDist = 1100, bowlSizePx = 540;
   let targetP = 0, smoothP = 0, activeBeat = 0;
   let isVisible = true, rafId = null, lastMs = 0;
 
@@ -421,14 +425,14 @@ function initAct1HeroSummoning() {
     targetP = clamp(scrolled / scrollDist, 0, 1);
   }
 
-  function drawHeroStream(ctx, cx, mouthY, p, time, isDark) {
-    const alpha = clamp(1 - easeInOutCubic(invLerp(p, 0.76, 0.98)), 0, 1);
-    if (alpha <= 0.01) return;
+  function drawHeroStream(ctx, cx, mouthY, bowlScale, bowlAlpha, p, time, isDark) {
+    if (bowlAlpha <= 0.01) return;
 
     ctx.save();
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha = bowlAlpha;
 
-    const poolRx = Math.min(w * 0.145, 195);
+    // 1. Swirling crimson liquid pool inside the silver bowl cavity
+    const poolRx = Math.min(w * 0.145, 195) * bowlScale;
     const poolRy = poolRx * 0.45;
     const poolGrad = ctx.createRadialGradient(cx, mouthY + 4, 8, cx, mouthY + 8, poolRx);
     poolGrad.addColorStop(0, '#a8141c');
@@ -440,9 +444,9 @@ function initAct1HeroSummoning() {
     ctx.fillStyle = poolGrad;
     ctx.fill();
 
-    // Concentric churning ripples inside the silver bowl
+    // Concentric churning liquid ripples inside the silver bowl
     for (let r = 0; r < 4; r++) {
-      const wp = (time * 0.72 + r * 0.25 + p * 2.2) % 1;
+      const wp = (time * 0.72 + r * 0.25 + p * 2.4) % 1;
       ctx.beginPath();
       ctx.ellipse(cx, mouthY + 5, poolRx * (0.14 + wp * 0.8), poolRy * (0.14 + wp * 0.8), 0, 0, Math.PI * 2);
       ctx.strokeStyle = `rgba(255, 175, 170, ${(1 - wp) * 0.46})`;
@@ -450,64 +454,71 @@ function initAct1HeroSummoning() {
       ctx.stroke();
     }
 
-    // Glossy pouring crimson stream (0ms blur cost!)
-    const streamTopY = -20;
-    const streamEndY = mouthY + 6;
-    const segments = 26;
-    const baseWidth = Math.min(w * 0.035, 38) * lerp(1.0, 0.62, p);
+    // 2. Falling crimson stream finishes draining cleanly into the bowl BEFORE the Ghost rises!
+    const pourDrainT = easeInOutCubic(invLerp(p, 0.20, 0.39));
+    const streamAlpha = clamp(1 - invLerp(p, 0.35, 0.41), 0, 1) * bowlAlpha;
+    if (streamAlpha > 0.01 && pourDrainT < 0.995) {
+      ctx.globalAlpha = streamAlpha;
+      const streamEndY = mouthY + 6;
+      // Top of stream glides smoothly down into the bowl like finishing a real pour!
+      const streamTopY = lerp(-20, streamEndY - 6, pourDrainT);
+      const segments = 24;
+      const baseWidth = Math.min(w * 0.035, 38) * lerp(1.0, 0.48, pourDrainT);
 
-    function drawRibbon(widthScale, offsetX, fill) {
-      ctx.beginPath();
-      const leftPts = [];
-      const rightPts = [];
-      for (let i = 0; i <= segments; i++) {
-        const t = i / segments;
-        const y = lerp(streamTopY, streamEndY, t);
-        const damp = 1 - Math.pow(t, 1.5);
-        const sway =
-          Math.sin(t * 4.2 - time * 2.8 - p * 12) * (15 * damp) +
-          Math.cos(t * 2.1 + time * 1.4) * (5 * damp);
-        const prof = (1.3 - t * 0.5 + Math.pow(t, 5) * 1.1) * baseWidth * widthScale;
-        const px = cx + sway + offsetX;
-        leftPts.push([px - prof * 0.5, y]);
-        rightPts.push([px + prof * 0.5, y]);
+      function drawRibbon(widthScale, offsetX, fill) {
+        ctx.beginPath();
+        const leftPts = [];
+        const rightPts = [];
+        for (let i = 0; i <= segments; i++) {
+          const t = i / segments;
+          const y = lerp(streamTopY, streamEndY, t);
+          const damp = 1 - Math.pow(t, 1.5);
+          const sway =
+            Math.sin(t * 4.2 - time * 2.8 - p * 12) * (14 * damp * (1 - pourDrainT * 0.6)) +
+            Math.cos(t * 2.1 + time * 1.4) * (4.5 * damp);
+          const taperTop = pourDrainT > 0.05 ? clamp(t * 3.5, 0.15, 1) : 1;
+          const prof = (1.28 - t * 0.48 + Math.pow(t, 5) * 1.05) * baseWidth * widthScale * taperTop;
+          const px = cx + sway + offsetX;
+          leftPts.push([px - prof * 0.5, y]);
+          rightPts.push([px + prof * 0.5, y]);
+        }
+        ctx.moveTo(leftPts[0][0], leftPts[0][1]);
+        for (let i = 1; i < leftPts.length; i++) ctx.lineTo(leftPts[i][0], leftPts[i][1]);
+        for (let i = rightPts.length - 1; i >= 0; i--) ctx.lineTo(rightPts[i][0], rightPts[i][1]);
+        ctx.closePath();
+        ctx.fillStyle = fill;
+        ctx.fill();
       }
-      ctx.moveTo(leftPts[0][0], leftPts[0][1]);
-      for (let i = 1; i < leftPts.length; i++) ctx.lineTo(leftPts[i][0], leftPts[i][1]);
-      for (let i = rightPts.length - 1; i >= 0; i--) ctx.lineTo(rightPts[i][0], rightPts[i][1]);
-      ctx.closePath();
-      ctx.fillStyle = fill;
+
+      const mistGrad = ctx.createLinearGradient(cx - baseWidth * 1.45, 0, cx + baseWidth * 1.45, 0);
+      mistGrad.addColorStop(0, 'rgba(140,18,22,0)');
+      mistGrad.addColorStop(0.5, 'rgba(155,22,26,0.24)');
+      mistGrad.addColorStop(1, 'rgba(140,18,22,0)');
+      drawRibbon(2.2, 0, mistGrad);
+
+      const coreGrad = ctx.createLinearGradient(cx - baseWidth, 0, cx + baseWidth, 0);
+      coreGrad.addColorStop(0, '#3a0508');
+      coreGrad.addColorStop(0.35, '#8c1118');
+      coreGrad.addColorStop(0.58, '#c21e26');
+      coreGrad.addColorStop(0.85, '#59080c');
+      coreGrad.addColorStop(1, '#260305');
+      drawRibbon(1.0, 0, coreGrad);
+
+      const specGrad = ctx.createLinearGradient(cx, streamTopY, cx, streamEndY);
+      specGrad.addColorStop(0, 'rgba(255,210,205,0.15)');
+      specGrad.addColorStop(0.5, isDark ? 'rgba(255,175,170,0.48)' : 'rgba(255,232,226,0.62)');
+      specGrad.addColorStop(1, 'rgba(255,195,190,0.35)');
+      drawRibbon(0.24, -baseWidth * 0.14, specGrad);
+
+      const splashGrad = ctx.createRadialGradient(cx, streamEndY, 2, cx, streamEndY, baseWidth * 1.15);
+      splashGrad.addColorStop(0, 'rgba(255,210,205,0.55)');
+      splashGrad.addColorStop(0.45, 'rgba(178,24,30,0.48)');
+      splashGrad.addColorStop(1, 'rgba(120,14,18,0)');
+      ctx.beginPath();
+      ctx.ellipse(cx, streamEndY, baseWidth * 1.15, baseWidth * 0.44, 0, 0, Math.PI * 2);
+      ctx.fillStyle = splashGrad;
       ctx.fill();
     }
-
-    const mistGrad = ctx.createLinearGradient(cx - baseWidth * 1.45, 0, cx + baseWidth * 1.45, 0);
-    mistGrad.addColorStop(0, 'rgba(140,18,22,0)');
-    mistGrad.addColorStop(0.5, 'rgba(155,22,26,0.24)');
-    mistGrad.addColorStop(1, 'rgba(140,18,22,0)');
-    drawRibbon(2.2, 0, mistGrad);
-
-    const coreGrad = ctx.createLinearGradient(cx - baseWidth, 0, cx + baseWidth, 0);
-    coreGrad.addColorStop(0, '#3a0508');
-    coreGrad.addColorStop(0.35, '#8c1118');
-    coreGrad.addColorStop(0.58, '#c21e26');
-    coreGrad.addColorStop(0.85, '#59080c');
-    coreGrad.addColorStop(1, '#260305');
-    drawRibbon(1.0, 0, coreGrad);
-
-    const specGrad = ctx.createLinearGradient(cx, streamTopY, cx, streamEndY);
-    specGrad.addColorStop(0, 'rgba(255,210,205,0.15)');
-    specGrad.addColorStop(0.5, isDark ? 'rgba(255,175,170,0.48)' : 'rgba(255,232,226,0.62)');
-    specGrad.addColorStop(1, 'rgba(255,195,190,0.35)');
-    drawRibbon(0.24, -baseWidth * 0.14, specGrad);
-
-    const splashGrad = ctx.createRadialGradient(cx, streamEndY, 2, cx, streamEndY, baseWidth * 1.15);
-    splashGrad.addColorStop(0, 'rgba(255,210,205,0.55)');
-    splashGrad.addColorStop(0.45, 'rgba(178,24,30,0.48)');
-    splashGrad.addColorStop(1, 'rgba(120,14,18,0)');
-    ctx.beginPath();
-    ctx.ellipse(cx, streamEndY, baseWidth * 1.15, baseWidth * 0.44, 0, 0, Math.PI * 2);
-    ctx.fillStyle = splashGrad;
-    ctx.fill();
 
     ctx.restore();
   }
@@ -522,19 +533,22 @@ function initAct1HeroSummoning() {
     const time = nowMs * 0.001;
 
     MouseState.update(dt);
-    smoothP += (targetP - smoothP) * (1 - Math.exp(-12 * dt));
+    // Extra-silky damped interpolation for buttery cinema scrubbing
+    smoothP += (targetP - smoothP) * (1 - Math.exp(-8.5 * dt));
+    if (Math.abs(targetP - smoothP) < 0.00004) smoothP = targetP;
     const p = smoothP;
+
     const isMobile = w <= 900;
     const isDark = document.documentElement.classList.contains('cinema-mode');
     const stageCX = w * (isMobile ? 0.5 : 0.63);
     const stageCY = h * (isMobile ? 0.34 : 0.52);
 
-    const mx = isMobile ? 0 : MouseState.sx * 13;
-    const my = isMobile ? 0 : MouseState.sy * 9;
-    const mRot = isMobile ? 0 : MouseState.sx * 2.1;
+    const mx = isMobile ? 0 : MouseState.sx * 12;
+    const my = isMobile ? 0 : MouseState.sy * 8;
+    const mRot = isMobile ? 0 : MouseState.sx * 1.8;
 
-    // 2 Hero beats switch at p = 0.46
-    const beatIdx = p < 0.46 ? 0 : 1;
+    // Smooth beat transition right as the Ghost starts rising cleanly from the bowl
+    const beatIdx = p < 0.38 ? 0 : 1;
     if (beatIdx !== activeBeat) {
       activeBeat = beatIdx;
       beats.forEach((b, i) => {
@@ -542,14 +556,21 @@ function initAct1HeroSummoning() {
         b.classList.toggle('is-passed', i < beatIdx);
       });
     }
-    if (scrollCue) scrollCue.classList.toggle('is-hidden', p > 0.08);
+    if (scrollCue) scrollCue.classList.toggle('is-hidden', p > 0.06);
 
-    // Silver bowl choreography: sits prominently -> leans slightly -> gently lifts at end of Hero
-    const bowlLift = easeInOutCubic(invLerp(p, 0.72, 1.0));
-    const bowlY = lerp(isMobile ? 40 : 72, isMobile ? 22 : 48, easeInOutSine(invLerp(p, 0.18, 0.72))) - bowlLift * (h * 0.42);
-    const bowlScale = lerp(1.06, 1.0, invLerp(p, 0, 0.35)) * lerp(1.0, 0.88, bowlLift);
-    const bowlRot = lerp(0, -2.5, p) + mRot * 0.4;
-    const bowlOp = clamp(1 - bowlLift * 0.85, 0.15, 1);
+    /* ------------------------------------------------------------------
+       PHASE A->B->C BOWL CHOREOGRAPHY (NEVER slides up across Ghost's face!)
+       - Phase A–B (0.00–0.72): Sits grounded, gently settles into frame
+       - Phase C (0.72–0.96): Smoothly SINKS DOWNWARD & fades away below Ghost!
+       ------------------------------------------------------------------ */
+    const bowlSettleT = easeInOutSine(invLerp(p, 0.0, 0.45));
+    const bowlSinkT = easeInOutCubic(invLerp(p, 0.72, 0.96));
+    const bowlStartY = isMobile ? 42 : 76;
+    const bowlMidY = isMobile ? 34 : 58;
+    const bowlY = lerp(bowlStartY, bowlMidY, bowlSettleT) + bowlSinkT * (h * 0.34);
+    const bowlScale = lerp(1.05, 1.0, bowlSettleT) * lerp(1.0, 0.86, bowlSinkT);
+    const bowlRot = lerp(0, -1.5, bowlSettleT) + mRot * 0.35;
+    const bowlOp = clamp(1 - easeInOutCubic(invLerp(p, 0.72, 0.93)), 0, 1);
 
     const bowlTf = `translate3d(calc(-50% + ${(mx * 0.55).toFixed(1)}px), calc(-50% + ${(bowlY + my * 0.4).toFixed(1)}px), 0) scale(${bowlScale.toFixed(4)}) rotate(${bowlRot.toFixed(2)}deg)`;
     if (bowlBack && bowlFront) {
@@ -562,23 +583,42 @@ function initAct1HeroSummoning() {
     const bowlAnchorY = h * (isMobile ? 0.34 : 0.56);
     const bowlMouthY = bowlAnchorY + bowlY + my * 0.4 - bowlSizePx * 0.045 * bowlScale;
 
-    // Ghost rises smoothly out of the swirling crimson inside the silver bowl!
-    const emerge = easeInOutCubic(invLerp(p, 0.10, 0.78));
-    const ascend = easeInOutCubic(invLerp(p, 0.78, 1.0));
-    let ghostY = lerp(isMobile ? 74 : 135, isMobile ? 16 : 30, emerge);
-    ghostY = lerp(ghostY, isMobile ? -12 : -18, ascend);
-    let ghostScale = lerp(0.35, 0.72, emerge);
-    ghostScale = lerp(ghostScale, 0.88, ascend);
-    const ghostOp = clamp(lerp(0.08, 1.0, invLerp(p, 0.08, 0.52)), 0, 1);
-    const ghostRot = lerp(-3, 1.2, emerge) + mRot;
+    /* ------------------------------------------------------------------
+       PHASE B->C GHOST CHOREOGRAPHY (Hidden during pour -> Emerges cleanly!)
+       ------------------------------------------------------------------ */
+    const emerge = easeOutCubic(invLerp(p, 0.32, 0.72));
+    const handoff = easeInOutCubic(invLerp(p, 0.72, 1.0));
 
-    ghostRig.style.transform = `translate3d(calc(-50% + ${mx.toFixed(1)}px), calc(-50% + ${(ghostY + my).toFixed(1)}px), 0) scale(${ghostScale.toFixed(4)}) rotate(${ghostRot.toFixed(2)}deg)`;
+    let ghostY = lerp(isMobile ? 145 : 225, isMobile ? 16 : 26, emerge);
+    ghostY = lerp(ghostY, isMobile ? -4 : -8, handoff);
+    const levitate = Math.sin(time * 1.9) * 6.5 * handoff;
+
+    let ghostScale = lerp(0.46, 0.74, emerge);
+    ghostScale = lerp(ghostScale, isMobile ? 0.86 : 0.95, handoff);
+
+    const ghostOp = clamp(invLerp(p, 0.32, 0.48), 0, 1);
+    const ghostRot = lerp(-2.2, 0.5, emerge) * (1 - handoff) + mRot;
+
+    ghostRig.style.transform = `translate3d(calc(-50% + ${mx.toFixed(1)}px), calc(-50% + ${(ghostY + levitate + my).toFixed(1)}px), 0) scale(${ghostScale.toFixed(4)}) rotate(${ghostRot.toFixed(2)}deg)`;
     ghostRig.style.opacity = ghostOp.toFixed(3);
+
+    // Surgical waterline clip: hides cut cleanly behind the curved front engraved silver rim
+    // (zero straight line inside the red liquid AND zero skirt poking below the bowl!)
+    if (ghostMask) {
+      if (bowlOp > 0.02) {
+        const bowlClipY = bowlMouthY + bowlSizePx * 0.145 * bowlScale;
+        const clipAtBowl = Math.max(0, h - bowlClipY);
+        const activeClip = lerp(clipAtBowl, 0, easeInOutCubic(invLerp(p, 0.76, 0.94)));
+        ghostMask.style.clipPath = activeClip > 1 ? `inset(0px 0px ${activeClip.toFixed(1)}px 0px)` : 'none';
+      } else {
+        ghostMask.style.clipPath = 'none';
+      }
+    }
 
     const eyePulse = 0.5 + 0.5 * Math.sin(time * 3.1);
     if (ghostEyes) ghostEyes.style.opacity = (emerge * (0.6 + eyePulse * 0.4)).toFixed(3);
-    if (ghostAura) ghostAura.style.opacity = (emerge * (isDark ? 0.75 : 0.48)).toFixed(3);
-    if (crimsonHalo) crimsonHalo.style.opacity = clamp(0.2 + emerge * 0.38, 0, isDark ? 0.85 : 0.45).toFixed(3);
+    if (ghostAura) ghostAura.style.opacity = (emerge * (isDark ? 0.78 : 0.48)).toFixed(3);
+    if (crimsonHalo) crimsonHalo.style.opacity = clamp(0.18 + emerge * 0.38, 0, isDark ? 0.85 : 0.45).toFixed(3);
 
     // Back Canvas: Ambient Embers + Sacred Occult Circle
     backCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -588,7 +628,7 @@ function initAct1HeroSummoning() {
       em.y -= em.vy * dt;
       em.x += (em.vx + Math.sin(time + em.phase) * 0.008) * dt;
       if (em.y < -0.05) { em.y = 1.05; em.x = 0.25 + Math.random() * 0.7; }
-      const alpha = (0.16 + 0.28 * (0.5 + 0.5 * Math.sin(time * 2.2 + em.phase)));
+      const alpha = 0.16 + 0.28 * (0.5 + 0.5 * Math.sin(time * 2.2 + em.phase));
       backCtx.beginPath();
       backCtx.arc(em.x * w, em.y * h, em.r, 0, Math.PI * 2);
       backCtx.fillStyle = em.bright
@@ -597,10 +637,10 @@ function initAct1HeroSummoning() {
       backCtx.fill();
     });
 
-    if (emerge > 0.05) {
-      const r = Math.min(w * 0.23, 255) * lerp(0.82, 1.06, emerge);
+    if (emerge > 0.04) {
+      const r = Math.min(w * 0.24, 265) * lerp(0.82, 1.06, emerge);
       backCtx.save();
-      backCtx.translate(stageCX + mx * 0.4, stageCY + ghostY * 0.35);
+      backCtx.translate(stageCX + mx * 0.4, stageCY + ghostY * 0.25);
       backCtx.rotate(time * 0.2 + p * 2.2);
       backCtx.globalAlpha = emerge * (isDark ? 0.45 : 0.3);
       backCtx.beginPath();
@@ -615,7 +655,7 @@ function initAct1HeroSummoning() {
     // Mid Canvas (inside bowl rim): Pouring Crimson Blood Stream + Ripples
     midCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     midCtx.clearRect(0, 0, w, h);
-    drawHeroStream(midCtx, stageCX + mx * 0.55, bowlMouthY, p, time, isDark);
+    drawHeroStream(midCtx, stageCX + mx * 0.55, bowlMouthY, bowlScale, bowlOp, p, time, isDark);
 
     rafId = window.requestAnimationFrame(render);
   }

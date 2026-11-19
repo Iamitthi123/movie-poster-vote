@@ -631,11 +631,13 @@ html.cinema-mode .theme-toggle-dot {
 }
 
 /* ==========================================================================
-   ACT 1: COMPACT HERO SUMMONING (185vh — Pouring Stream -> Ghost in Bowl)
+   ACT 1: SMOOTH 3-PHASE HERO SUMMONING (235vh — Zero Overlap Choreography)
+   Phase A: Pour finishes cleanly -> Phase B: Ghost emerges inside bowl ->
+   Phase C: Bowl descends cleanly away while Ghost rises unobstructed!
    ========================================================================== */
 .hero-scrolly {
   position: relative;
-  height: 185vh;
+  height: 235vh;
   background-color: var(--bg-primary);
 }
 
@@ -733,6 +735,14 @@ html.cinema-mode .stage-radial-light {
 
 .prop-bowl--front .prop-bowl-img {
   filter: none;
+}
+
+.hero-ghost-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  will-change: clip-path;
 }
 
 .prop-ghost-rig {
