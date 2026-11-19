@@ -5,15 +5,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description"
-    content="MOVIE PORTFOLIO — ประสบการณ์เว็บภาพยนตร์สยองขวัญแบบ Scroll-Driven Scrollytelling รวมผลงานโปสเตอร์และทีเซอร์ ผีบอกว่าอย่าหาทำ และ แผ่นดินเลือด" />
+    content="MOVIE PORTFOLIO — เว็บไซต์พอร์ตโฟลิโอภาพยนตร์สยองขวัญแบบ Full-Page Scrollytelling รวมผลงานโปสเตอร์และทีเซอร์ ผีบอกว่าอย่าหาทำ และ แผ่นดินเลือด" />
   <meta name="theme-color" content="#f3efe7" />
-  <title>MOVIE PORTFOLIO — ผีบอกว่าอย่าหาทำ | Cinematic Scroll Experience</title>
+  <title>MOVIE PORTFOLIO — ผีบอกว่าอย่าหาทำ | Full-Page Cinematic Experience</title>
 
   <!-- Inline SVG favicon -->
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23181513'/%3E%3Cpath d='M23 18 L47 32 L23 46 Z' fill='%239e1b1b'/%3E%3C/svg%3E" />
 
-  <!-- Google Fonts: Cormorant Garamond & Noto Serif Thai for CREMA-style luxury editorial serif + Plus Jakarta Sans & Noto Sans Thai -->
+  <!-- Luxury Editorial Serif + Clean Sans Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -27,11 +27,10 @@
 <body>
   <a class="skip-link" href="#main-content">ข้ามไปยังเนื้อหาหลัก</a>
 
-  <!-- Subtle Editorial Grain & Cursor Atmosphere -->
-  <div class="film-grain" aria-hidden="true"></div>
+  <!-- Subtle Cursor Atmosphere -->
   <div class="cursor-spotlight" id="cursor-spotlight" aria-hidden="true"></div>
 
-  <!-- Top Utility Micro-Strip (CREMA LAB editorial touch) -->
+  <!-- Top Utility Micro-Strip -->
   <div class="top-utility-bar" aria-label="ข้อมูลการฉายและติดต่อ">
     <div class="container utility-inner">
       <p class="utility-left">
@@ -87,232 +86,187 @@
     </div>
   </header>
 
+  <!-- Full-Page 6-Act Vertical Journey Rail (Desktop Right Edge) -->
+  <nav class="page-rail" id="page-rail" aria-label="นำทางทั้ง 6 องก์ของเว็บไซต์">
+    <a href="#story" class="rail-dot is-active" data-section="story" aria-label="องก์ที่ 1: ปลุกคำสาป">
+      <span class="rail-label">01 STORY</span>
+      <span class="rail-bar"></span>
+    </a>
+    <a href="#posters" class="rail-dot" data-section="posters" aria-label="องก์ที่ 2: โปสเตอร์และผีลอยคั่น">
+      <span class="rail-label">02 POSTERS</span>
+      <span class="rail-bar"></span>
+    </a>
+    <a href="#teasers" class="rail-dot" data-section="teasers" aria-label="องก์ที่ 3: บ่อโลหิตและทีเซอร์">
+      <span class="rail-label">03 TEASERS</span>
+      <span class="rail-bar"></span>
+    </a>
+    <a href="#featured" class="rail-dot" data-section="featured" aria-label="องก์ที่ 4: ไฮไลต์ริบบิ้น 3 มิติ">
+      <span class="rail-label">04 FEATURED</span>
+      <span class="rail-bar"></span>
+    </a>
+    <a href="#about" class="rail-dot" data-section="about" aria-label="องก์ที่ 5: ประวัติผู้สร้าง">
+      <span class="rail-label">05 CREATOR</span>
+      <span class="rail-bar"></span>
+    </a>
+    <a href="#contact" class="rail-dot" data-section="contact" aria-label="องก์ที่ 6: ส่งท้ายและติดต่อ">
+      <span class="rail-label">06 CONTACT</span>
+      <span class="rail-bar"></span>
+    </a>
+  </nav>
+
   <main id="main-content">
     <!-- =========================================================================
-         1. CREMA-STYLE 5-STAGE SCROLL-DRIVEN GHOST SHOWCASE
-         (Scroll-scrubbed choreography: Pouring Crimson Mist -> Ritual Vortex ->
-          Rising Apparition with Curved Text -> Crimson Blood Pool Dip ->
-          Levitating Finale with Floating Ribbons)
+         ACT 1: HERO SUMMONING (Compact ~185vh — Pouring Crimson Stream -> Ghost
+         Emerging From Antique Silver Bowl, then hands off seamlessly to Act 2!)
          ========================================================================= -->
-    <section class="scrolly-showcase" id="story" aria-label="ประสบการณ์แอนิเมชัน ผีบอกว่าอย่าหาทำ">
-      <div class="scrolly-sticky" id="scrolly-sticky">
-        <!-- Studio Radial Backdrop & Dynamic Mood Glow -->
-        <div class="stage-backdrop" id="stage-backdrop" aria-hidden="true">
+    <section class="hero-scrolly" id="story" aria-label="องก์ที่ 1: ปลุกคำสาปในขันอาคม">
+      <div class="hero-sticky" id="hero-sticky">
+        <div class="stage-backdrop" aria-hidden="true">
           <div class="stage-radial-light"></div>
-          <div class="stage-crimson-halo" id="stage-crimson-halo"></div>
+          <div class="stage-crimson-halo" id="hero-crimson-halo"></div>
         </div>
 
-        <!-- Back 60fps Canvas: Pouring Blood Stream, Swirl Vortex, Back Smoke & Back Ribbons -->
-        <canvas class="stage-canvas stage-canvas--back" id="scrolly-canvas-back" aria-hidden="true"></canvas>
+        <!-- Hero Back Canvas: Floating Embers & Sacred Rotating Rings -->
+        <canvas class="stage-canvas stage-canvas--back" id="hero-canvas-back" aria-hidden="true"></canvas>
 
-        <!-- Choreographed Visual Props Stage (Right / Center-Right Focus) -->
-        <div class="stage-visual-layer" id="stage-visual-layer" aria-hidden="true">
-          <!-- Antique Thai Silver Ritual Bowl (Back Layer, z=1) -->
-          <div class="prop-bowl prop-bowl--back" id="prop-bowl-back">
+        <!-- Hero Visual Props Stage -->
+        <div class="stage-visual-layer" aria-hidden="true">
+          <!-- Antique Thai Silver Bowl Back (z=1) -->
+          <div class="prop-bowl prop-bowl--back" id="hero-bowl-back">
             <img src="assets/images/ritual-bowl.png" alt="" width="1024" height="1024" class="prop-bowl-img"
               decoding="async" fetchpriority="high" />
           </div>
 
-          <!-- Mid 60fps Canvas (z=2): Pouring Crimson Stream & Swirling Pool INSIDE the Silver Bowl Cavity -->
-          <canvas class="stage-canvas stage-canvas--mid" id="scrolly-canvas-mid" aria-hidden="true"></canvas>
+          <!-- Hero Mid Canvas (z=2): Pouring Crimson Blood Stream & Swirling Liquid Inside Bowl -->
+          <canvas class="stage-canvas stage-canvas--mid" id="hero-canvas-mid" aria-hidden="true"></canvas>
 
-          <!-- Ghost Centerpiece Rig (z=3): High-Res Full-Screen Scale Ghost Dancer -->
-          <div class="prop-ghost-mask" id="prop-ghost-mask">
-            <div class="prop-ghost-rig" id="prop-ghost-rig">
-              <div class="prop-ghost-aura" id="prop-ghost-aura"></div>
-              <img src="assets/images/ghost-transparent.png" alt="ผีนางรำเปื้อนเลือดจากภาพยนตร์ ผีบอกว่าอย่าหาทำ"
-                width="500" height="1339" class="prop-ghost-img" decoding="async" fetchpriority="high" />
-              <!-- Subtle pulsing crimson eyes glow precisely aligned to eyes (44.5%, 20.3%) -->
-              <div class="prop-ghost-eyes-glow" id="prop-ghost-eyes-glow"></div>
-            </div>
+          <!-- Ghost Emerging Inside Silver Bowl (z=3) -->
+          <div class="prop-ghost-rig hero-ghost-rig" id="hero-ghost-rig">
+            <div class="prop-ghost-aura" id="hero-ghost-aura"></div>
+            <img src="assets/images/ghost-transparent.png" alt="ผีนางรำเปื้อนเลือดจากภาพยนตร์ ผีบอกว่าอย่าหาทำ"
+              width="500" height="1339" class="prop-ghost-img" decoding="async" fetchpriority="high" />
+            <div class="prop-ghost-eyes-glow" id="hero-ghost-eyes"></div>
           </div>
 
-          <!-- Antique Thai Silver Ritual Bowl (Front Engraved Rim Occlusion Layer, z=4) -->
-          <div class="prop-bowl prop-bowl--front" id="prop-bowl-front">
+          <!-- Antique Thai Silver Bowl Front Rim Mask (z=4) -->
+          <div class="prop-bowl prop-bowl--front" id="hero-bowl-front">
             <img src="assets/images/ritual-bowl-front.png" alt="" width="1024" height="1024" class="prop-bowl-img"
               decoding="async" fetchpriority="high" />
           </div>
-
-          <!-- Curved Orbital Editorial Text Accent (Sweeping cleanly OUTSIDE ghost crown & shoulders) -->
-          <div class="prop-curved-badge" id="prop-curved-badge">
-            <svg viewBox="0 0 420 420" class="curved-badge-svg" aria-hidden="true">
-              <defs>
-                <!-- Wide upper-right outer halo arc (never touches crown or torso) -->
-                <path id="ghost-arc-right" d="M 225,24 A 186,186 0 0,1 394,235" />
-                <!-- Wide upper-left outer halo arc (cleanly frames left silhouette) -->
-                <path id="ghost-arc-left" d="M 26,235 A 186,186 0 0,1 195,24" />
-              </defs>
-              <text class="curved-badge-text">
-                <textPath href="#ghost-arc-right" startOffset="50%" text-anchor="middle">
-                  DON'T LOOK BACK &bull; อย่าหันหลังกลับ
-                </textPath>
-              </text>
-              <text class="curved-badge-text curved-badge-text--sub">
-                <textPath href="#ghost-arc-left" startOffset="50%" text-anchor="middle">
-                  CURSED IN SILENCE &bull; ผีบอกว่าอย่าหาทำ
-                </textPath>
-              </text>
-            </svg>
-          </div>
         </div>
 
-        <!-- Front 60fps Canvas: Glossy Liquid Blood Pool Surface, Ripples, Splashes & Foreground Ribbons -->
-        <canvas class="stage-canvas stage-canvas--front" id="scrolly-canvas-front" aria-hidden="true"></canvas>
-
-        <!-- Editorial Left-Column Chapter Copy (5 Smooth Scroll-Synced Chapters) -->
-        <div class="container scrolly-content-wrap">
-          <div class="scrolly-chapters" id="scrolly-chapters">
-            <!-- Chapter 01 (0% - 20%): Equivalent to "MADE TO MELT SLOWLY" -->
-            <article class="story-chapter is-active" data-chapter="0">
-              <p class="chapter-eyebrow">THAI HORROR EXPERIENCE &bull; 01</p>
+        <!-- Compact 2-Beat Editorial Hero Copy -->
+        <div class="container hero-content-wrap">
+          <div class="hero-chapters">
+            <!-- Hero Beat 01 -->
+            <article class="story-chapter is-active" data-hero-beat="0">
+              <p class="chapter-eyebrow">ACT 01 &bull; BLACK MOON PICTURES</p>
               <h1 class="chapter-title">
                 <span class="title-line">BORN TO</span>
                 <span class="title-line">HAUNT</span>
                 <span class="title-line">SLOWLY</span>
               </h1>
               <p class="chapter-body">
-                <strong>ผีบอกว่าอย่าหาทำ</strong> — เริ่มต้นจากความคึกคะนองของกลุ่มเพื่อน 4 คน
-                ที่ก้าวเข้าสู่บ้านร้างกลางหมู่บ้าน โดยไม่รู้ว่าขันอาคมโบราณกำลังปลุกคำสาปให้ตื่นขึ้นอย่างช้าๆ
+                <strong>ผีบอกว่าอย่าหาทำ</strong> — รวมผลงานโปสเตอร์และทีเซอร์ภาพยนตร์ที่ร้อยเรียงแอนิเมชันความหลอนไว้ทุกองก์ตลอดทั้งหน้าเว็บ
               </p>
               <div class="chapter-actions">
-                <button type="button" class="pill-btn pill-btn--dark" data-scroll-chapter="1">
-                  <span>เข้าสู่พิธีกรรม</span>
+                <a href="#posters" class="pill-btn pill-btn--dark">
+                  <span>สำรวจคลังโปสเตอร์</span>
                   <span class="pill-btn-icon" aria-hidden="true">&darr;</span>
-                </button>
-                <a href="#posters" class="pill-btn pill-btn--outline">ชมคลังโปสเตอร์</a>
+                </a>
+                <a href="#teasers" class="pill-btn pill-btn--outline">รับชมทีเซอร์</a>
               </div>
             </article>
 
-            <!-- Chapter 02 (20% - 42%): Equivalent to "CHURNED COLD" -->
-            <article class="story-chapter" data-chapter="1">
-              <p class="chapter-eyebrow">THE SUMMONING &bull; 02</p>
+            <!-- Hero Beat 02 -->
+            <article class="story-chapter" data-hero-beat="1">
+              <p class="chapter-eyebrow">ACT 01 &bull; THE SUMMONING</p>
               <h2 class="chapter-title">
                 <span class="title-line">CHILLED</span>
                 <span class="title-line">TO THE</span>
                 <span class="title-line">BONE</span>
               </h2>
               <p class="chapter-body">
-                หมอกโลหิตหมุนวนในขันเงินโบราณ เสียงกระซิบปริศนาเริ่มเรียกชื่อทีละคนท่ามกลางความเงียบสงัด
-                ก่อนที่ดวงตาสีเลือดจะจ้องมองกลับมาอย่างเยือกเย็น
+                เสียงกระซิบปริศนาเริ่มเรียกชื่อทีละคนจากขันอาคมโบราณ — เลื่อนลงต่อไปเพื่อพบกับร่างเต็มของเธอและคลัง Key Visual ภาพยนตร์ทั้ง 2 เรื่อง
               </p>
               <div class="chapter-actions">
-                <button type="button" class="pill-btn pill-btn--dark" data-scroll-chapter="2">
-                  <span>อย่าหยุดเลื่อน</span>
+                <a href="#posters" class="pill-btn pill-btn--crimson">
+                  <span>เข้าสู่องก์ที่ 2: โปสเตอร์</span>
                   <span class="pill-btn-icon" aria-hidden="true">&darr;</span>
-                </button>
-              </div>
-            </article>
-
-            <!-- Chapter 03 (42% - 64%): Equivalent to "SWIRLED TO ORDER" -->
-            <article class="story-chapter" data-chapter="2">
-              <p class="chapter-eyebrow">THE APPARITION &bull; 03</p>
-              <h2 class="chapter-title">
-                <span class="title-line">RISING</span>
-                <span class="title-line">FROM THE</span>
-                <span class="title-line">SHADOW</span>
-              </h2>
-              <p class="chapter-body">
-                ผีนางรำในชุดไทยสีเลือดค่อยๆ ปรากฏร่างขึ้นจากเงามืด พร้อมรอยยิ้มเปื้อนเลือดที่ไม่มีวันลบเลือน
-                ทุกอย่างไม่ได้เป็นเพียงเรื่องล้อเล่นอีกต่อไป
-              </p>
-              <div class="chapter-actions">
-                <a href="#posters" class="pill-btn pill-btn--dark">
-                  <span>ดูโปสเตอร์ฉบับเต็ม</span>
-                  <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
                 </a>
-              </div>
-            </article>
-
-            <!-- Chapter 04 (64% - 84%): Equivalent to "DIPPED BY HAND" -->
-            <article class="story-chapter" data-chapter="3">
-              <p class="chapter-eyebrow">CRIMSON CURSE &bull; 04</p>
-              <h2 class="chapter-title">
-                <span class="title-line">DIPPED</span>
-                <span class="title-line">IN</span>
-                <span class="title-line">CRIMSON</span>
-              </h2>
-              <p class="chapter-body">
-                คำสาปอาบโลหิตที่ฝังรากลึกในผืนดินบ้านร้าง สิ่งที่พวกเขาปลุกขึ้นมาจะฉุดรั้งทุกชีวิตให้จมดิ่งลงสู่ห้วงมืด
-                และไม่ยอมให้ใครกลับออกไปอีกเลย
-              </p>
-              <div class="chapter-actions">
-                <a href="#teasers" class="pill-btn pill-btn--dark">
-                  <span>ชมทีเซอร์ 01:21</span>
-                  <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
-                </a>
-              </div>
-            </article>
-
-            <!-- Chapter 05 (84% - 100%): Equivalent to "FROM CREAM TO CRAVE" -->
-            <article class="story-chapter" data-chapter="4">
-              <p class="chapter-eyebrow">12 ธันวาคม 2569 ในโรงภาพยนตร์ &bull; 05</p>
-              <h2 class="chapter-title">
-                <span class="title-line">FROM DARE</span>
-                <span class="title-line">TO</span>
-                <span class="title-line">DESPAIR</span>
-              </h2>
-              <p class="chapter-body">
-                <strong>“ตอนแรกก็ไม่เชื่อ... ตอนนี้ไม่กล้ากลับบ้าน”</strong> — สำรวจคลังโปสเตอร์ Key Visual
-                และทีเซอร์ภาพยนตร์อย่างเป็นทางการทั้ง 2 เรื่องด้านล่าง
-              </p>
-              <div class="chapter-actions">
-                <a href="#teasers" class="pill-btn pill-btn--crimson">
-                  <span>รับชมทีเซอร์ตอนนี้</span>
-                  <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
-                </a>
-                <a href="#posters" class="pill-btn pill-btn--outline">ดูโปสเตอร์ทั้งหมด</a>
               </div>
             </article>
           </div>
         </div>
 
-        <!-- Minimal Right-Edge Chapter Navigation Rail -->
-        <nav class="scrolly-rail" id="scrolly-rail" aria-label="เลือกบทของแอนิเมชัน">
-          <button type="button" class="rail-dot is-active" data-scroll-chapter="0" aria-label="บทที่ 1: ปลุกคำสาป">
-            <span class="rail-num">01</span>
-            <span class="rail-bar"></span>
-          </button>
-          <button type="button" class="rail-dot" data-scroll-chapter="1" aria-label="บทที่ 2: เสียงกระซิบ">
-            <span class="rail-num">02</span>
-            <span class="rail-bar"></span>
-          </button>
-          <button type="button" class="rail-dot" data-scroll-chapter="2" aria-label="บทที่ 3: ร่างจากเงามืด">
-            <span class="rail-num">03</span>
-            <span class="rail-bar"></span>
-          </button>
-          <button type="button" class="rail-dot" data-scroll-chapter="3" aria-label="บทที่ 4: คำสาปสีเลือด">
-            <span class="rail-num">04</span>
-            <span class="rail-bar"></span>
-          </button>
-          <button type="button" class="rail-dot" data-scroll-chapter="4" aria-label="บทที่ 5: บทสรุปความหลอน">
-            <span class="rail-num">05</span>
-            <span class="rail-bar"></span>
-          </button>
-        </nav>
-
-        <!-- Scroll Prompt Cue (Fades out smoothly as user begins scrolling) -->
-        <div class="scrolly-cue" id="scrolly-cue" aria-hidden="true">
-          <span class="scrolly-cue-text">SCROLL TO SUMMON</span>
+        <div class="scrolly-cue" id="hero-scroll-cue" aria-hidden="true">
+          <span class="scrolly-cue-text">SCROLL TO EXPLORE ALL 6 ACTS</span>
           <span class="scrolly-cue-line"></span>
         </div>
       </div>
     </section>
 
     <!-- =========================================================================
-         2. POSTER GALLERY SECTION (Unified Luxury Editorial Styling)
+         ACT 2: POSTER GALLERY — THE APPARITION & OPPOSING PARALLAX GALLERY
+         (Monumental Ghost + Curved Orbital Text greets you beside the header,
+          then gracefully glides aside as opposing-parallax Posters shine!)
          ========================================================================= -->
     <section class="section posters" id="posters" aria-labelledby="posters-heading">
       <div class="container">
-        <div class="section-header reveal" data-reveal="fade-up">
-          <p class="section-eyebrow">01 / KEY ART ARCHIVE</p>
-          <h2 class="section-title" id="posters-heading">POSTER GALLERY</h2>
-          <span class="section-accent-line" aria-hidden="true"></span>
-        </div>
-        <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 120ms">
-          คลิกที่โปสเตอร์เพื่อเปิดดูภาพขนาดเต็มพร้อมระบบ Zoom รองรับคีย์บอร์ดและการปัดหน้าจอบนมือถือ
-        </p>
+        <!-- Editorial Split Banner: Section Title (Left) + Floating Ghost & Curved Text (Right) -->
+        <div class="posters-hero-band" id="posters-apparition-stage">
+          <div class="posters-header-col">
+            <div class="section-header reveal" data-reveal="fade-up">
+              <p class="section-eyebrow">ACT 02 &bull; KEY ART ARCHIVE</p>
+              <h2 class="section-title" id="posters-heading">
+                RISING FROM<br />THE SHADOW
+              </h2>
+              <span class="section-accent-line" data-scroll-line aria-hidden="true"></span>
+            </div>
+            <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 100ms">
+              <strong>คลังโปสเตอร์ภาพยนตร์</strong> — ผีนางรำลอยปรากฏร่างพร้อมคำเตือน <em>“อย่าหันหลังกลับ”</em> ก่อนส่งต่อเข้าสู่ Key Visual ฉบับเต็มทั้ง 2 เรื่อง คลิกที่โปสเตอร์เพื่อขยาย Zoom ได้ทันที
+            </p>
+            <div class="posters-badges reveal" data-reveal="fade-up" style="--reveal-delay: 180ms">
+              <span class="meta-chip">01 / ผีบอกว่าอย่าหาทำ (Horror)</span>
+              <span class="meta-chip">02 / แผ่นดินเลือด (Historical War)</span>
+            </div>
+          </div>
 
-        <!-- Populated dynamically from MOVIES array in js/main.js -->
+          <!-- Ghost Apparition + Curved Orbital SVG Text (Scroll-Scrubbed Parallax, zero poster overlap!) -->
+          <div class="posters-ghost-col" aria-hidden="true">
+            <div class="apparition-stage" id="apparition-stage">
+              <div class="apparition-ring apparition-ring--outer" id="apparition-ring-outer"></div>
+              <div class="apparition-ring apparition-ring--inner" id="apparition-ring-inner"></div>
+
+              <div class="apparition-curved-badge" id="apparition-curved-badge">
+                <svg viewBox="0 0 420 420" class="curved-badge-svg" aria-hidden="true">
+                  <defs>
+                    <path id="posters-arc-right" d="M 226,24 A 186,186 0 0,1 394,238" />
+                    <path id="posters-arc-left" d="M 26,238 A 186,186 0 0,1 194,24" />
+                  </defs>
+                  <text class="curved-badge-text">
+                    <textPath href="#posters-arc-right" startOffset="50%" text-anchor="middle">
+                      DON'T LOOK BACK &bull; อย่าหันหลังกลับ
+                    </textPath>
+                  </text>
+                  <text class="curved-badge-text curved-badge-text--sub">
+                    <textPath href="#posters-arc-left" startOffset="50%" text-anchor="middle">
+                      CURSED IN SILENCE &bull; ผีบอกว่าอย่าหาทำ
+                    </textPath>
+                  </text>
+                </svg>
+              </div>
+
+              <div class="apparition-ghost-wrap" id="apparition-ghost-wrap">
+                <img src="assets/images/ghost-transparent.png" alt="" width="500" height="1339"
+                  loading="lazy" decoding="async" class="apparition-ghost-img" />
+                <div class="prop-ghost-eyes-glow apparition-eyes-glow" id="apparition-eyes-glow"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Opposing Scroll-Parallax 2:3 Poster Gallery (Populated by js/main.js) -->
         <div class="poster-grid" id="poster-grid" aria-live="polite">
           <noscript>
             <p class="noscript-notice">
@@ -324,89 +278,133 @@
     </section>
 
     <!-- =========================================================================
-         3. OFFICIAL TEASERS SECTION
+         ACT 3: OFFICIAL TEASERS — DIPPED IN CRIMSON BLOOD POOL
+         (Full-width glossy liquid crimson wave + Ghost plunging/emerging right
+          above the screening deck, followed by scale-scrubbed 16:9 Teaser Cards!)
          ========================================================================= -->
-    <section class="section teasers" id="teasers" aria-labelledby="teasers-heading">
-      <div class="container">
-        <div class="section-header reveal" data-reveal="fade-up">
-          <p class="section-eyebrow">02 / MOTION &amp; SOUND</p>
-          <h2 class="section-title" id="teasers-heading">OFFICIAL TEASERS</h2>
-          <span class="section-accent-line" aria-hidden="true"></span>
-        </div>
-        <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 120ms">
-          ตัวอย่างภาพยนตร์สัดส่วน 16:9 โหลดไฟล์วิดีโอเฉพาะเมื่อกดเล่นเพื่อความเร็วสูงสุดในการเปิดหน้าเว็บ
-        </p>
+    <section class="section teasers teasers--crimson-stage" id="teasers" aria-labelledby="teasers-heading">
+      <!-- Dedicated Crimson Blood-Pool Theatrical Stage -->
+      <div class="blood-stage-banner" id="teaser-blood-stage">
+        <canvas class="blood-stage-canvas blood-stage-canvas--back" id="teaser-blood-back" aria-hidden="true"></canvas>
 
-        <!-- Populated dynamically from MOVIES array in js/main.js -->
-        <div class="teaser-list" id="teaser-list"></div>
+        <div class="container blood-stage-inner">
+          <div class="blood-stage-copy">
+            <div class="section-header reveal" data-reveal="fade-up">
+              <p class="section-eyebrow">ACT 03 &bull; MOTION &amp; SOUND</p>
+              <h2 class="section-title" id="teasers-heading">
+                DIPPED IN<br />CRIMSON
+              </h2>
+              <span class="section-accent-line" data-scroll-line aria-hidden="true"></span>
+            </div>
+            <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 100ms">
+              <strong>ตัวอย่างภาพยนตร์อย่างเป็นทางการ (Official Teasers)</strong> — จมดิ่งสู่บรรยากาศเสียงและภาพสัดส่วน 16:9 กดปุ่มเล่นเพื่อรับชมทีเซอร์คมชัดระดับโรงภาพยนตร์
+            </p>
+          </div>
+
+          <!-- Ghost Dynamically Submerging & Rising Inside the Liquid Crimson Blood Pool -->
+          <div class="blood-ghost-slot" aria-hidden="true">
+            <div class="blood-ghost-mask" id="teaser-ghost-mask">
+              <div class="blood-ghost-rig" id="teaser-ghost-rig">
+                <img src="assets/images/ghost-transparent.png" alt="" width="500" height="1339"
+                  loading="lazy" decoding="async" class="blood-ghost-img" />
+                <div class="prop-ghost-eyes-glow blood-eyes-glow" id="teaser-eyes-glow"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <canvas class="blood-stage-canvas blood-stage-canvas--front" id="teaser-blood-front" aria-hidden="true"></canvas>
+      </div>
+
+      <!-- Teaser Screening Deck (Rises smoothly out of the dark crimson liquid horizon) -->
+      <div class="teasers-deck">
+        <div class="container">
+          <!-- Populated dynamically from MOVIES array in js/main.js -->
+          <div class="teaser-list" id="teaser-list"></div>
+        </div>
       </div>
     </section>
 
     <!-- =========================================================================
-         4. FEATURED PROJECT SPOTLIGHT SECTION
+         ACT 4: FEATURED PROJECT — DUAL-THEME 3D RIBBONS & SPARKS SPOTLIGHT
+         (Switches live 3D Canvas ribbons & embers dynamically per movie tab:
+          ผีบอกว่าอย่าหาทำ = Crimson Blood Ribbons | แผ่นดินเลือด = Molten Gold War Sparks!)
          ========================================================================= -->
-    <section class="section featured" id="featured" aria-labelledby="featured-heading">
-      <div class="container">
-        <div class="section-header reveal" data-reveal="fade-up">
-          <p class="section-eyebrow">03 / SPOTLIGHT RELEASE</p>
-          <h2 class="section-title" id="featured-heading">FEATURED PROJECT</h2>
-          <span class="section-accent-line" aria-hidden="true"></span>
+    <section class="section featured" id="featured" data-movie-theme="horror" aria-labelledby="featured-heading">
+      <!-- Live 60fps Dual-Theme 3D Canvas Backdrop -->
+      <canvas class="featured-canvas featured-canvas--back" id="featured-canvas-back" aria-hidden="true"></canvas>
+
+      <div class="container featured-container">
+        <div class="featured-top-bar">
+          <div class="section-header reveal" data-reveal="fade-up">
+            <p class="section-eyebrow">ACT 04 &bull; SPOTLIGHT RELEASE</p>
+            <h2 class="section-title" id="featured-heading">FEATURED PROJECT</h2>
+            <span class="section-accent-line" data-scroll-line aria-hidden="true"></span>
+          </div>
+
+          <!-- Interactive Movie Theme Switcher -->
+          <div class="featured-switcher-wrap reveal" data-reveal="fade-up" style="--reveal-delay: 100ms">
+            <span class="featured-theme-pill" id="featured-theme-badge">CRIMSON HORROR THEME</span>
+            <div class="featured-switcher" id="featured-switcher" role="tablist"
+              aria-label="เลือกดูรายละเอียดและธีมแอนิเมชันของภาพยนตร์เด่น"></div>
+          </div>
         </div>
 
-        <!-- Switcher & Spotlight details populated from MOVIES array in js/main.js -->
-        <div class="featured-switcher reveal" id="featured-switcher" data-reveal="fade-up" role="tablist"
-          aria-label="เลือกดูรายละเอียดภาพยนตร์เด่น"></div>
-        <div class="featured-layout" id="featured-project"></div>
+        <div class="featured-stage-shell">
+          <div class="featured-layout" id="featured-project"></div>
+          <!-- Foreground 3D Ribbons sweeping delicately across the spotlight -->
+          <canvas class="featured-canvas featured-canvas--front" id="featured-canvas-front" aria-hidden="true"></canvas>
+        </div>
       </div>
     </section>
 
     <!-- =========================================================================
-         5. ABOUT THE DIRECTOR SECTION
+         ACT 5: ABOUT THE DIRECTOR — EDITORIAL SCROLL-SCRUBBED ZOOM & COUNT-UP
          ========================================================================= -->
     <section class="section about" id="about" aria-labelledby="about-heading">
       <div class="container">
         <div class="section-header reveal" data-reveal="fade-up">
-          <p class="section-eyebrow">04 / CREATOR</p>
+          <p class="section-eyebrow">ACT 05 &bull; CREATOR</p>
           <h2 class="section-title" id="about-heading">ABOUT THE DIRECTOR</h2>
-          <span class="section-accent-line" aria-hidden="true"></span>
+          <span class="section-accent-line" data-scroll-line aria-hidden="true"></span>
         </div>
 
         <div class="about-grid">
           <div class="about-portrait-wrap">
-            <div class="about-portrait-frame reveal" data-reveal="zoom-in">
+            <div class="about-portrait-frame" id="about-portrait-frame">
               <img src="assets/images/creator-portrait.jpg"
                 alt="ภาพพอร์ตเทรตผู้กำกับและนักออกแบบโปสเตอร์ภาพยนตร์ในสตูดิโอแสงโทนมืด" width="800" height="800"
-                loading="lazy" decoding="async" class="about-portrait-img" />
+                loading="lazy" decoding="async" class="about-portrait-img" id="about-portrait-img" />
             </div>
-            <p class="about-badge reveal" data-reveal="fade-up" style="--reveal-delay: 160ms">
+            <p class="about-badge reveal" data-reveal="fade-up" style="--reveal-delay: 140ms">
               DARK NIGHT VISUALS &bull; BANGKOK
             </p>
           </div>
 
           <div class="about-copy">
-            <h3 class="about-lead reveal" data-reveal="fade-up" style="--reveal-delay: 100ms">
+            <h3 class="about-lead reveal" data-reveal="fade-up" style="--reveal-delay: 80ms">
               ถ่ายทอดอารมณ์ภาพยนตร์ผ่านภาพนิ่งและจังหวะการเล่าเรื่อง
             </h3>
-            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 220ms">
+            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 180ms">
               พอร์ตโฟลิโอนี้รวบรวมผลงานการออกแบบ Key Visual โปสเตอร์ภาพยนตร์ และการตัดต่อทีเซอร์
               ครอบคลุมทั้งแนวสยองขวัญเชิงบรรยากาศ (Horror) อย่าง “ผีบอกว่าอย่าหาทำ”
               ไปจนถึงมหากาพย์อิงประวัติศาสตร์–สงคราม–ดราม่าอย่าง “แผ่นดินเลือด”
             </p>
-            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 320ms">
+            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 260ms">
               ทุกโปรเจกต์เริ่มต้นจากการวางองค์ประกอบภาพหลัก (Key Art Concept)
               การออกแบบโทนสีและแสงเงาเฉพาะตัวของแต่ละเรื่อง
               ไปจนถึงจังหวะการตัดต่อภาพและเสียงเพื่อสร้างแรงดึงดูดก่อนก้าวเข้าสู่โรงภาพยนตร์
             </p>
             <dl class="about-stats">
-              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 380ms">
+              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 320ms">
                 <dt>POSTER WORKS</dt>
-                <dd>02</dd>
+                <dd data-count-to="2" data-pad="2">02</dd>
+              </div>
+              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 400ms">
+                <dt>TEASER REELS</dt>
+                <dd data-count-to="2" data-pad="2">02</dd>
               </div>
               <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 480ms">
-                <dt>TEASER REELS</dt>
-                <dd>02</dd>
-              </div>
-              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 580ms">
                 <dt>FOCUS GENRE</dt>
                 <dd>HORROR / WAR</dd>
               </div>
@@ -417,29 +415,25 @@
     </section>
 
     <!-- =========================================================================
-         6. CONTACT SECTION
+         ACT 6: CONTACT & FINALE — FROM DARE TO DESPAIR (LEVITATING GHOST FINALE)
+         (Contact Card cleanly on Left, Monumental Ghost + 3D Crimson Ribbons
+          floating majestically on Right, gently dissolving near Footer!)
          ========================================================================= -->
-    <section class="section contact" id="contact" aria-labelledby="contact-heading">
-      <div class="container">
-        <div class="section-header reveal" data-reveal="fade-up">
-          <p class="section-eyebrow">05 / COLLABORATE</p>
-          <h2 class="section-title" id="contact-heading">CONTACT</h2>
-          <span class="section-accent-line" aria-hidden="true"></span>
-        </div>
+    <section class="section contact contact--finale" id="contact" aria-labelledby="contact-heading">
+      <canvas class="finale-canvas finale-canvas--back" id="finale-canvas-back" aria-hidden="true"></canvas>
 
-        <div class="contact-card reveal" data-reveal="zoom-in">
-          <p class="contact-cta-label reveal" data-reveal="fade-up" style="--reveal-delay: 120ms">
-            LET'S WORK TOGETHER
-          </p>
-          <h3 class="contact-headline reveal" data-reveal="fade-up" style="--reveal-delay: 220ms">
-            พร้อมร่วมสร้างงานโปสเตอร์และทีเซอร์ภาพยนตร์เรื่องต่อไปของคุณ
-          </h3>
-          <p class="contact-desc reveal" data-reveal="fade-up" style="--reveal-delay: 320ms">
+      <div class="container finale-grid">
+        <div class="contact-card contact-card--split reveal" data-reveal="fade-up">
+          <p class="contact-cta-label">ACT 06 &bull; FROM DARE TO DESPAIR</p>
+          <h2 class="contact-headline" id="contact-heading">
+            พร้อมร่วมสร้างงานโปสเตอร์และทีเซอร์เรื่องต่อไปของคุณ
+          </h2>
+          <p class="contact-desc">
             ติดต่อสอบถามงานออกแบบ Key Visual โปสเตอร์ภาพยนตร์ ทีเซอร์ประชาสัมพันธ์ หรือร่วมงานด้านภาพยนตร์อิสระ
             ที่คุณกัณฑ์ณภัทร
           </p>
 
-          <div class="contact-links reveal" data-reveal="fade-up" style="--reveal-delay: 420ms">
+          <div class="contact-links">
             <a href="mailto:studio@group6.com" class="pill-btn pill-btn--crimson">
               <span>studio@group6.com</span>
               <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
@@ -449,20 +443,34 @@
             </button>
           </div>
 
-          <ul class="social-links reveal" data-reveal="fade-up" style="--reveal-delay: 520ms"
-            aria-label="ช่องทางโซเชียลมีเดีย">
+          <ul class="social-links" aria-label="ช่องทางโซเชียลมีเดีย">
             <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-link">Instagram</a></li>
             <li><a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="social-link">YouTube</a></li>
             <li><a href="https://vimeo.com" target="_blank" rel="noopener noreferrer" class="social-link">Vimeo</a></li>
             <li><a href="https://behance.net" target="_blank" rel="noopener noreferrer" class="social-link">Behance</a></li>
           </ul>
         </div>
+
+        <!-- Monumental Levitating Ghost Finale + 3D Wrapping Crimson Ribbons -->
+        <div class="finale-ghost-col" aria-hidden="true">
+          <div class="finale-ghost-stage" id="finale-ghost-stage">
+            <div class="finale-ghost-rig" id="finale-ghost-rig">
+              <div class="prop-ghost-aura finale-ghost-aura"></div>
+              <img src="assets/images/ghost-transparent.png" alt="" width="500" height="1339"
+                loading="lazy" decoding="async" class="finale-ghost-img" />
+              <div class="prop-ghost-eyes-glow finale-eyes-glow" id="finale-eyes-glow"></div>
+            </div>
+            <p class="finale-tagline">“ตอนแรกก็ไม่เชื่อ... ตอนนี้ไม่กล้ากลับบ้าน”</p>
+          </div>
+        </div>
       </div>
+
+      <canvas class="finale-canvas finale-canvas--front" id="finale-canvas-front" aria-hidden="true"></canvas>
     </section>
   </main>
 
   <!-- 7. Footer -->
-  <footer class="site-footer">
+  <footer class="site-footer" id="footer">
     <div class="container footer-inner">
       <p class="footer-copy">
         &copy; 2026 MOVIE PORTFOLIO &bull; BLACK MOON PICTURES &times; HERITAGE FLAME STUDIO

@@ -1,28 +1,28 @@
 /**
- * MOVIE PORTFOLIO — CREMA-Inspired Horror Scrollytelling & Portfolio Engine
+ * MOVIE PORTFOLIO — Full-Page 6-Act Distributed Scrollytelling Engine
  * ---------------------------------------------------------------------------
- * 1. 5-Stage Smooth Scroll-Scrubbed Ghost Choreography (`initGhostScrollytelling`):
- *    - Stage 1 (0.00–0.22): Crimson blood stream pours into antique Thai silver bowl
- *    - Stage 2 (0.22–0.44): Swirl vortex summoning; Ghost emerges from inside bowl rim
- *    - Stage 3 (0.44–0.64): Opposing parallax — bowl lifts out, full Ghost rises with curved orbital text
- *    - Stage 4 (0.64–0.84): Ghost plunges into glossy liquid crimson blood pool with ripples & splash
- *    - Stage 5 (0.84–1.00): Ghost rises out & levitates framed by 3D wrap-around crimson silk ribbons
- * 2. Complete Movie Portfolio Modules:
- *    - Poster Gallery + 3D Magnetic Tilt + Fullscreen Zoom Lightbox
- *    - Lazy-loaded 16:9 Official Teasers (MP4 / YouTube)
- *    - Featured Project Switcher + About + Copy Email Toast
- *    - LIGHTS OFF / GALLERY LIGHT Theme Toggle
+ * Distributes CREMA-style scroll-driven animations seamlessly from 0% -> 100%:
+ * - Act 1 (#story):   Pouring Crimson Blood into Antique Thai Silver Bowl -> Ghost Emerging
+ * - Act 2 (#posters): Floating Ghost + Curved Orbital Text + Opposing-Parallax Poster Gallery
+ * - Act 3 (#teasers): Full-Width Glossy Liquid Crimson Blood Pool + Submerged Ghost + Teasers
+ * - Act 4 (#featured): Dual-Theme 3D Wrapping Ribbons & Sparks (Horror Crimson <-> War Gold!)
+ * - Act 5 (#about):   Editorial Portrait Ken Burns Scroll Zoom + Count-Up Stats + Accent Lines
+ * - Act 6 (#contact): Monumental Levitating Ghost Finale + 3D Ribbons beside Contact Card
+ *
+ * Performance Architecture:
+ * - Lenis-style frame-rate-independent smooth wheel momentum scrolling
+ * - IntersectionObserver auto-pauses offscreen canvases (only 1 canvas active at a time!)
+ * - Zero ctx.filter blur, zero CSS animated blur, zero layout thrash inside RAF
  * ---------------------------------------------------------------------------
  */
 
 'use strict';
 
-/**
- * Single source of truth for all movies, posters, and teasers.
- */
 const MOVIES = [
   {
     id: 'dont-dare-the-dark',
+    theme: 'horror',
+    themeLabel: 'CRIMSON HORROR THEME',
     title: 'ผีบอกว่าอย่าหาทำ',
     englishTitle: "DON'T DARE THE DARK",
     genre: 'สยองขวัญ | HORROR',
@@ -48,6 +48,8 @@ const MOVIES = [
   },
   {
     id: 'bloodland',
+    theme: 'war',
+    themeLabel: 'GOLDEN WAR FLAME THEME',
     title: 'แผ่นดินเลือด',
     englishTitle: 'BLOODLAND : มหาศึกแห่งแผ่นดิน',
     genre: 'ประวัติศาสตร์ • สงคราม • ดราม่า | HISTORICAL • WAR • DRAMA',
@@ -73,12 +75,40 @@ const MOVIES = [
 ];
 
 const REDUCED_MOTION_QUERY = window.matchMedia('(prefers-reduced-motion: reduce)');
+const FINE_POINTER_QUERY = window.matchMedia('(hover: hover) and (pointer: fine)');
 let revealObserver = null;
 let toastTimer = null;
+let setFeaturedCanvasTheme = () => {};
+
 const lightboxState = {
   isOpen: false,
   currentIndex: 0,
   lastTrigger: null
+};
+
+// Shared smoothed pointer state (single global listener for desktop 3D subtle parallax)
+const MouseState = {
+  x: 0,
+  y: 0,
+  sx: 0,
+  sy: 0,
+  init() {
+    if (!FINE_POINTER_QUERY.matches) return;
+    window.addEventListener(
+      'pointermove',
+      (e) => {
+        if (e.pointerType !== 'mouse') return;
+        this.x = (e.clientX / (window.innerWidth || 1) - 0.5) * 2;
+        this.y = (e.clientY / (window.innerHeight || 1) - 0.5) * 2;
+      },
+      { passive: true }
+    );
+  },
+  update(dt) {
+    const a = 1 - Math.exp(-7.5 * dt);
+    this.sx += (this.x - this.sx) * a;
+    this.sy += (this.y - this.sy) * a;
+  }
 };
 
 /* ==========================================================================
@@ -111,6 +141,13 @@ function easeInOutSine(t) {
   return -(Math.cos(Math.PI * clamp(t, 0, 1)) - 1) / 2;
 }
 
+function lerpRGB(c1, c2, t, alpha) {
+  const r = Math.round(lerp(c1[0], c2[0], t));
+  const g = Math.round(lerp(c1[1], c2[1], t));
+  const b = Math.round(lerp(c1[2], c2[2], t));
+  return alpha === undefined ? `rgb(${r},${g},${b})` : `rgba(${r},${g},${b},${alpha})`;
+}
+
 function safeAssetUrl(pathStr) {
   return encodeURI(String(pathStr ?? ''));
 }
@@ -140,10 +177,83 @@ function parseYouTubeId(input) {
   return raw;
 }
 
+/**
+ * Shared 3D calligraphic ribbon drawer (used cleanly by both Act 4 Dual-Theme & Act 6 Finale!)
+ */
+function draw3DOrbitRibbons(ctx, cx, cy, scaleR, reveal, time, layer, palette, isDark) {
+  if (reveal <= 0.01) return;
+
+  const configs =
+    layer === 'back'
+      ? [
+          { yOff: -0.34, rx: 1.12, ry: 0.25, tilt: -0.26, width: 15, phase: 0.4, c: palette.dark },
+          { yOff: 0.22, rx: 1.2, ry: 0.23, tilt: 0.22, width: 12, phase: 2.3, c: palette.deep }
+        ]
+      : [
+          { yOff: -0.04, rx: 1.05, ry: 0.27, tilt: -0.17, width: 16, phase: 1.2, c: palette.mid },
+          { yOff: 0.36, rx: 0.96, ry: 0.22, tilt: 0.16, width: 11, phase: 3.7, c: palette.dark }
+        ];
+
+  ctx.save();
+  ctx.globalAlpha = reveal * (isDark ? 0.92 : 0.86);
+
+  configs.forEach((cfg) => {
+    const centerY = cy + cfg.yOff * scaleR;
+    const startAngle = layer === 'back' ? Math.PI * 1.06 : Math.PI * 0.06;
+    const endAngle = layer === 'back' ? Math.PI * 1.94 : Math.PI * 0.94;
+    const steps = 32;
+    const topEdge = [];
+    const botEdge = [];
+    const cosT = Math.cos(cfg.tilt);
+    const sinT = Math.sin(cfg.tilt);
+
+    for (let i = 0; i <= steps; i++) {
+      const u = i / steps;
+      const theta = lerp(startAngle, endAngle, u) + Math.sin(time * 0.9 + cfg.phase) * 0.08;
+      const wobble = Math.sin(u * Math.PI * 2.4 - time * 1.7 + cfg.phase) * 7.5;
+      const lx = Math.cos(theta) * scaleR * cfg.rx;
+      const ly = Math.sin(theta) * scaleR * cfg.ry + wobble;
+
+      const rx = cx + lx * cosT - ly * sinT;
+      const ry = centerY + lx * sinT + ly * cosT;
+      const thick = Math.sin(u * Math.PI) * cfg.width * reveal;
+
+      topEdge.push([rx, ry - thick * 0.5]);
+      botEdge.push([rx, ry + thick * 0.5]);
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(topEdge[0][0], topEdge[0][1]);
+    for (let i = 1; i < topEdge.length; i++) ctx.lineTo(topEdge[i][0], topEdge[i][1]);
+    for (let i = botEdge.length - 1; i >= 0; i--) ctx.lineTo(botEdge[i][0], botEdge[i][1]);
+    ctx.closePath();
+
+    const grad = ctx.createLinearGradient(cx - scaleR, centerY, cx + scaleR, centerY);
+    grad.addColorStop(0, palette.fadeEdge);
+    grad.addColorStop(0.32, cfg.c);
+    grad.addColorStop(0.54, palette.bright);
+    grad.addColorStop(0.78, cfg.c);
+    grad.addColorStop(1, palette.fadeEdge);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Specular edge sheen
+    ctx.beginPath();
+    for (let i = 3; i < topEdge.length - 3; i++) {
+      const [x, y] = topEdge[i];
+      if (i === 3) ctx.moveTo(x, y + 2);
+      else ctx.lineTo(x, y + 2);
+    }
+    ctx.strokeStyle = palette.specular;
+    ctx.lineWidth = 1.35;
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
 /* ==========================================================================
    0. SILKY LENIS-STYLE SMOOTH MOMENTUM MOUSE-WHEEL & ANCHOR SCROLLER
-   Eliminates choppy Windows discrete wheel steps (100px–120px jumps) using
-   frame-rate-independent exponential damping (60Hz / 120Hz / 144Hz identical).
    ========================================================================== */
 const SmoothScroller = (() => {
   let targetY = window.scrollY || 0;
@@ -161,7 +271,6 @@ const SmoothScroller = (() => {
     const dt = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000));
     lastTime = now;
 
-    // Frame-rate-independent exponential smoothing (butter-smooth at 60–240Hz)
     const alpha = 1 - Math.exp(-10.5 * dt);
     currentY += (targetY - currentY) * alpha;
 
@@ -201,53 +310,41 @@ const SmoothScroller = (() => {
       window.scrollTo(0, clamp(destY, 0, maxScrollY()));
       return;
     }
-    if (!isActive) {
-      currentY = window.scrollY || 0;
-    }
+    if (!isActive) currentY = window.scrollY || 0;
     targetY = clamp(destY, 0, maxScrollY());
     start();
   }
 
   function init() {
-    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-    if (!finePointer.matches) return;
+    if (FINE_POINTER_QUERY.matches) {
+      window.addEventListener(
+        'wheel',
+        (e) => {
+          if (REDUCED_MOTION_QUERY.matches || lightboxState.isOpen || e.ctrlKey || e.metaKey) return;
+          if (e.target && e.target.closest('.lightbox-figure')) return;
 
-    window.addEventListener(
-      'wheel',
-      (e) => {
-        if (REDUCED_MOTION_QUERY.matches || lightboxState.isOpen || e.ctrlKey || e.metaKey) return;
-        if (e.target && e.target.closest('.lightbox-figure')) return;
+          let dy = e.deltaY;
+          if (e.deltaMode === 1) dy *= 34;
+          else if (e.deltaMode === 2) dy *= window.innerHeight * 0.85;
+          if (Math.abs(dy) < 0.5) return;
 
-        // Normalize wheel delta across mice & trackpads
-        let dy = e.deltaY;
-        if (e.deltaMode === 1) dy *= 34;
-        else if (e.deltaMode === 2) dy *= window.innerHeight * 0.85;
+          e.preventDefault();
+          if (!isActive) currentY = targetY = window.scrollY || 0;
+          targetY = clamp(targetY + dy * 0.92, 0, maxScrollY());
+          start();
+        },
+        { passive: false }
+      );
+    }
 
-        // Ignore tiny horizontal-only gestures
-        if (Math.abs(dy) < 0.5) return;
-
-        e.preventDefault();
-        if (!isActive) {
-          currentY = targetY = window.scrollY || 0;
-        }
-        targetY = clamp(targetY + dy * 0.92, 0, maxScrollY());
-        start();
-      },
-      { passive: false }
-    );
-
-    // Sync immediately if user drags scrollbar, presses keyboard keys, or touches screen
     window.addEventListener('mousedown', (e) => {
       if (e.clientX >= document.documentElement.clientWidth - 2) stop();
     }, { passive: true });
     window.addEventListener('touchstart', stop, { passive: true });
     window.addEventListener('keydown', (e) => {
-      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) {
-        stop();
-      }
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) stop();
     });
 
-    // Smooth-glide all same-page anchor links (#posters, #teasers, #story, etc.)
     document.addEventListener('click', (e) => {
       const link = e.target.closest('a[href^="#"]');
       if (!link) return;
@@ -256,10 +353,9 @@ const SmoothScroller = (() => {
       const targetEl = document.querySelector(hash);
       if (!targetEl) return;
       e.preventDefault();
-      const headerH = 68;
       const dest = hash === '#story' || hash === '#top'
         ? 0
-        : targetEl.getBoundingClientRect().top + window.scrollY - headerH;
+        : targetEl.getBoundingClientRect().top + window.scrollY - 68;
       scrollToY(dest);
     });
   }
@@ -268,272 +364,146 @@ const SmoothScroller = (() => {
 })();
 
 /* ==========================================================================
-   1. CREMA-STYLE 5-STAGE SCROLL-DRIVEN GHOST CHOREOGRAPHY ENGINE
+   ACT 1: COMPACT HERO SUMMONING (Pouring Crimson Stream -> Ghost Emerging)
    ========================================================================== */
-function initGhostScrollytelling() {
-  const showcase = document.getElementById('story');
-  const stickyEl = document.getElementById('scrolly-sticky');
-  const backCanvas = document.getElementById('scrolly-canvas-back');
-  const midCanvas = document.getElementById('scrolly-canvas-mid');
-  const frontCanvas = document.getElementById('scrolly-canvas-front');
-  const bowlBack = document.getElementById('prop-bowl-back');
-  const bowlFront = document.getElementById('prop-bowl-front');
-  const ghostMask = document.getElementById('prop-ghost-mask');
-  const ghostRig = document.getElementById('prop-ghost-rig');
-  const ghostAura = document.getElementById('prop-ghost-aura');
-  const ghostEyes = document.getElementById('prop-ghost-eyes-glow');
-  const curvedBadge = document.getElementById('prop-curved-badge');
-  const crimsonHalo = document.getElementById('stage-crimson-halo');
-  const scrollCue = document.getElementById('scrolly-cue');
-  const chapters = Array.from(document.querySelectorAll('.story-chapter'));
-  const railDots = Array.from(document.querySelectorAll('.rail-dot'));
-  const chapterTriggers = Array.from(document.querySelectorAll('[data-scroll-chapter]'));
+function initAct1HeroSummoning() {
+  const section = document.getElementById('story');
+  const stickyEl = document.getElementById('hero-sticky');
+  const backCanvas = document.getElementById('hero-canvas-back');
+  const midCanvas = document.getElementById('hero-canvas-mid');
+  const bowlBack = document.getElementById('hero-bowl-back');
+  const bowlFront = document.getElementById('hero-bowl-front');
+  const ghostRig = document.getElementById('hero-ghost-rig');
+  const ghostAura = document.getElementById('hero-ghost-aura');
+  const ghostEyes = document.getElementById('hero-ghost-eyes');
+  const crimsonHalo = document.getElementById('hero-crimson-halo');
+  const scrollCue = document.getElementById('hero-scroll-cue');
+  const beats = Array.from(document.querySelectorAll('[data-hero-beat]'));
 
-  if (!showcase || !stickyEl || !backCanvas || !midCanvas || !frontCanvas || !ghostRig) return;
-
+  if (!section || !stickyEl || !backCanvas || !midCanvas || !ghostRig) return;
   const backCtx = backCanvas.getContext('2d', { alpha: true });
   const midCtx = midCanvas.getContext('2d', { alpha: true });
-  const frontCtx = frontCanvas.getContext('2d', { alpha: true });
-  if (!backCtx || !midCtx || !frontCtx) return;
+  if (!backCtx || !midCtx) return;
 
-  // Chapter normalized anchors for click-to-jump
-  const CHAPTER_ANCHORS = [0.02, 0.29, 0.53, 0.74, 0.94];
-  const CHAPTER_BOUNDS = [0.21, 0.43, 0.64, 0.84, 1.01];
+  let w = 1280, h = 720, dpr = 1;
+  let headerOffset = 68, sectionTop = 34, scrollDist = 800, bowlSizePx = 540;
+  let targetP = 0, smoothP = 0, activeBeat = 0;
+  let isVisible = true, rafId = null, lastMs = 0;
 
-  // Cached layout geometry (recomputed ONLY on resize — ZERO layout reflow in RAF!)
-  let stageW = 1280;
-  let stageH = 720;
-  let dpr = 1;
-  let cachedHeaderOffset = 68;
-  let cachedShowcaseTop = 34;
-  let cachedScrollableDist = 3000;
-  let cachedBowlSizePx = 540;
-  let midHasContent = true;
-  let frontHasContent = true;
-  let lastFrameMs = 0;
-
-  let targetP = 0;
-  let smoothP = 0;
-  let prevSmoothP = 0;
-  let activeChapterIdx = 0;
-  let mouseX = 0;
-  let mouseY = 0;
-  let smoothMouseX = 0;
-  let smoothMouseY = 0;
-  let isStageVisible = true;
-  let rafId = null;
-
-  // Persistent ember / crimson droplet particle pools
-  const embers = Array.from({ length: 28 }, (_, i) => ({
-    x: Math.random(),
+  const embers = Array.from({ length: 24 }, (_, i) => ({
+    x: 0.25 + Math.random() * 0.72,
     y: Math.random(),
-    r: 1.2 + Math.random() * 2.4,
-    speedY: 0.03 + Math.random() * 0.065,
-    drift: (Math.random() - 0.5) * 0.035,
+    r: 1.2 + Math.random() * 2.2,
+    vy: 0.03 + Math.random() * 0.06,
+    vx: (Math.random() - 0.5) * 0.025,
     phase: Math.random() * Math.PI * 2,
     bright: i % 3 === 0
   }));
 
-  const splashDroplets = Array.from({ length: 16 }, (_, i) => ({
-    angle: -Math.PI * 0.88 + (i / 15) * Math.PI * 0.76,
-    dist: 0.35 + Math.random() * 0.65,
-    size: 2.2 + Math.random() * 4.2,
-    phase: Math.random() * Math.PI * 2,
-    speed: 0.8 + Math.random() * 0.85
-  }));
-
-  function resizeStage() {
+  function resize() {
     const rect = stickyEl.getBoundingClientRect();
-    stageW = Math.max(1, Math.round(rect.width));
-    stageH = Math.max(1, Math.round(rect.height));
-    // Smart DPR cap <= 1.5 saves 44% GPU fillrate with crisp fluid rendering
+    w = Math.max(1, Math.round(rect.width));
+    h = Math.max(1, Math.round(rect.height));
     dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    backCanvas.width = Math.round(w * dpr);
+    backCanvas.height = Math.round(h * dpr);
+    midCanvas.width = Math.round(w * dpr);
+    midCanvas.height = Math.round(h * dpr);
 
-    backCanvas.width = Math.round(stageW * dpr);
-    backCanvas.height = Math.round(stageH * dpr);
-    midCanvas.width = Math.round(stageW * dpr);
-    midCanvas.height = Math.round(stageH * dpr);
-    frontCanvas.width = Math.round(stageW * dpr);
-    frontCanvas.height = Math.round(stageH * dpr);
-
-    cachedHeaderOffset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 68;
-    cachedShowcaseTop = showcase.getBoundingClientRect().top + window.scrollY;
-    cachedScrollableDist = Math.max(1, showcase.offsetHeight - (window.innerHeight - cachedHeaderOffset));
-    cachedBowlSizePx = bowlBack ? bowlBack.offsetHeight || 520 : 520;
-    midHasContent = true;
-    frontHasContent = true;
+    headerOffset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 68;
+    sectionTop = section.getBoundingClientRect().top + window.scrollY;
+    scrollDist = Math.max(1, section.offsetHeight - (window.innerHeight - headerOffset));
+    bowlSizePx = bowlBack ? bowlBack.offsetHeight || 520 : 520;
   }
 
-  function computeTargetScrollProgress() {
-    // Pure arithmetic — ZERO DOM layout reflow during scroll!
-    const scrolled = (window.scrollY || 0) - (cachedShowcaseTop - cachedHeaderOffset);
-    targetP = clamp(scrolled / cachedScrollableDist, 0, 1);
+  function updateTarget() {
+    const scrolled = (window.scrollY || 0) - (sectionTop - headerOffset);
+    targetP = clamp(scrolled / scrollDist, 0, 1);
   }
 
-  function jumpToChapter(idx) {
-    const clampedIdx = clamp(idx, 0, CHAPTER_ANCHORS.length - 1);
-    const destY = cachedShowcaseTop - cachedHeaderOffset + CHAPTER_ANCHORS[clampedIdx] * cachedScrollableDist;
-    SmoothScroller.scrollToY(Math.max(0, destY));
-  }
-
-  chapterTriggers.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const idx = Number(btn.getAttribute('data-scroll-chapter'));
-      if (Number.isInteger(idx)) jumpToChapter(idx);
-    });
-  });
-
-  // Mouse parallax tracking (desktop fine pointer)
-  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-  if (finePointer.matches) {
-    window.addEventListener(
-      'pointermove',
-      (e) => {
-        if (e.pointerType !== 'mouse') return;
-        mouseX = (e.clientX / (window.innerWidth || 1) - 0.5) * 2;
-        mouseY = (e.clientY / (window.innerHeight || 1) - 0.5) * 2;
-      },
-      { passive: true }
-    );
-  }
-
-  function updateChapterUI(p) {
-    let idx = 0;
-    for (let i = 0; i < CHAPTER_BOUNDS.length; i++) {
-      if (p < CHAPTER_BOUNDS[i]) {
-        idx = i;
-        break;
-      }
-      idx = CHAPTER_BOUNDS.length - 1;
-    }
-
-    if (idx !== activeChapterIdx) {
-      activeChapterIdx = idx;
-      chapters.forEach((ch, i) => {
-        ch.classList.toggle('is-active', i === idx);
-        ch.classList.toggle('is-passed', i < idx);
-      });
-      railDots.forEach((dot, i) => {
-        dot.classList.toggle('is-active', i === idx);
-      });
-    }
-
-    if (scrollCue) {
-      scrollCue.classList.toggle('is-hidden', p > 0.045);
-    }
-  }
-
-  /* ------------------------------------------------------------------------
-     CANVAS DRAWING ROUTINES (60FPS FLUID, VORTEX, BLOOD POOL & 3D RIBBONS)
-     ------------------------------------------------------------------------ */
-
-  /**
-   * Stage 1 & 2: Glossy pouring crimson blood & mist stream into the antique bowl
-   */
-  function drawPouringStream(ctx, cx, bowlMouthY, p, time, isDark) {
-    const enterT = easeOutCubic(invLerp(p, 0.0, 0.06));
-    const exitT = 1 - easeInOutCubic(invLerp(p, 0.34, 0.48));
-    const alpha = Math.max(0.85, enterT) * exitT;
+  function drawHeroStream(ctx, cx, mouthY, p, time, isDark) {
+    const alpha = clamp(1 - easeInOutCubic(invLerp(p, 0.76, 0.98)), 0, 1);
     if (alpha <= 0.01) return;
 
     ctx.save();
     ctx.globalAlpha = alpha;
 
-    // Stream descends smoothly from top (y = -20) directly into bowl interior liquid center
-    const streamTopY = -20;
-    const streamEndY = bowlMouthY + 6;
-    const segments = 28;
-    const baseWidth = Math.min(stageW * 0.035, 38) * lerp(1.0, 0.62, invLerp(p, 0.2, 0.44));
-
-    // Swirling glossy crimson blood pool INSIDE the antique silver bowl cavity
-    const poolRx = Math.min(stageW * 0.145, 196);
-    const poolRy = poolRx * 0.46;
-    const poolGrad = ctx.createRadialGradient(cx, bowlMouthY + 4, 8, cx, bowlMouthY + 8, poolRx);
+    const poolRx = Math.min(w * 0.145, 195);
+    const poolRy = poolRx * 0.45;
+    const poolGrad = ctx.createRadialGradient(cx, mouthY + 4, 8, cx, mouthY + 8, poolRx);
     poolGrad.addColorStop(0, '#a8141c');
     poolGrad.addColorStop(0.48, '#6a0a10');
     poolGrad.addColorStop(0.84, '#360407');
     poolGrad.addColorStop(1, 'rgba(28, 3, 5, 0)');
     ctx.beginPath();
-    ctx.ellipse(cx, bowlMouthY + 6, poolRx, poolRy, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, mouthY + 6, poolRx, poolRy, 0, 0, Math.PI * 2);
     ctx.fillStyle = poolGrad;
     ctx.fill();
 
-    // Concentric churning liquid ripples inside the silver bowl (strongest in Stage 2)
-    const churnIntensity = 0.55 + 0.45 * easeInOutSine(invLerp(p, 0.12, 0.36));
+    // Concentric churning ripples inside the silver bowl
     for (let r = 0; r < 4; r++) {
-      const wavePhase = ((time * 0.72 + r * 0.25 + p * 3.0) % 1);
-      const rx = poolRx * (0.14 + wavePhase * 0.8);
-      const ry = poolRy * (0.14 + wavePhase * 0.8);
+      const wp = (time * 0.72 + r * 0.25 + p * 2.2) % 1;
       ctx.beginPath();
-      ctx.ellipse(cx, bowlMouthY + 5, rx, ry, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 175, 170, ${(1 - wavePhase) * 0.48 * churnIntensity})`;
-      ctx.lineWidth = 1.8;
+      ctx.ellipse(cx, mouthY + 5, poolRx * (0.14 + wp * 0.8), poolRy * (0.14 + wp * 0.8), 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 175, 170, ${(1 - wp) * 0.46})`;
+      ctx.lineWidth = 1.7;
       ctx.stroke();
     }
 
-    // Helper to build undulating viscous ribbon polygon (ZERO ctx.filter blur -> 100x faster!)
-    function drawRibbonLayer(widthScale, offsetX, fillStyle) {
-      ctx.beginPath();
+    // Glossy pouring crimson stream (0ms blur cost!)
+    const streamTopY = -20;
+    const streamEndY = mouthY + 6;
+    const segments = 26;
+    const baseWidth = Math.min(w * 0.035, 38) * lerp(1.0, 0.62, p);
 
+    function drawRibbon(widthScale, offsetX, fill) {
+      ctx.beginPath();
       const leftPts = [];
       const rightPts = [];
       for (let i = 0; i <= segments; i++) {
         const t = i / segments;
         const y = lerp(streamTopY, streamEndY, t);
-        // Sinuous pouring curve converging dead-center into the bowl interior!
         const damp = 1 - Math.pow(t, 1.5);
         const sway =
-          Math.sin(t * 4.2 - time * 2.8 - p * 18) * (15 * damp) +
+          Math.sin(t * 4.2 - time * 2.8 - p * 12) * (15 * damp) +
           Math.cos(t * 2.1 + time * 1.4) * (5 * damp);
-        // Taper wider at top, slender mid-stream, glossy splash flare at impact point inside bowl
-        const profile = (1.3 - t * 0.5 + Math.pow(t, 5) * 1.1) * baseWidth * widthScale;
+        const prof = (1.3 - t * 0.5 + Math.pow(t, 5) * 1.1) * baseWidth * widthScale;
         const px = cx + sway + offsetX;
-        leftPts.push([px - profile * 0.5, y]);
-        rightPts.push([px + profile * 0.5, y]);
+        leftPts.push([px - prof * 0.5, y]);
+        rightPts.push([px + prof * 0.5, y]);
       }
-
       ctx.moveTo(leftPts[0][0], leftPts[0][1]);
-      for (let i = 1; i < leftPts.length; i++) {
-        ctx.lineTo(leftPts[i][0], leftPts[i][1]);
-      }
-      for (let i = rightPts.length - 1; i >= 0; i--) {
-        ctx.lineTo(rightPts[i][0], rightPts[i][1]);
-      }
+      for (let i = 1; i < leftPts.length; i++) ctx.lineTo(leftPts[i][0], leftPts[i][1]);
+      for (let i = rightPts.length - 1; i >= 0; i--) ctx.lineTo(rightPts[i][0], rightPts[i][1]);
       ctx.closePath();
-      ctx.fillStyle = fillStyle;
+      ctx.fillStyle = fill;
       ctx.fill();
     }
 
-    // Soft eerie crimson mist halo using pure horizontal multi-stop gradient (0ms blur cost!)
     const mistGrad = ctx.createLinearGradient(cx - baseWidth * 1.45, 0, cx + baseWidth * 1.45, 0);
-    mistGrad.addColorStop(0, 'rgba(140, 18, 22, 0)');
-    mistGrad.addColorStop(0.28, 'rgba(145, 20, 24, 0.14)');
-    mistGrad.addColorStop(0.5, 'rgba(155, 22, 26, 0.26)');
-    mistGrad.addColorStop(0.72, 'rgba(145, 20, 24, 0.14)');
-    mistGrad.addColorStop(1, 'rgba(140, 18, 22, 0)');
-    drawRibbonLayer(2.25, 0, mistGrad);
+    mistGrad.addColorStop(0, 'rgba(140,18,22,0)');
+    mistGrad.addColorStop(0.5, 'rgba(155,22,26,0.24)');
+    mistGrad.addColorStop(1, 'rgba(140,18,22,0)');
+    drawRibbon(2.2, 0, mistGrad);
 
-    // Core viscous deep blood stream
     const coreGrad = ctx.createLinearGradient(cx - baseWidth, 0, cx + baseWidth, 0);
     coreGrad.addColorStop(0, '#3a0508');
     coreGrad.addColorStop(0.35, '#8c1118');
     coreGrad.addColorStop(0.58, '#c21e26');
     coreGrad.addColorStop(0.85, '#59080c');
     coreGrad.addColorStop(1, '#260305');
-    drawRibbonLayer(1.0, 0, coreGrad);
+    drawRibbon(1.0, 0, coreGrad);
 
-    // Glossy liquid specular highlight ribbon inside stream
     const specGrad = ctx.createLinearGradient(cx, streamTopY, cx, streamEndY);
-    specGrad.addColorStop(0, 'rgba(255, 210, 205, 0.15)');
-    specGrad.addColorStop(0.5, isDark ? 'rgba(255, 175, 170, 0.48)' : 'rgba(255, 232, 226, 0.62)');
-    specGrad.addColorStop(1, 'rgba(255, 195, 190, 0.35)');
-    drawRibbonLayer(0.24, -baseWidth * 0.14, specGrad);
+    specGrad.addColorStop(0, 'rgba(255,210,205,0.15)');
+    specGrad.addColorStop(0.5, isDark ? 'rgba(255,175,170,0.48)' : 'rgba(255,232,226,0.62)');
+    specGrad.addColorStop(1, 'rgba(255,195,190,0.35)');
+    drawRibbon(0.24, -baseWidth * 0.14, specGrad);
 
-    // Bright glossy splash crown right where stream strikes liquid inside the bowl
     const splashGrad = ctx.createRadialGradient(cx, streamEndY, 2, cx, streamEndY, baseWidth * 1.15);
-    splashGrad.addColorStop(0, 'rgba(255, 210, 205, 0.55)');
-    splashGrad.addColorStop(0.45, 'rgba(178, 24, 30, 0.48)');
-    splashGrad.addColorStop(1, 'rgba(120, 14, 18, 0)');
+    splashGrad.addColorStop(0, 'rgba(255,210,205,0.55)');
+    splashGrad.addColorStop(0.45, 'rgba(178,24,30,0.48)');
+    splashGrad.addColorStop(1, 'rgba(120,14,18,0)');
     ctx.beginPath();
     ctx.ellipse(cx, streamEndY, baseWidth * 1.15, baseWidth * 0.44, 0, 0, Math.PI * 2);
     ctx.fillStyle = splashGrad;
@@ -542,557 +512,762 @@ function initGhostScrollytelling() {
     ctx.restore();
   }
 
-  /**
-   * Stage 2–3: Rotating sacred occult mist rings behind the summoning Ghost
-   */
-  function drawOccultVortex(ctx, cx, cy, p, time, isDark) {
-    const fadeIn = easeOutCubic(invLerp(p, 0.18, 0.32));
-    const fadeOut = 1 - easeInOutCubic(invLerp(p, 0.52, 0.68));
-    const alpha = fadeIn * fadeOut;
-    if (alpha <= 0.01) return;
-
-    const radius = Math.min(stageW * 0.255, 285) * lerp(0.84, 1.12, invLerp(p, 0.2, 0.58));
-
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(time * 0.22 + p * Math.PI * 1.4);
-    ctx.globalAlpha = alpha * (isDark ? 0.48 : 0.34);
-
-    // Outer dashed sacred circle
-    ctx.beginPath();
-    ctx.setLineDash([12, 10]);
-    ctx.arc(0, 0, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = isDark ? 'rgba(210, 52, 52, 0.65)' : 'rgba(135, 24, 24, 0.55)';
-    ctx.lineWidth = 1.25;
-    ctx.stroke();
-
-    // Inner counter-rotating fine gold/crimson ring
-    ctx.rotate(-time * 0.48 - p * Math.PI * 2.1);
-    ctx.setLineDash([4, 14]);
-    ctx.beginPath();
-    ctx.arc(0, 0, radius * 0.82, 0, Math.PI * 2);
-    ctx.strokeStyle = isDark ? 'rgba(204, 166, 108, 0.55)' : 'rgba(140, 106, 56, 0.5)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Soft swirling crimson mist arcs
-    ctx.setLineDash([]);
-    for (let i = 0; i < 3; i++) {
-      const a0 = (i * Math.PI * 2) / 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, radius * (0.65 + i * 0.14), a0, a0 + Math.PI * 0.72);
-      ctx.strokeStyle = 'rgba(155, 22, 26, 0.32)';
-      ctx.lineWidth = 8;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  }
-
-  /**
-   * Stage 4: Glossy Liquid Crimson Blood Pool (Replaces Chocolate Dip Pool in clip 00:04–00:05)
-   * Returns exact waterline Y coordinate so the Ghost clips seamlessly beneath the liquid!
-   */
-  function getBloodPoolState(p) {
-    const rise = easeInOutCubic(invLerp(p, 0.60, 0.72));
-    const recede = easeInOutCubic(invLerp(p, 0.82, 0.93));
-    const level = clamp(rise - recede, 0, 1);
-    // Pool surface rises from 108% height up to 72% height on desktop (leaving clean contrast under Chapter 04)
-    const peakSurfaceRatio = stageW <= 900 ? 0.57 : 0.72;
-    const surfaceY = lerp(stageH * 1.08, stageH * peakSurfaceRatio, level);
-    return { level, surfaceY };
-  }
-
-  function drawBloodPoolBack(ctx, poolState, p, time) {
-    if (poolState.level <= 0.005) return;
-    const { level, surfaceY } = poolState;
-
-    ctx.save();
-    ctx.globalAlpha = clamp(level * 1.4, 0, 1);
-
-    // Back horizon of the crimson pool (slightly higher behind the Ghost for 3D depth)
-    const backY = surfaceY - 18 * level;
-    const grad = ctx.createLinearGradient(0, backY, 0, stageH);
-    grad.addColorStop(0, '#2b0406');
-    grad.addColorStop(0.35, '#4d080c');
-    grad.addColorStop(1, '#120203');
-
-    ctx.beginPath();
-    ctx.moveTo(0, stageH);
-    for (let x = 0; x <= stageW; x += 24) {
-      const w =
-        Math.sin(x * 0.0065 + time * 1.6 + p * 8) * 7 * level +
-        Math.cos(x * 0.012 - time * 1.1) * 4 * level;
-      ctx.lineTo(x, backY + w);
-    }
-    ctx.lineTo(stageW, stageH);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawBloodPoolFront(ctx, cx, poolState, p, velocity, time, isDark) {
-    if (poolState.level <= 0.005) return;
-    const { level, surfaceY } = poolState;
-
-    ctx.save();
-    ctx.globalAlpha = clamp(level * 1.35, 0, 1);
-
-    // Undulating foreground glossy crimson liquid mass
-    const waveBoost = 1 + Math.min(Math.abs(velocity) * 24, 1.8);
-    const wavePts = [];
-    const step = 18;
-    for (let x = 0; x <= stageW + step; x += step) {
-      const distFromGhost = Math.abs(x - cx);
-      const dipRipple =
-        Math.exp(-distFromGhost / (stageW * 0.24)) *
-        Math.cos(distFromGhost * 0.032 - time * 5.2 - p * 30) *
-        9 *
-        level *
-        waveBoost;
-      const ambientWave =
-        Math.sin(x * 0.0085 - time * 2.1 + p * 12) * 8 * level +
-        Math.sin(x * 0.019 + time * 1.4) * 3.5 * level;
-      wavePts.push([x, surfaceY + ambientWave + dipRipple]);
-    }
-
-    // Main glossy crimson-obsidian liquid fill
-    const bodyGrad = ctx.createLinearGradient(0, surfaceY - 10, 0, stageH);
-    bodyGrad.addColorStop(0, '#780e14');
-    bodyGrad.addColorStop(0.14, '#56080d');
-    bodyGrad.addColorStop(0.45, '#2f0407');
-    bodyGrad.addColorStop(1, '#110203');
-
-    ctx.beginPath();
-    ctx.moveTo(0, stageH + 10);
-    wavePts.forEach(([x, y]) => ctx.lineTo(x, y));
-    ctx.lineTo(stageW + step, stageH + 10);
-    ctx.closePath();
-    ctx.fillStyle = bodyGrad;
-    ctx.fill();
-
-    // Specular wet rim crest along the wave line (chocolate/blood glass sheen!)
-    ctx.beginPath();
-    wavePts.forEach(([x, y], i) => {
-      if (i === 0) ctx.moveTo(x, y + 1);
-      else ctx.lineTo(x, y + 1);
-    });
-    const rimGrad = ctx.createLinearGradient(cx - stageW * 0.35, 0, cx + stageW * 0.35, 0);
-    rimGrad.addColorStop(0, 'rgba(255, 160, 155, 0.05)');
-    rimGrad.addColorStop(0.35, 'rgba(255, 190, 185, 0.55)');
-    rimGrad.addColorStop(0.5, isDark ? 'rgba(255, 110, 110, 0.85)' : 'rgba(255, 225, 220, 0.78)');
-    rimGrad.addColorStop(0.65, 'rgba(255, 190, 185, 0.5)');
-    rimGrad.addColorStop(1, 'rgba(255, 160, 155, 0.05)');
-    ctx.strokeStyle = rimGrad;
-    ctx.lineWidth = 2.6;
-    ctx.stroke();
-
-    // Concentric glossy elliptical splash ripples right around the submerged Ghost
-    const dipActivity = Math.sin(invLerp(p, 0.64, 0.88) * Math.PI);
-    for (let r = 0; r < 4; r++) {
-      const rp = (time * 0.65 + r * 0.25 + p * 4.5) % 1;
-      const rx = (52 + rp * Math.min(stageW * 0.26, 260)) * level;
-      const ry = rx * 0.16;
-      ctx.beginPath();
-      ctx.ellipse(cx, surfaceY + 12 + rp * 18, rx, ry, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 185, 180, ${(1 - rp) * 0.42 * dipActivity})`;
-      ctx.lineWidth = 1.8 * (1 - rp * 0.5);
-      ctx.stroke();
-    }
-
-    // Subtle horizontal wet specular reflection bands across pool surface
-    for (let s = 0; s < 3; s++) {
-      const sy = surfaceY + 34 + s * 34;
-      if (sy > stageH) continue;
-      const sw = (stageW * 0.18 - s * 28) * level;
-      const sx = cx + Math.sin(time * 0.9 + s * 2.1) * 35;
-      const sGrad = ctx.createLinearGradient(sx - sw, sy, sx + sw, sy);
-      sGrad.addColorStop(0, 'rgba(255, 165, 160, 0)');
-      sGrad.addColorStop(0.5, `rgba(255, 170, 165, ${0.14 - s * 0.03})`);
-      sGrad.addColorStop(1, 'rgba(255, 165, 160, 0)');
-      ctx.fillStyle = sGrad;
-      ctx.beginPath();
-      ctx.ellipse(sx, sy, Math.max(10, sw), 3.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Dynamic splashing crimson droplets arcing upward during the dip
-    if (dipActivity > 0.08) {
-      splashDroplets.forEach((d) => {
-        const cycle = (time * d.speed * 0.55 + d.phase) % 1;
-        const spread = d.dist * Math.min(stageW * 0.19, 195);
-        const dx = cx + Math.cos(d.angle) * spread * (0.45 + cycle * 0.85);
-        const arcHeight = Math.sin(cycle * Math.PI) * (55 + d.dist * 75) * dipActivity;
-        const dy = surfaceY + 4 - arcHeight;
-        const dAlpha = Math.sin(cycle * Math.PI) * 0.82 * dipActivity;
-
-        ctx.beginPath();
-        ctx.arc(dx, dy, d.size * (1 - cycle * 0.3), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(150, 18, 24, ${dAlpha})`;
-        ctx.fill();
-
-        // Tiny glossy dot highlight
-        ctx.beginPath();
-        ctx.arc(dx - d.size * 0.28, dy - d.size * 0.28, d.size * 0.28, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 220, 215, ${dAlpha * 0.7})`;
-        ctx.fill();
-      });
-    }
-
-    ctx.restore();
-  }
-
-  /**
-   * Stage 5: 3D Depth-Layered Floating Crimson Silk / Blood Ribbons
-   * (Replaces the floating chocolate & cream curls orbiting the finished cone in clip 00:06!)
-   */
-  function drawOrbitingRibbons(ctx, cx, cy, p, time, layer /* 'back' | 'front' */, isDark) {
-    const reveal = easeOutCubic(invLerp(p, 0.79, 0.92));
-    if (reveal <= 0.01) return;
-
-    const scaleR = Math.min(stageW * 0.255, 295);
-    const configs =
-      layer === 'back'
-        ? [
-            { yOff: -0.28, rx: 1.08, ry: 0.26, tilt: -0.26, width: 17, phase: 0.4, color: '#5c090e' },
-            { yOff: 0.20, rx: 1.16, ry: 0.24, tilt: 0.22, width: 14, phase: 2.3, color: '#3b0508' }
-          ]
-        : [
-            { yOff: -0.02, rx: 1.04, ry: 0.28, tilt: -0.18, width: 18, phase: 1.2, color: '#8f1319' },
-            { yOff: 0.36, rx: 0.96, ry: 0.22, tilt: 0.16, width: 13, phase: 3.7, color: '#690b10' }
-          ];
-
-    ctx.save();
-    ctx.globalAlpha = reveal * (isDark ? 0.92 : 0.88);
-
-    configs.forEach((cfg) => {
-      const centerX = cx;
-      const centerY = cy + cfg.yOff * scaleR;
-      const startAngle = layer === 'back' ? Math.PI * 1.05 : Math.PI * 0.06;
-      const endAngle = layer === 'back' ? Math.PI * 1.95 : Math.PI * 0.94;
-      const steps = 36;
-      const topEdge = [];
-      const botEdge = [];
-
-      for (let i = 0; i <= steps; i++) {
-        const u = i / steps;
-        const theta = lerp(startAngle, endAngle, u) + Math.sin(time * 0.9 + cfg.phase) * 0.08;
-        const wobble = Math.sin(u * Math.PI * 2.5 - time * 1.8 + cfg.phase) * 8;
-        const lx = Math.cos(theta) * scaleR * cfg.rx;
-        const ly = Math.sin(theta) * scaleR * cfg.ry + wobble;
-
-        // Rotate by tilt
-        const cosT = Math.cos(cfg.tilt);
-        const sinT = Math.sin(cfg.tilt);
-        const rx = centerX + lx * cosT - ly * sinT;
-        const ry = centerY + lx * sinT + ly * cosT;
-
-        // Calligraphic taper (pointed ends, lush center)
-        const thick = Math.sin(u * Math.PI) * cfg.width * reveal;
-        topEdge.push([rx, ry - thick * 0.5]);
-        botEdge.push([rx, ry + thick * 0.5]);
-      }
-
-      ctx.beginPath();
-      ctx.moveTo(topEdge[0][0], topEdge[0][1]);
-      for (let i = 1; i < topEdge.length; i++) ctx.lineTo(topEdge[i][0], topEdge[i][1]);
-      for (let i = botEdge.length - 1; i >= 0; i--) ctx.lineTo(botEdge[i][0], botEdge[i][1]);
-      ctx.closePath();
-
-      const grad = ctx.createLinearGradient(centerX - scaleR, centerY, centerX + scaleR, centerY);
-      grad.addColorStop(0, 'rgba(55, 5, 8, 0.25)');
-      grad.addColorStop(0.35, cfg.color);
-      grad.addColorStop(0.55, '#b51c24');
-      grad.addColorStop(0.8, cfg.color);
-      grad.addColorStop(1, 'rgba(35, 3, 5, 0.2)');
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // Thin wet specular sheen along ribbon top edge
-      ctx.beginPath();
-      for (let i = 3; i < topEdge.length - 3; i++) {
-        const [x, y] = topEdge[i];
-        if (i === 3) ctx.moveTo(x, y + 2);
-        else ctx.lineTo(x, y + 2);
-      }
-      ctx.strokeStyle = isDark ? 'rgba(255, 175, 170, 0.42)' : 'rgba(255, 225, 220, 0.52)';
-      ctx.lineWidth = 1.4;
-      ctx.stroke();
-    });
-
-    ctx.restore();
-  }
-
-  /**
-   * Subtle floating embers & spectral dust particles across the studio stage (dt-normalized)
-   */
-  function drawAmbientEmbers(ctx, p, time, dt, isDark) {
-    const intensity = lerp(0.35, 0.95, p);
-    ctx.save();
-    embers.forEach((em) => {
-      em.y -= em.speedY * dt * (0.7 + intensity * 0.8);
-      em.x += (em.drift + Math.sin(time + em.phase) * 0.01) * dt;
-      if (em.y < -0.05) {
-        em.y = 1.05;
-        em.x = 0.25 + Math.random() * 0.72;
-      }
-      if (em.x < 0) em.x = 1;
-      if (em.x > 1) em.x = 0;
-
-      const flicker = 0.5 + 0.5 * Math.sin(time * 2.4 + em.phase);
-      const alpha = (0.14 + flicker * 0.34) * intensity;
-
-      ctx.beginPath();
-      ctx.arc(em.x * stageW, em.y * stageH, em.r, 0, Math.PI * 2);
-      if (em.bright) {
-        ctx.fillStyle = isDark
-          ? `rgba(235, 65, 58, ${alpha * 1.25})`
-          : `rgba(155, 22, 24, ${alpha * 1.05})`;
-      } else {
-        ctx.fillStyle = isDark
-          ? `rgba(218, 185, 130, ${alpha * 0.7})`
-          : `rgba(80, 68, 60, ${alpha * 0.45})`;
-      }
-      ctx.fill();
-    });
-    ctx.restore();
-  }
-
-  /* ------------------------------------------------------------------------
-     MAIN 60–144FPS DELTA-TIME ANIMATION LOOP (ZERO LAYOUT THRASH, ZERO BLUR!)
-     ------------------------------------------------------------------------ */
-  function renderFrame(nowMs) {
+  function render(nowMs) {
     rafId = null;
-    if (!isStageVisible || REDUCED_MOTION_QUERY.matches) return;
+    if (!isVisible || REDUCED_MOTION_QUERY.matches) return;
 
-    if (!lastFrameMs) lastFrameMs = nowMs;
-    const dt = Math.min(0.05, Math.max(0.001, (nowMs - lastFrameMs) / 1000));
-    lastFrameMs = nowMs;
+    if (!lastMs) lastMs = nowMs;
+    const dt = Math.min(0.05, Math.max(0.001, (nowMs - lastMs) / 1000));
+    lastMs = nowMs;
     const time = nowMs * 0.001;
 
-    // Frame-rate-independent exponential smoothing (identical liquid butter feel at 60–240Hz!)
-    const scrollAlpha = 1 - Math.exp(-12.5 * dt);
-    smoothP += (targetP - smoothP) * scrollAlpha;
-    if (Math.abs(targetP - smoothP) < 0.00005) smoothP = targetP;
-    const velocity = (smoothP - prevSmoothP) / Math.max(0.016, dt) * 0.016;
-    prevSmoothP = smoothP;
-
-    const mouseAlpha = 1 - Math.exp(-7.5 * dt);
-    smoothMouseX += (mouseX - smoothMouseX) * mouseAlpha;
-    smoothMouseY += (mouseY - smoothMouseY) * mouseAlpha;
-
+    MouseState.update(dt);
+    smoothP += (targetP - smoothP) * (1 - Math.exp(-12 * dt));
     const p = smoothP;
-    const isMobile = stageW <= 900;
+    const isMobile = w <= 900;
     const isDark = document.documentElement.classList.contains('cinema-mode');
-    const stageCenterX = stageW * (isMobile ? 0.5 : 0.63);
-    const stageCenterY = stageH * (isMobile ? 0.34 : 0.52);
+    const stageCX = w * (isMobile ? 0.5 : 0.63);
+    const stageCY = h * (isMobile ? 0.34 : 0.52);
 
-    // Update active editorial chapter & right-hand rail
-    updateChapterUI(p);
+    const mx = isMobile ? 0 : MouseState.sx * 13;
+    const my = isMobile ? 0 : MouseState.sy * 9;
+    const mRot = isMobile ? 0 : MouseState.sx * 2.1;
 
-    // Subtle mouse 3D tilt offsets (desktop only)
-    const mxPx = isMobile ? 0 : smoothMouseX * 14;
-    const myPx = isMobile ? 0 : smoothMouseY * 10;
-    const mRot = isMobile ? 0 : smoothMouseX * 2.4;
+    // 2 Hero beats switch at p = 0.46
+    const beatIdx = p < 0.46 ? 0 : 1;
+    if (beatIdx !== activeBeat) {
+      activeBeat = beatIdx;
+      beats.forEach((b, i) => {
+        b.classList.toggle('is-active', i === beatIdx);
+        b.classList.toggle('is-passed', i < beatIdx);
+      });
+    }
+    if (scrollCue) scrollCue.classList.toggle('is-hidden', p > 0.08);
 
-    /* ------------------------------------------------------------------
-       A. ANTIQUE THAI SILVER RITUAL BOWL CHOREOGRAPHY (Stages 1 -> 3)
-       ------------------------------------------------------------------ */
-    const bowlExitT = easeInOutCubic(invLerp(p, 0.37, 0.53));
-    const bowlStage2T = easeInOutSine(invLerp(p, 0.16, 0.38));
-    const bowlBaseY = isMobile ? 42 : 76;
-    const bowlY = lerp(bowlBaseY, bowlBaseY - 22, bowlStage2T) - bowlExitT * (stageH * 0.96);
-    const bowlScale = lerp(1.06, 1.0, invLerp(p, 0, 0.2)) * lerp(1.0, 1.06, bowlStage2T) * lerp(1.0, 0.84, bowlExitT);
-    const bowlRot = lerp(0, -2.5, bowlStage2T) - bowlExitT * 6 + mRot * 0.45;
-    const bowlOpacity = clamp(1 - easeInOutCubic(invLerp(p, 0.42, 0.53)), 0, 1);
+    // Silver bowl choreography: sits prominently -> leans slightly -> gently lifts at end of Hero
+    const bowlLift = easeInOutCubic(invLerp(p, 0.72, 1.0));
+    const bowlY = lerp(isMobile ? 40 : 72, isMobile ? 22 : 48, easeInOutSine(invLerp(p, 0.18, 0.72))) - bowlLift * (h * 0.42);
+    const bowlScale = lerp(1.06, 1.0, invLerp(p, 0, 0.35)) * lerp(1.0, 0.88, bowlLift);
+    const bowlRot = lerp(0, -2.5, p) + mRot * 0.4;
+    const bowlOp = clamp(1 - bowlLift * 0.85, 0.15, 1);
 
-    const bowlTransform = `translate3d(calc(-50% + ${(mxPx * 0.55).toFixed(1)}px), calc(-50% + ${(
-      bowlY +
-      myPx * 0.4
-    ).toFixed(1)}px), 0) scale(${bowlScale.toFixed(4)}) rotate(${bowlRot.toFixed(2)}deg)`;
-
+    const bowlTf = `translate3d(calc(-50% + ${(mx * 0.55).toFixed(1)}px), calc(-50% + ${(bowlY + my * 0.4).toFixed(1)}px), 0) scale(${bowlScale.toFixed(4)}) rotate(${bowlRot.toFixed(2)}deg)`;
     if (bowlBack && bowlFront) {
-      bowlBack.style.transform = bowlTransform;
-      bowlBack.style.opacity = bowlOpacity.toFixed(3);
-      bowlFront.style.transform = bowlTransform;
-      bowlFront.style.opacity = bowlOpacity.toFixed(3);
+      bowlBack.style.transform = bowlTf;
+      bowlBack.style.opacity = bowlOp.toFixed(3);
+      bowlFront.style.transform = bowlTf;
+      bowlFront.style.opacity = bowlOp.toFixed(3);
     }
 
-    // Cached bowl size — ZERO forced layout reflow inside RAF!
-    const bowlAnchorY = stageH * (isMobile ? 0.34 : 0.56);
-    const bowlMouthY = bowlAnchorY + bowlY + myPx * 0.4 - cachedBowlSizePx * 0.045 * bowlScale;
+    const bowlAnchorY = h * (isMobile ? 0.34 : 0.56);
+    const bowlMouthY = bowlAnchorY + bowlY + my * 0.4 - bowlSizePx * 0.045 * bowlScale;
 
-    /* ------------------------------------------------------------------
-       B. GHOST CENTERPIECE CHOREOGRAPHY (Continuous C1 Smooth Across 5 Stages!)
-       ------------------------------------------------------------------ */
-    const s1 = easeInOutSine(invLerp(p, 0.0, 0.22));
-    const s2 = easeInOutCubic(invLerp(p, 0.22, 0.43));
-    const s3 = easeInOutCubic(invLerp(p, 0.43, 0.63));
-    const s4Dip = easeInOutCubic(invLerp(p, 0.65, 0.78));
-    const s5Rise = easeInOutCubic(invLerp(p, 0.80, 0.94));
+    // Ghost rises smoothly out of the swirling crimson inside the silver bowl!
+    const emerge = easeInOutCubic(invLerp(p, 0.10, 0.78));
+    const ascend = easeInOutCubic(invLerp(p, 0.78, 1.0));
+    let ghostY = lerp(isMobile ? 74 : 135, isMobile ? 16 : 30, emerge);
+    ghostY = lerp(ghostY, isMobile ? -12 : -18, ascend);
+    let ghostScale = lerp(0.35, 0.72, emerge);
+    ghostScale = lerp(ghostScale, 0.88, ascend);
+    const ghostOp = clamp(lerp(0.08, 1.0, invLerp(p, 0.08, 0.52)), 0, 1);
+    const ghostRot = lerp(-3, 1.2, emerge) + mRot;
 
-    const ghostYStart = isMobile ? 76 : 132;
-    const ghostYStage1 = isMobile ? 48 : 88;
-    const ghostYStage2 = isMobile ? 16 : 26;
-    const ghostYStage3 = isMobile ? 8 : 6;
-    const ghostYDip = isMobile ? 132 : 258;
-    const ghostYFinale = isMobile ? 8 : 8;
+    ghostRig.style.transform = `translate3d(calc(-50% + ${mx.toFixed(1)}px), calc(-50% + ${(ghostY + my).toFixed(1)}px), 0) scale(${ghostScale.toFixed(4)}) rotate(${ghostRot.toFixed(2)}deg)`;
+    ghostRig.style.opacity = ghostOp.toFixed(3);
 
-    let ghostY = lerp(ghostYStart, ghostYStage1, s1);
-    ghostY = lerp(ghostY, ghostYStage2, s2);
-    ghostY = lerp(ghostY, ghostYStage3, s3);
-    ghostY = lerp(ghostY, ghostYDip, s4Dip);
-    ghostY = lerp(ghostY, ghostYFinale, s5Rise);
+    const eyePulse = 0.5 + 0.5 * Math.sin(time * 3.1);
+    if (ghostEyes) ghostEyes.style.opacity = (emerge * (0.6 + eyePulse * 0.4)).toFixed(3);
+    if (ghostAura) ghostAura.style.opacity = (emerge * (isDark ? 0.75 : 0.48)).toFixed(3);
+    if (crimsonHalo) crimsonHalo.style.opacity = clamp(0.2 + emerge * 0.38, 0, isDark ? 0.85 : 0.45).toFixed(3);
 
-    const floatWeight = clamp(s3 * (1 - s4Dip * 0.85) + s5Rise, 0, 1);
-    const levitateY = Math.sin(time * 1.9) * 8.5 * floatWeight;
+    // Back Canvas: Ambient Embers + Sacred Occult Circle
+    backCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    backCtx.clearRect(0, 0, w, h);
 
-    let ghostScale = lerp(0.35, 0.46, s1);
-    ghostScale = lerp(ghostScale, 0.66, s2);
-    ghostScale = lerp(ghostScale, isMobile ? 0.94 : 1.0, s3);
-    ghostScale = lerp(ghostScale, isMobile ? 1.02 : 1.12, s4Dip);
-    ghostScale = lerp(ghostScale, isMobile ? 0.96 : 1.04, s5Rise);
+    embers.forEach((em) => {
+      em.y -= em.vy * dt;
+      em.x += (em.vx + Math.sin(time + em.phase) * 0.008) * dt;
+      if (em.y < -0.05) { em.y = 1.05; em.x = 0.25 + Math.random() * 0.7; }
+      const alpha = (0.16 + 0.28 * (0.5 + 0.5 * Math.sin(time * 2.2 + em.phase)));
+      backCtx.beginPath();
+      backCtx.arc(em.x * w, em.y * h, em.r, 0, Math.PI * 2);
+      backCtx.fillStyle = em.bright
+        ? (isDark ? `rgba(235,65,58,${alpha * 1.2})` : `rgba(155,22,24,${alpha})`)
+        : (isDark ? `rgba(218,185,130,${alpha * 0.65})` : `rgba(80,68,60,${alpha * 0.4})`);
+      backCtx.fill();
+    });
 
-    let ghostRot = lerp(-3.5, -1.5, s1);
-    ghostRot = lerp(ghostRot, 1.6, s2);
-    ghostRot = lerp(ghostRot, -1.2, s3);
-    ghostRot = lerp(ghostRot, 3.8, s4Dip);
-    ghostRot = lerp(ghostRot, 0, s5Rise);
-    ghostRot += Math.sin(time * 1.3) * 0.8 * floatWeight + mRot;
+    if (emerge > 0.05) {
+      const r = Math.min(w * 0.23, 255) * lerp(0.82, 1.06, emerge);
+      backCtx.save();
+      backCtx.translate(stageCX + mx * 0.4, stageCY + ghostY * 0.35);
+      backCtx.rotate(time * 0.2 + p * 2.2);
+      backCtx.globalAlpha = emerge * (isDark ? 0.45 : 0.3);
+      backCtx.beginPath();
+      backCtx.setLineDash([12, 10]);
+      backCtx.arc(0, 0, r, 0, Math.PI * 2);
+      backCtx.strokeStyle = isDark ? 'rgba(210,52,52,0.65)' : 'rgba(135,24,24,0.55)';
+      backCtx.lineWidth = 1.25;
+      backCtx.stroke();
+      backCtx.restore();
+    }
 
-    // Pure GPU opacity + transform3d (ZERO filter: blur re-rasterization!)
-    const ghostOpacity = clamp(lerp(0.14, 0.62, s1) + s2 * 0.38, 0, 1);
+    // Mid Canvas (inside bowl rim): Pouring Crimson Blood Stream + Ripples
+    midCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    midCtx.clearRect(0, 0, w, h);
+    drawHeroStream(midCtx, stageCX + mx * 0.55, bowlMouthY, p, time, isDark);
 
-    ghostRig.style.transform = `translate3d(calc(-50% + ${mxPx.toFixed(1)}px), calc(-50% + ${(
-      ghostY +
-      levitateY +
-      myPx
-    ).toFixed(1)}px), 0) scale(${ghostScale.toFixed(4)}) rotate(${ghostRot.toFixed(2)}deg)`;
-    ghostRig.style.opacity = ghostOpacity.toFixed(3);
+    rafId = window.requestAnimationFrame(render);
+  }
 
-    // Clip Ghost lower body smoothly beneath the animated blood pool waterline during Stage 4!
-    const poolState = getBloodPoolState(p);
-    if (ghostMask) {
-      if (poolState.level > 0.02) {
-        const clipBottomPx = Math.max(0, stageH - (poolState.surfaceY + 14));
-        ghostMask.style.clipPath = `inset(0px 0px ${clipBottomPx.toFixed(1)}px 0px)`;
-      } else {
-        ghostMask.style.clipPath = 'none';
+  function start() {
+    if (isVisible && !REDUCED_MOTION_QUERY.matches && rafId === null) {
+      lastMs = 0;
+      rafId = window.requestAnimationFrame(render);
+    }
+  }
+
+  resize();
+  updateTarget();
+  smoothP = targetP;
+
+  window.addEventListener('resize', () => { resize(); updateTarget(); }, { passive: true });
+  window.addEventListener('load', () => { resize(); updateTarget(); }, { once: true });
+  window.addEventListener('scroll', updateTarget, { passive: true });
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((entries) => {
+      isVisible = Boolean(entries[0]?.isIntersecting);
+      start();
+    }, { threshold: 0 }).observe(section);
+  }
+  start();
+}
+
+/* ==========================================================================
+   ACT 2: POSTERS APPARITION + OPPOSING SCROLL PARALLAX + ACT 5 EDITORIAL SCRUB
+   (Unified lightweight scroll-scrubbed DOM compositor for Acts 2 & 5!)
+   ========================================================================== */
+function initScrollScrubbedSections() {
+  const postersSection = document.getElementById('posters');
+  const apparitionGhost = document.getElementById('apparition-ghost-wrap');
+  const apparitionBadge = document.getElementById('apparition-curved-badge');
+  const ringOuter = document.getElementById('apparition-ring-outer');
+  const ringInner = document.getElementById('apparition-ring-inner');
+  const apparitionEyes = document.getElementById('apparition-eyes-glow');
+
+  const aboutSection = document.getElementById('about');
+  const aboutImg = document.getElementById('about-portrait-img');
+  const accentLines = Array.from(document.querySelectorAll('[data-scroll-line]'));
+
+  let rafId = null;
+  let lastMs = 0;
+  let isPostersVis = false;
+  let isAboutVis = false;
+
+  // Trigger smooth stat count-up once when About stats enter view
+  const countEls = Array.from(document.querySelectorAll('[data-count-to]'));
+  if ('IntersectionObserver' in window && countEls.length > 0 && !REDUCED_MOTION_QUERY.matches) {
+    const countObs = new IntersectionObserver((entries, obs) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const targetVal = Number(el.dataset.countTo) || 2;
+        const pad = Number(el.dataset.pad) || 2;
+        const startT = performance.now();
+        const dur = 750;
+        const tickCount = (now) => {
+          const u = easeOutCubic(clamp((now - startT) / dur, 0, 1));
+          const val = Math.round(lerp(0, targetVal, u));
+          el.textContent = String(val).padStart(pad, '0');
+          if (u < 1) window.requestAnimationFrame(tickCount);
+        };
+        window.requestAnimationFrame(tickCount);
+        obs.unobserve(el);
+      });
+    }, { threshold: 0.4 });
+    countEls.forEach((el) => countObs.observe(el));
+  }
+
+  function updateAccentLines() {
+    const vh = window.innerHeight || 800;
+    accentLines.forEach((line) => {
+      const rect = line.getBoundingClientRect();
+      if (rect.top < vh && rect.bottom > 0) {
+        const progress = easeOutCubic(invLerp(vh - rect.top, 40, vh * 0.55));
+        line.style.transform = `scaleX(${lerp(0.22, 1.0, progress).toFixed(3)})`;
+      }
+    });
+  }
+
+  function renderFrame(nowMs) {
+    rafId = null;
+    if (REDUCED_MOTION_QUERY.matches) return;
+
+    if (!lastMs) lastMs = nowMs;
+    const dt = Math.min(0.05, Math.max(0.001, (nowMs - lastMs) / 1000));
+    lastMs = nowMs;
+    const time = nowMs * 0.001;
+    const vh = window.innerHeight || 800;
+    const isDesktop = (window.innerWidth || 1200) > 860;
+
+    MouseState.update(dt);
+
+    // Act 2: Ghost Apparition + Curved Orbital Badge + Opposing Poster Parallax
+    if (isPostersVis && postersSection) {
+      const rect = postersSection.getBoundingClientRect();
+      const prog = invLerp(vh - rect.top, 0, rect.height + vh);
+
+      if (apparitionGhost) {
+        const riseY = lerp(52, -38, easeInOutSine(invLerp(prog, 0.0, 0.65)));
+        const levitate = Math.sin(time * 1.9) * 7;
+        const rot = lerp(-3.5, 2.5, prog) + (isDesktop ? MouseState.sx * 2.0 : 0);
+        const mx = isDesktop ? MouseState.sx * 10 : 0;
+        const op = clamp(invLerp(prog, 0.02, 0.22), 0.15, 1);
+        apparitionGhost.style.transform = `translate3d(${mx.toFixed(1)}px, ${(riseY + levitate).toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg)`;
+        apparitionGhost.style.opacity = op.toFixed(3);
+      }
+
+      if (apparitionEyes) {
+        apparitionEyes.style.opacity = (0.55 + 0.4 * Math.sin(time * 3.0)).toFixed(3);
+      }
+
+      if (apparitionBadge) {
+        const badgeRot = lerp(-10, 10, prog) + Math.sin(time * 0.85) * 2.0;
+        apparitionBadge.style.transform = `translate3d(-50%, -50%, 0) rotate(${badgeRot.toFixed(2)}deg)`;
+      }
+
+      if (ringOuter) {
+        ringOuter.style.transform = `translate3d(-50%, -50%, 0) rotate(${(time * 10 + prog * 70).toFixed(1)}deg)`;
+      }
+      if (ringInner) {
+        ringInner.style.transform = `translate3d(-50%, -50%, 0) rotate(${(-time * 14 - prog * 95).toFixed(1)}deg)`;
+      }
+
+      // Opposing Dual-Column Parallax on Poster Cards (Desktop 2-col)
+      if (isDesktop) {
+        const cards = postersSection.querySelectorAll('.poster-card');
+        const centerOffset = clamp((rect.top + rect.height * 0.55 - vh * 0.5) / vh, -1, 1);
+        cards.forEach((card, i) => {
+          const dir = i % 2 === 0 ? -1 : 1;
+          const shiftY = centerOffset * 26 * dir;
+          card.style.transform = `translate3d(0, ${shiftY.toFixed(1)}px, 0)`;
+        });
       }
     }
 
-    // Ghost Crimson Aura & Pulsing Red Eyes Glow
-    const eyePulse = 0.5 + 0.5 * Math.sin(time * 3.1);
-    const eyeStrength = clamp(s2 * 0.85 + s5Rise * 0.35, 0, 1) * (0.6 + eyePulse * 0.4);
-    if (ghostEyes) ghostEyes.style.opacity = eyeStrength.toFixed(3);
-    if (ghostAura) {
-      const auraOp = clamp(s2 * 0.45 + s3 * 0.35 + s5Rise * 0.35, 0, isDark ? 1 : 0.65);
-      ghostAura.style.opacity = auraOp.toFixed(3);
-    }
-    if (crimsonHalo) {
-      const haloOp = clamp(0.18 + s2 * 0.35 + s4Dip * 0.35, 0, isDark ? 0.92 : 0.48);
-      crimsonHalo.style.opacity = haloOp.toFixed(3);
-      crimsonHalo.style.transform = `translate3d(-50%, -50%, 0) scale(${(0.88 + s4Dip * 0.25).toFixed(3)})`;
+    // Act 5: Director Portrait Scroll-Scrubbed Ken Burns Zoom
+    if (isAboutVis && aboutSection && aboutImg) {
+      const rect = aboutSection.getBoundingClientRect();
+      const prog = invLerp(vh - rect.top, 0, rect.height + vh);
+      const zoomScale = lerp(1.15, 1.0, easeOutCubic(prog));
+      const panY = lerp(-14, 14, prog);
+      aboutImg.style.transform = `translate3d(0, ${panY.toFixed(1)}px, 0) scale(${zoomScale.toFixed(4)})`;
     }
 
-    /* ------------------------------------------------------------------
-       C. CURVED ORBITAL TEXT BADGE (Stage 3: Framing cleanly outside crown & shoulders)
-       ------------------------------------------------------------------ */
-    if (curvedBadge) {
-      const badgeIn = easeOutCubic(invLerp(p, 0.44, 0.53));
-      const badgeOut = 1 - easeInOutCubic(invLerp(p, 0.60, 0.67));
-      const badgeOp = badgeIn * badgeOut;
-      const badgeRot = lerp(-8, 8, invLerp(p, 0.44, 0.65)) + Math.sin(time * 0.9) * 2.2;
-      const badgeScale = lerp(0.88, 1.0, badgeIn);
-      curvedBadge.style.opacity = badgeOp.toFixed(3);
-      curvedBadge.style.transform = `translate3d(calc(-50% + ${(mxPx * 0.6).toFixed(
-        1
-      )}px), calc(-50% + ${(myPx * 0.5).toFixed(1)}px), 0) scale(${badgeScale.toFixed(
-        3
-      )}) rotate(${badgeRot.toFixed(2)}deg)`;
-    }
-
-    /* ------------------------------------------------------------------
-       D. SMART LAZY-DRAWN TRIPLE CANVASES (Only draws active stage layers!)
-       ------------------------------------------------------------------ */
-    backCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    backCtx.clearRect(0, 0, stageW, stageH);
-
-    // Back Canvas (z=1): Embers + Occult Vortex + Blood Pool Back + Stage 5 Back Ribbons
-    drawAmbientEmbers(backCtx, p, time, dt, isDark);
-    drawOccultVortex(backCtx, stageCenterX + mxPx * 0.4, stageCenterY + ghostY * 0.35, p, time, isDark);
-    drawBloodPoolBack(backCtx, poolState, p, time);
-    drawOrbitingRibbons(backCtx, stageCenterX + mxPx, stageCenterY + ghostY + levitateY, p, time, 'back', isDark);
-
-    // Mid Canvas (z=2, inside silver bowl): ONLY redraw during Stages 1–2 (p < 0.49)!
-    if (p < 0.49) {
-      midCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      midCtx.clearRect(0, 0, stageW, stageH);
-      drawPouringStream(midCtx, stageCenterX + mxPx * 0.55, bowlMouthY, p, time, isDark);
-      midHasContent = true;
-    } else if (midHasContent) {
-      midCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      midCtx.clearRect(0, 0, stageW, stageH);
-      midHasContent = false;
-    }
-
-    // Front Canvas (z=5, Blood Pool Foreground + Stage 5 Front Ribbons): ONLY redraw when p > 0.59!
-    if (p > 0.59) {
-      frontCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      frontCtx.clearRect(0, 0, stageW, stageH);
-      drawBloodPoolFront(frontCtx, stageCenterX + mxPx, poolState, p, velocity, time, isDark);
-      drawOrbitingRibbons(frontCtx, stageCenterX + mxPx, stageCenterY + ghostY + levitateY, p, time, 'front', isDark);
-      frontHasContent = true;
-    } else if (frontHasContent) {
-      frontCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      frontCtx.clearRect(0, 0, stageW, stageH);
-      frontHasContent = false;
-    }
-
-    rafId = window.requestAnimationFrame(renderFrame);
-  }
-
-  function ensureLoop() {
-    if (isStageVisible && !REDUCED_MOTION_QUERY.matches && rafId === null) {
-      lastFrameMs = 0;
+    if (isPostersVis || isAboutVis) {
       rafId = window.requestAnimationFrame(renderFrame);
     }
   }
 
-  resizeStage();
-  computeTargetScrollProgress();
-  smoothP = targetP;
-
-  window.addEventListener('resize', () => {
-    resizeStage();
-    computeTargetScrollProgress();
-  }, { passive: true });
-
-  window.addEventListener('load', () => {
-    resizeStage();
-    computeTargetScrollProgress();
-  }, { once: true });
-
-  window.addEventListener('scroll', computeTargetScrollProgress, { passive: true });
-
-  if ('IntersectionObserver' in window) {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        isStageVisible = Boolean(entries[0]?.isIntersecting);
-        ensureLoop();
-      },
-      { threshold: 0 }
-    );
-    obs.observe(showcase);
+  function ensureLoop() {
+    if ((isPostersVis || isAboutVis) && !REDUCED_MOTION_QUERY.matches && rafId === null) {
+      lastMs = 0;
+      rafId = window.requestAnimationFrame(renderFrame);
+    }
   }
 
-  ensureLoop();
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.target === postersSection) isPostersVis = entry.isIntersecting;
+        if (entry.target === aboutSection) isAboutVis = entry.isIntersecting;
+      });
+      ensureLoop();
+    }, { threshold: 0 });
+    if (postersSection) obs.observe(postersSection);
+    if (aboutSection) obs.observe(aboutSection);
+  }
+
+  window.addEventListener('scroll', () => {
+    window.requestAnimationFrame(updateAccentLines);
+  }, { passive: true });
+  updateAccentLines();
 }
 
 /* ==========================================================================
-   2. GLOBAL SCROLL PROGRESS BAR (Cached maxScroll — ZERO layout reflow!)
+   ACT 3: OFFICIAL TEASERS — DIPPED IN CRIMSON BLOOD POOL STAGE
+   ========================================================================== */
+function initAct3TeasersBloodPool() {
+  const section = document.getElementById('teasers');
+  const banner = document.getElementById('teaser-blood-stage');
+  const backCanvas = document.getElementById('teaser-blood-back');
+  const frontCanvas = document.getElementById('teaser-blood-front');
+  const ghostMask = document.getElementById('teaser-ghost-mask');
+  const ghostRig = document.getElementById('teaser-ghost-rig');
+  const ghostEyes = document.getElementById('teaser-eyes-glow');
+
+  if (!section || !banner || !backCanvas || !frontCanvas || !ghostRig) return;
+  const backCtx = backCanvas.getContext('2d', { alpha: true });
+  const frontCtx = frontCanvas.getContext('2d', { alpha: true });
+  if (!backCtx || !frontCtx) return;
+
+  let w = 1280, h = 520, dpr = 1;
+  let isVisible = false, rafId = null, lastMs = 0;
+  let smoothProg = 0.5, prevProg = 0.5;
+
+  const droplets = Array.from({ length: 14 }, (_, i) => ({
+    angle: -Math.PI * 0.86 + (i / 13) * Math.PI * 0.72,
+    dist: 0.35 + Math.random() * 0.65,
+    size: 2.2 + Math.random() * 4.0,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.75 + Math.random() * 0.8
+  }));
+
+  function resize() {
+    const rect = banner.getBoundingClientRect();
+    w = Math.max(1, Math.round(rect.width));
+    h = Math.max(1, Math.round(rect.height));
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    backCanvas.width = Math.round(w * dpr);
+    backCanvas.height = Math.round(h * dpr);
+    frontCanvas.width = Math.round(w * dpr);
+    frontCanvas.height = Math.round(h * dpr);
+  }
+
+  function render(nowMs) {
+    rafId = null;
+    if (!isVisible || REDUCED_MOTION_QUERY.matches) return;
+
+    if (!lastMs) lastMs = nowMs;
+    const dt = Math.min(0.05, Math.max(0.001, (nowMs - lastMs) / 1000));
+    lastMs = nowMs;
+    const time = nowMs * 0.001;
+
+    const vh = window.innerHeight || 800;
+    const rect = banner.getBoundingClientRect();
+    const targetProg = invLerp(vh - rect.top, 0, rect.height + vh * 0.85);
+    smoothProg += (targetProg - smoothProg) * (1 - Math.exp(-10 * dt));
+    const vel = (smoothProg - prevProg) / Math.max(0.016, dt) * 0.016;
+    prevProg = smoothProg;
+
+    const isMobile = w <= 860;
+    const isDark = document.documentElement.classList.contains('cinema-mode');
+    const ghostCX = isMobile ? w * 0.5 : w * 0.69;
+    const surfaceY = h * (isMobile ? 0.68 : 0.66);
+
+    // Ghost dips deep into the glossy crimson pool and rises dramatically as you scroll!
+    const dipArc = Math.sin(clamp(smoothProg, 0, 1) * Math.PI);
+    const ghostShiftY = lerp(175, 42, dipArc) + Math.sin(time * 1.8) * 6;
+    const ghostRot = lerp(-3.5, 2.5, smoothProg);
+    ghostRig.style.transform = `translate3d(0, ${ghostShiftY.toFixed(1)}px, 0) rotate(${ghostRot.toFixed(2)}deg)`;
+
+    if (ghostEyes) ghostEyes.style.opacity = (0.55 + 0.4 * Math.sin(time * 3.1)).toFixed(3);
+
+    // Clip Ghost lower torso smoothly right at the crimson wave line
+    if (ghostMask) {
+      const maskRect = ghostMask.getBoundingClientRect();
+      const bannerRect = banner.getBoundingClientRect();
+      const waterlineInMask = (bannerRect.top + surfaceY + 12) - maskRect.top;
+      const clipBot = Math.max(0, maskRect.height - waterlineInMask);
+      ghostMask.style.clipPath = `inset(0px 0px ${clipBot.toFixed(1)}px 0px)`;
+    }
+
+    // Teaser cards subtle scroll scale-in
+    const cards = section.querySelectorAll('.teaser-card');
+    cards.forEach((card, i) => {
+      const cRect = card.getBoundingClientRect();
+      const cp = easeOutCubic(invLerp(vh - cRect.top, -20, vh * 0.52));
+      const sc = lerp(0.94, 1.0, cp);
+      const ty = lerp(26 + i * 10, 0, cp);
+      card.style.transform = `translate3d(0, ${ty.toFixed(1)}px, 0) scale(${sc.toFixed(4)})`;
+    });
+
+    // Draw Back Liquid Horizon
+    backCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    backCtx.clearRect(0, 0, w, h);
+    const backY = surfaceY - 16;
+    const backGrad = backCtx.createLinearGradient(0, backY, 0, h);
+    backGrad.addColorStop(0, '#2e0406');
+    backGrad.addColorStop(0.5, '#4d080c');
+    backGrad.addColorStop(1, '#130203');
+    backCtx.beginPath();
+    backCtx.moveTo(0, h + 4);
+    for (let x = 0; x <= w + 24; x += 24) {
+      const wy = Math.sin(x * 0.007 + time * 1.5) * 7 + Math.cos(x * 0.013 - time * 1.1) * 3.5;
+      backCtx.lineTo(x, backY + wy);
+    }
+    backCtx.lineTo(w + 24, h + 4);
+    backCtx.closePath();
+    backCtx.fillStyle = backGrad;
+    backCtx.fill();
+
+    // Draw Front Glossy Liquid Blood Wave + Ripples + Arcing Droplets
+    frontCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    frontCtx.clearRect(0, 0, w, h);
+
+    const waveBoost = 1 + Math.min(Math.abs(vel) * 20, 1.6);
+    const pts = [];
+    for (let x = 0; x <= w + 18; x += 18) {
+      const d = Math.abs(x - ghostCX);
+      const ripple = Math.exp(-d / (w * 0.24)) * Math.cos(d * 0.032 - time * 5.0 - smoothProg * 14) * 8 * waveBoost;
+      const amb = Math.sin(x * 0.0085 - time * 2.0) * 7.5 + Math.sin(x * 0.018 + time * 1.3) * 3;
+      pts.push([x, surfaceY + amb + ripple]);
+    }
+
+    const bodyGrad = frontCtx.createLinearGradient(0, surfaceY - 10, 0, h);
+    bodyGrad.addColorStop(0, '#7c0f15');
+    bodyGrad.addColorStop(0.2, '#54080d');
+    bodyGrad.addColorStop(0.65, '#260306');
+    bodyGrad.addColorStop(1, '#130203');
+
+    frontCtx.beginPath();
+    frontCtx.moveTo(0, h + 6);
+    pts.forEach(([x, y]) => frontCtx.lineTo(x, y));
+    frontCtx.lineTo(w + 18, h + 6);
+    frontCtx.closePath();
+    frontCtx.fillStyle = bodyGrad;
+    frontCtx.fill();
+
+    // Specular wet glass crest
+    frontCtx.beginPath();
+    pts.forEach(([x, y], i) => {
+      if (i === 0) frontCtx.moveTo(x, y + 1);
+      else frontCtx.lineTo(x, y + 1);
+    });
+    const rimGrad = frontCtx.createLinearGradient(ghostCX - w * 0.32, 0, ghostCX + w * 0.32, 0);
+    rimGrad.addColorStop(0, 'rgba(255,160,155,0.06)');
+    rimGrad.addColorStop(0.45, isDark ? 'rgba(255,120,120,0.85)' : 'rgba(255,225,220,0.78)');
+    rimGrad.addColorStop(1, 'rgba(255,160,155,0.06)');
+    frontCtx.strokeStyle = rimGrad;
+    frontCtx.lineWidth = 2.4;
+    frontCtx.stroke();
+
+    // Concentric elliptical ripples around submerged Ghost
+    for (let r = 0; r < 4; r++) {
+      const rp = (time * 0.62 + r * 0.25 + smoothProg * 2.4) % 1;
+      const rx = 48 + rp * Math.min(w * 0.23, 240);
+      const ry = rx * 0.16;
+      frontCtx.beginPath();
+      frontCtx.ellipse(ghostCX, surfaceY + 12 + rp * 16, rx, ry, 0, 0, Math.PI * 2);
+      frontCtx.strokeStyle = `rgba(255, 190, 185, ${(1 - rp) * 0.42})`;
+      frontCtx.lineWidth = 1.6 * (1 - rp * 0.45);
+      frontCtx.stroke();
+    }
+
+    // Glossy splashing crimson droplets
+    droplets.forEach((d) => {
+      const cyc = (time * d.speed * 0.55 + d.phase) % 1;
+      const dx = ghostCX + Math.cos(d.angle) * d.dist * Math.min(w * 0.18, 175) * (0.45 + cyc * 0.8);
+      const dy = surfaceY + 4 - Math.sin(cyc * Math.PI) * (48 + d.dist * 68);
+      const a = Math.sin(cyc * Math.PI) * 0.8;
+      frontCtx.beginPath();
+      frontCtx.arc(dx, dy, d.size * (1 - cyc * 0.3), 0, Math.PI * 2);
+      frontCtx.fillStyle = `rgba(155, 18, 24, ${a})`;
+      frontCtx.fill();
+    });
+
+    rafId = window.requestAnimationFrame(render);
+  }
+
+  function start() {
+    if (isVisible && !REDUCED_MOTION_QUERY.matches && rafId === null) {
+      lastMs = 0;
+      rafId = window.requestAnimationFrame(render);
+    }
+  }
+
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+  window.addEventListener('load', resize, { once: true });
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((entries) => {
+      isVisible = Boolean(entries[0]?.isIntersecting);
+      start();
+    }, { threshold: 0 }).observe(section);
+  }
+}
+
+/* ==========================================================================
+   ACT 4: FEATURED PROJECT — DUAL-THEME 3D RIBBONS & SPARKS SPOTLIGHT!
+   (Smoothly morphs between Horror Crimson Blood Ribbons <-> War Gold Flame Sparks!)
+   ========================================================================== */
+function initAct4FeaturedDualTheme() {
+  const section = document.getElementById('featured');
+  const backCanvas = document.getElementById('featured-canvas-back');
+  const frontCanvas = document.getElementById('featured-canvas-front');
+  if (!section || !backCanvas || !frontCanvas) return;
+
+  const backCtx = backCanvas.getContext('2d', { alpha: true });
+  const frontCtx = frontCanvas.getContext('2d', { alpha: true });
+  if (!backCtx || !frontCtx) return;
+
+  let bw = 1280, bh = 720, fw = 1200, fh = 600, dpr = 1;
+  let isVisible = false, rafId = null, lastMs = 0;
+  let targetTheme = 0; // 0 = horror crimson, 1 = war molten gold
+  let smoothTheme = 0;
+
+  setFeaturedCanvasTheme = (themeName) => {
+    targetTheme = themeName === 'war' ? 1 : 0;
+    section.dataset.movieTheme = themeName === 'war' ? 'war' : 'horror';
+  };
+
+  const sparks = Array.from({ length: 34 }, (_, i) => ({
+    x: Math.random(),
+    y: Math.random(),
+    r: 1.3 + Math.random() * 2.8,
+    vy: 0.04 + Math.random() * 0.09,
+    vx: (Math.random() - 0.5) * 0.05,
+    phase: Math.random() * Math.PI * 2,
+    isHero: i % 2 === 0
+  }));
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const bRect = section.getBoundingClientRect();
+    bw = Math.max(1, Math.round(bRect.width));
+    bh = Math.max(1, Math.round(bRect.height));
+    backCanvas.width = Math.round(bw * dpr);
+    backCanvas.height = Math.round(bh * dpr);
+
+    const shell = frontCanvas.parentElement;
+    if (shell) {
+      const fRect = shell.getBoundingClientRect();
+      fw = Math.max(1, Math.round(fRect.width));
+      fh = Math.max(1, Math.round(fRect.height));
+      frontCanvas.width = Math.round(fw * dpr);
+      frontCanvas.height = Math.round(fh * dpr);
+    }
+  }
+
+  function render(nowMs) {
+    rafId = null;
+    if (!isVisible || REDUCED_MOTION_QUERY.matches) return;
+
+    if (!lastMs) lastMs = nowMs;
+    const dt = Math.min(0.05, Math.max(0.001, (nowMs - lastMs) / 1000));
+    lastMs = nowMs;
+    const time = nowMs * 0.001;
+    const isDark = document.documentElement.classList.contains('cinema-mode');
+
+    // Smoothly morph palette between Crimson Horror (0) and Molten War Gold (1)!
+    smoothTheme += (targetTheme - smoothTheme) * (1 - Math.exp(-5.5 * dt));
+    const t = smoothTheme;
+
+    const palette = {
+      deep: lerpRGB([56, 5, 8], [88, 42, 6], t),
+      dark: lerpRGB([96, 10, 14], [148, 86, 16], t),
+      mid: lerpRGB([148, 18, 24], [198, 126, 28], t),
+      bright: lerpRGB([198, 32, 38], [248, 194, 84], t),
+      fadeEdge: lerpRGB([55, 5, 8], [95, 52, 10], t, 0.16),
+      specular: lerpRGB([255, 195, 190], [255, 244, 196], t, isDark ? 0.52 : 0.6)
+    };
+
+    // Subtle scroll-scrubbed parallax on Featured Poster
+    const posterWrap = document.getElementById('featured-parallax');
+    if (posterWrap) {
+      const sRect = section.getBoundingClientRect();
+      const vh = window.innerHeight || 800;
+      const delta = clamp((sRect.top + sRect.height * 0.5 - vh * 0.5) / vh, -1, 1);
+      posterWrap.style.transform = `translate3d(0, ${(delta * -22).toFixed(1)}px, 0)`;
+    }
+
+    // Back Canvas: Ambient Theme Glow + Drifting Sparks/Embers + Back 3D Ribbons
+    backCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    backCtx.clearRect(0, 0, bw, bh);
+
+    const isWide = bw > 860;
+    const posterCX = isWide ? bw * 0.25 : bw * 0.5;
+    const posterCY = isWide ? bh * 0.58 : bh * 0.36;
+    const ribbonR = Math.min(bw * (isWide ? 0.21 : 0.4), 250);
+
+    // Theme Ambient Radial Halo behind Featured Poster
+    const haloGrad = backCtx.createRadialGradient(posterCX, posterCY, 20, posterCX, posterCY, ribbonR * 1.45);
+    haloGrad.addColorStop(0, lerpRGB([155, 22, 26], [218, 146, 36], t, isDark ? 0.28 : 0.15));
+    haloGrad.addColorStop(0.55, lerpRGB([120, 14, 18], [180, 96, 20], t, isDark ? 0.1 : 0.05));
+    haloGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    backCtx.fillStyle = haloGrad;
+    backCtx.fillRect(0, 0, bw, bh);
+
+    // Rising Embers (Red Mist in Horror Mode -> Hot Golden War Sparks in War Mode!)
+    const speedBoost = lerp(0.85, 1.85, t);
+    sparks.forEach((sp) => {
+      sp.y -= sp.vy * dt * speedBoost;
+      sp.x += (sp.vx + Math.sin(time * (1.2 + t) + sp.phase) * 0.02) * dt;
+      if (sp.y < -0.04) { sp.y = 1.04; sp.x = Math.random(); }
+      if (sp.x < 0) sp.x = 1;
+      if (sp.x > 1) sp.x = 0;
+
+      const flick = 0.5 + 0.5 * Math.sin(time * (2.6 + t * 2) + sp.phase);
+      const alpha = (0.18 + flick * 0.45) * (isDark ? 1.15 : 0.9);
+      backCtx.beginPath();
+      // In war mode, draw stretched fiery spark streaks; in horror mode, eerie round embers
+      if (t > 0.5 && sp.isHero) {
+        backCtx.ellipse(sp.x * bw, sp.y * bh, sp.r * 0.65, sp.r * 2.1, 0.25, 0, Math.PI * 2);
+      } else {
+        backCtx.arc(sp.x * bw, sp.y * bh, sp.r, 0, Math.PI * 2);
+      }
+      backCtx.fillStyle = sp.isHero
+        ? lerpRGB([210, 38, 42], [250, 182, 58], t, alpha)
+        : lerpRGB([140, 22, 26], [230, 108, 28], t, alpha * 0.8);
+      backCtx.fill();
+    });
+
+    draw3DOrbitRibbons(backCtx, posterCX, posterCY, ribbonR, 0.92, time, 'back', palette, isDark);
+
+    // Front Canvas: Delicate Foreground 3D Ribbon Crossing Lower Poster Corner (stays clear of text column)
+    frontCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    frontCtx.clearRect(0, 0, fw, fh);
+    const fCX = isWide ? fw * 0.2 : fw * 0.5;
+    const fCY = isWide ? fh * 0.6 : fh * 0.26;
+    draw3DOrbitRibbons(frontCtx, fCX, fCY, Math.min(fw * 0.19, 225), 0.88, time, 'front', palette, isDark);
+
+    rafId = window.requestAnimationFrame(render);
+  }
+
+  function start() {
+    if (isVisible && !REDUCED_MOTION_QUERY.matches && rafId === null) {
+      lastMs = 0;
+      rafId = window.requestAnimationFrame(render);
+    }
+  }
+
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+  window.addEventListener('load', resize, { once: true });
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((entries) => {
+      isVisible = Boolean(entries[0]?.isIntersecting);
+      start();
+    }, { threshold: 0 }).observe(section);
+  }
+}
+
+/* ==========================================================================
+   ACT 6: CONTACT & LEVITATING GHOST FINALE (3D Ribbons + Embers)
+   ========================================================================== */
+function initAct6ContactFinale() {
+  const section = document.getElementById('contact');
+  const backCanvas = document.getElementById('finale-canvas-back');
+  const frontCanvas = document.getElementById('finale-canvas-front');
+  const ghostRig = document.getElementById('finale-ghost-rig');
+  const ghostEyes = document.getElementById('finale-eyes-glow');
+
+  if (!section || !backCanvas || !frontCanvas || !ghostRig) return;
+  const backCtx = backCanvas.getContext('2d', { alpha: true });
+  const frontCtx = frontCanvas.getContext('2d', { alpha: true });
+  if (!backCtx || !frontCtx) return;
+
+  let w = 1280, h = 680, dpr = 1;
+  let isVisible = false, rafId = null, lastMs = 0;
+
+  const embers = Array.from({ length: 24 }, (_, i) => ({
+    x: 0.45 + Math.random() * 0.52,
+    y: Math.random(),
+    r: 1.2 + Math.random() * 2.4,
+    vy: 0.03 + Math.random() * 0.065,
+    phase: Math.random() * Math.PI * 2,
+    bright: i % 2 === 0
+  }));
+
+  function resize() {
+    const rect = section.getBoundingClientRect();
+    w = Math.max(1, Math.round(rect.width));
+    h = Math.max(1, Math.round(rect.height));
+    dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    backCanvas.width = Math.round(w * dpr);
+    backCanvas.height = Math.round(h * dpr);
+    frontCanvas.width = Math.round(w * dpr);
+    frontCanvas.height = Math.round(h * dpr);
+  }
+
+  function render(nowMs) {
+    rafId = null;
+    if (!isVisible || REDUCED_MOTION_QUERY.matches) return;
+
+    if (!lastMs) lastMs = nowMs;
+    const dt = Math.min(0.05, Math.max(0.001, (nowMs - lastMs) / 1000));
+    lastMs = nowMs;
+    const time = nowMs * 0.001;
+    const isDark = document.documentElement.classList.contains('cinema-mode');
+    const isWide = w >= 960;
+
+    MouseState.update(dt);
+
+    const vh = window.innerHeight || 800;
+    const rect = section.getBoundingClientRect();
+    const enterP = easeOutCubic(invLerp(vh - rect.top, 40, vh * 0.72));
+
+    // Gentle weightless levitation + subtle mouse 3D tilt (never overlaps Contact Card on left!)
+    const levY = Math.sin(time * 1.85) * 9;
+    const slideY = lerp(55, 0, enterP);
+    const mx = isWide ? MouseState.sx * 10 : 0;
+    const rot = (isWide ? MouseState.sx * 2.0 : 0) + Math.sin(time * 1.2) * 0.9;
+
+    ghostRig.style.transform = `translate3d(${mx.toFixed(1)}px, ${(slideY + levY).toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg)`;
+    ghostRig.style.opacity = clamp(0.18 + enterP * 0.82, 0, 1).toFixed(3);
+    if (ghostEyes) ghostEyes.style.opacity = (0.55 + 0.4 * Math.sin(time * 3.0)).toFixed(3);
+
+    const gCX = isWide ? w * 0.74 + mx : w * 0.5;
+    const gCY = isWide ? h * 0.56 + levY : h * 0.74 + levY;
+    const rScale = Math.min(w * (isWide ? 0.19 : 0.34), 240);
+
+    const crimsonPalette = {
+      deep: '#3b0508',
+      dark: '#5c090e',
+      mid: '#8f1319',
+      bright: '#b81d24',
+      fadeEdge: 'rgba(55,5,8,0.18)',
+      specular: isDark ? 'rgba(255,175,170,0.45)' : 'rgba(255,225,220,0.55)'
+    };
+
+    backCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    backCtx.clearRect(0, 0, w, h);
+
+    embers.forEach((em) => {
+      em.y -= em.vy * dt;
+      if (em.y < -0.05) { em.y = 1.05; em.x = isWide ? 0.48 + Math.random() * 0.48 : Math.random(); }
+      const alpha = (0.15 + 0.32 * (0.5 + 0.5 * Math.sin(time * 2.3 + em.phase))) * enterP;
+      backCtx.beginPath();
+      backCtx.arc(em.x * w, em.y * h, em.r, 0, Math.PI * 2);
+      backCtx.fillStyle = em.bright
+        ? (isDark ? `rgba(235,65,58,${alpha * 1.2})` : `rgba(155,22,24,${alpha})`)
+        : (isDark ? `rgba(218,185,130,${alpha * 0.65})` : `rgba(80,68,60,${alpha * 0.45})`);
+      backCtx.fill();
+    });
+
+    draw3DOrbitRibbons(backCtx, gCX, gCY, rScale, enterP * 0.92, time, 'back', crimsonPalette, isDark);
+
+    frontCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    frontCtx.clearRect(0, 0, w, h);
+    draw3DOrbitRibbons(frontCtx, gCX, gCY, rScale, enterP * 0.92, time, 'front', crimsonPalette, isDark);
+
+    rafId = window.requestAnimationFrame(render);
+  }
+
+  function start() {
+    if (isVisible && !REDUCED_MOTION_QUERY.matches && rafId === null) {
+      lastMs = 0;
+      rafId = window.requestAnimationFrame(render);
+    }
+  }
+
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+  window.addEventListener('load', resize, { once: true });
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((entries) => {
+      isVisible = Boolean(entries[0]?.isIntersecting);
+      start();
+    }, { threshold: 0 }).observe(section);
+  }
+}
+
+/* ==========================================================================
+   GLOBAL HEADER PROGRESS BAR (Cached maxScroll — ZERO layout reflow!)
    ========================================================================== */
 function initHeaderProgress() {
   const bar = document.getElementById('header-progress');
@@ -1111,14 +1286,8 @@ function initHeaderProgress() {
   };
 
   recalc();
-  window.addEventListener('resize', () => {
-    recalc();
-    update();
-  }, { passive: true });
-  window.addEventListener('load', () => {
-    recalc();
-    update();
-  }, { once: true });
+  window.addEventListener('resize', () => { recalc(); update(); }, { passive: true });
+  window.addEventListener('load', () => { recalc(); update(); }, { once: true });
 
   window.addEventListener(
     'scroll',
@@ -1134,7 +1303,7 @@ function initHeaderProgress() {
 }
 
 /* ==========================================================================
-   3. POSTER GALLERY + TEASERS + FEATURED SPOTLIGHT
+   PORTFOLIO RENDERING: POSTERS, TEASERS, FEATURED SPOTLIGHT
    ========================================================================== */
 function getGridColumnCount(gridEl) {
   if (!gridEl) return 1;
@@ -1148,8 +1317,7 @@ function applyPosterStagger(gridEl) {
   const colCount = getGridColumnCount(gridEl);
   gridEl.querySelectorAll('.poster-card').forEach((card, index) => {
     if (!card.classList.contains('is-visible')) {
-      const colIndex = index % colCount;
-      card.style.setProperty('--reveal-delay', `${100 + colIndex * 160}ms`);
+      card.style.setProperty('--reveal-delay', `${100 + (index % colCount) * 160}ms`);
     }
   });
 }
@@ -1182,11 +1350,7 @@ function renderPosterGallery(movies) {
           <div class="poster-overlay">
             <p class="poster-meta">${escapeHTML(movie.genre)} &bull; ${escapeHTML(movie.year)}</p>
             <h3 class="poster-title">${escapeHTML(movie.title)}</h3>
-            ${
-              movie.englishTitle
-                ? `<p class="poster-subtitle-en">${escapeHTML(movie.englishTitle)}</p>`
-                : ''
-            }
+            ${movie.englishTitle ? `<p class="poster-subtitle-en">${escapeHTML(movie.englishTitle)}</p>` : ''}
           </div>
         </button>
       </article>
@@ -1253,10 +1417,8 @@ function renderTeaserSection(movies) {
 
   const teasers = movies.filter((movie) => Boolean(movie.teaserPath));
   list.innerHTML = teasers
-    .map((movie, index) => {
-      const baseDelay = 100 + index * 180;
-      return `
-      <article class="teaser-card reveal" data-reveal="fade-up" style="--reveal-delay: ${baseDelay}ms">
+    .map((movie, index) => `
+      <article class="teaser-card reveal" data-reveal="fade-up" style="--reveal-delay: ${80 + index * 160}ms">
         <div
           class="teaser-media"
           data-video-type="${escapeHTML(movie.teaserType || 'mp4')}"
@@ -1284,8 +1446,7 @@ function renderTeaserSection(movies) {
           <p class="teaser-synopsis">${escapeHTML(movie.synopsis)}</p>
         </div>
       </article>
-      `;
-    })
+    `)
     .join('');
 
   list.addEventListener('click', (event) => {
@@ -1300,6 +1461,7 @@ function renderTeaserSection(movies) {
 function renderFeaturedProject(movies, selectedIndex) {
   const container = document.getElementById('featured-project');
   const switcher = document.getElementById('featured-switcher');
+  const themeBadge = document.getElementById('featured-theme-badge');
   if (!container || movies.length === 0) return;
 
   const defaultIndex = Math.max(0, movies.findIndex((m) => Boolean(m.featured)));
@@ -1309,6 +1471,13 @@ function renderFeaturedProject(movies, selectedIndex) {
       : defaultIndex;
   const isSwitchAction = typeof selectedIndex === 'number';
   const movie = movies[featuredIndex];
+
+  // Morph Dual-Theme 3D Ribbons & Sparks Canvas immediately!
+  const movieTheme = movie.theme === 'war' ? 'war' : 'horror';
+  setFeaturedCanvasTheme(movieTheme);
+  if (themeBadge) {
+    themeBadge.textContent = movie.themeLabel || (movieTheme === 'war' ? 'GOLDEN WAR FLAME THEME' : 'CRIMSON HORROR THEME');
+  }
 
   if (switcher) {
     switcher.innerHTML = movies
@@ -1338,15 +1507,11 @@ function renderFeaturedProject(movies, selectedIndex) {
     }
   }
 
-  const lines =
-    Array.isArray(movie.synopsisLines) && movie.synopsisLines.length > 0
-      ? movie.synopsisLines
-      : [movie.synopsis];
-
+  const lines = Array.isArray(movie.synopsisLines) && movie.synopsisLines.length > 0 ? movie.synopsisLines : [movie.synopsis];
   const synopsisMarkup = lines
     .map(
       (line, idx) => `
-      <p class="featured-synopsis-line reveal" data-reveal="fade-up" style="--reveal-delay: ${240 + idx * 120}ms">
+      <p class="featured-synopsis-line reveal" data-reveal="fade-up" style="--reveal-delay: ${200 + idx * 110}ms">
         ${escapeHTML(line)}
       </p>
     `
@@ -1370,28 +1535,32 @@ function renderFeaturedProject(movies, selectedIndex) {
     )
     .join('');
 
+  const ctaClass = movieTheme === 'war' ? 'pill-btn--gold' : 'pill-btn--crimson';
+
   container.innerHTML = `
     <div class="featured-poster-reveal reveal" data-reveal="zoom-in">
-      <button type="button" class="featured-poster-btn" id="featured-poster-trigger" aria-label="ขยายดูโปสเตอร์ ${escapeHTML(movie.title)}">
-        <img
-          src="${escapeHTML(safeAssetUrl(movie.posterPath))}"
-          alt="${escapeHTML(movie.posterAlt || `โปสเตอร์ภาพยนตร์ ${movie.title}`)}"
-          width="800"
-          height="1200"
-          loading="lazy"
-          decoding="async"
-          class="featured-poster-img"
-        />
-      </button>
+      <div class="featured-poster-parallax" id="featured-parallax">
+        <button type="button" class="featured-poster-btn" id="featured-poster-trigger" aria-label="ขยายดูโปสเตอร์ ${escapeHTML(movie.title)}">
+          <img
+            src="${escapeHTML(safeAssetUrl(movie.posterPath))}"
+            alt="${escapeHTML(movie.posterAlt || `โปสเตอร์ภาพยนตร์ ${movie.title}`)}"
+            width="800"
+            height="1200"
+            loading="lazy"
+            decoding="async"
+            class="featured-poster-img"
+          />
+        </button>
+      </div>
     </div>
 
     <div class="featured-details">
       <p class="featured-genre-tag reveal" data-reveal="fade-left" style="--reveal-delay: 80ms">${escapeHTML(movie.genre)}</p>
-      <h3 class="featured-title reveal" data-reveal="fade-left" style="--reveal-delay: 160ms">${escapeHTML(movie.title)}</h3>
+      <h3 class="featured-title reveal" data-reveal="fade-left" style="--reveal-delay: 150ms">${escapeHTML(movie.title)}</h3>
       <div class="featured-synopsis-group" aria-label="เรื่องย่อภาพยนตร์">${synopsisMarkup}</div>
-      <dl class="featured-meta-list reveal" data-reveal="fade-up" style="--reveal-delay: 420ms">${metaMarkup}</dl>
-      <div class="featured-actions reveal" data-reveal="fade-up" style="--reveal-delay: 500ms">
-        <a href="#teasers" class="pill-btn pill-btn--crimson">
+      <dl class="featured-meta-list reveal" data-reveal="fade-up" style="--reveal-delay: 360ms">${metaMarkup}</dl>
+      <div class="featured-actions reveal" data-reveal="fade-up" style="--reveal-delay: 440ms">
+        <a href="#teasers" class="pill-btn ${ctaClass}">
           <span>รับชมทีเซอร์</span>
           <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
         </a>
@@ -1418,7 +1587,7 @@ function renderFeaturedProject(movies, selectedIndex) {
 }
 
 /* ==========================================================================
-   4. SCROLL REVEAL, NAVIGATION, LIGHTBOX, CARD TILT & THEME MODE
+   SCROLL REVEAL, 6-ACT NAVIGATION & RAIL, LIGHTBOX, CARD TILT & THEME
    ========================================================================== */
 function revealAllImmediately() {
   document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-visible'));
@@ -1446,7 +1615,7 @@ function initScrollReveal() {
         observer.unobserve(entry.target);
       });
     },
-    { threshold: 0.14, rootMargin: '0px 0px -50px 0px' }
+    { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
   );
 
   elements.forEach((el) => {
@@ -1458,6 +1627,7 @@ function initNavigation() {
   const toggleBtn = document.getElementById('nav-toggle');
   const nav = document.getElementById('primary-nav');
   const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+  const railDots = Array.from(document.querySelectorAll('.page-rail .rail-dot'));
   const sections = Array.from(document.querySelectorAll('main > section[id]'));
 
   function setMenuOpen(isOpen) {
@@ -1491,6 +1661,10 @@ function initNavigation() {
       if (isMatch) link.setAttribute('aria-current', 'location');
       else link.removeAttribute('aria-current');
     });
+    railDots.forEach((dot) => {
+      const isMatch = dot.getAttribute('data-section') === sectionId;
+      dot.classList.toggle('is-active', isMatch);
+    });
   }
 
   if ('IntersectionObserver' in window && sections.length > 0) {
@@ -1500,7 +1674,7 @@ function initNavigation() {
           if (entry.isIntersecting) setActiveSection(entry.target.id);
         });
       },
-      { rootMargin: '-30% 0px -55% 0px', threshold: 0 }
+      { rootMargin: '-32% 0px -52% 0px', threshold: 0 }
     );
     sections.forEach((section) => navObserver.observe(section));
   }
@@ -1557,6 +1731,7 @@ function openLightbox(index, triggerEl) {
   const closeBtn = document.getElementById('lightbox-close');
   if (!lightbox) return;
 
+  SmoothScroller.stop();
   lightboxState.isOpen = true;
   lightboxState.currentIndex = ((index % MOVIES.length) + MOVIES.length) % MOVIES.length;
   lightboxState.lastTrigger = triggerEl || document.activeElement;
@@ -1659,8 +1834,7 @@ function initLightbox() {
 
 function initCursorSpotlight() {
   const spot = document.getElementById('cursor-spotlight');
-  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-  if (!spot || !finePointer.matches || REDUCED_MOTION_QUERY.matches) return;
+  if (!spot || !FINE_POINTER_QUERY.matches || REDUCED_MOTION_QUERY.matches) return;
 
   let tx = -999;
   let ty = -999;
@@ -1688,8 +1862,7 @@ function initCursorSpotlight() {
 }
 
 function initCardTilt() {
-  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-  if (!finePointer.matches || REDUCED_MOTION_QUERY.matches) return;
+  if (!FINE_POINTER_QUERY.matches || REDUCED_MOTION_QUERY.matches) return;
 
   document.querySelectorAll('.poster-card').forEach((card) => {
     let rafId = null;
@@ -1781,12 +1954,21 @@ function initApp() {
   try {
     document.documentElement.classList.add('js-enabled');
 
+    MouseState.init();
+    SmoothScroller.init();
+
+    // Initialize Act 4 first so setFeaturedCanvasTheme is wired before renderFeaturedProject
+    initAct4FeaturedDualTheme();
+
     renderPosterGallery(MOVIES);
     renderTeaserSection(MOVIES);
     renderFeaturedProject(MOVIES);
 
-    SmoothScroller.init();
-    initGhostScrollytelling();
+    initAct1HeroSummoning();
+    initScrollScrubbedSections();
+    initAct3TeasersBloodPool();
+    initAct6ContactFinale();
+
     initHeaderProgress();
     initNavigation();
     initLightbox();
