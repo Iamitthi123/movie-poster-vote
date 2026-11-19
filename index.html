@@ -5,19 +5,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description"
-    content="MOVIE PORTFOLIO — รวมผลงานโปสเตอร์และทีเซอร์ภาพยนตร์แนวสยองขวัญ ระทึกขวัญ และดราม่า พร้อมระบบแอนิเมชันเมื่อเลื่อนหน้าจอ" />
-  <meta name="theme-color" content="#0a0a0c" />
-  <title>MOVIE PORTFOLIO — รวมผลงานโปสเตอร์และทีเซอร์ภาพยนตร์</title>
+    content="MOVIE PORTFOLIO — ประสบการณ์เว็บภาพยนตร์สยองขวัญแบบ Scroll-Driven Scrollytelling รวมผลงานโปสเตอร์และทีเซอร์ ผีบอกว่าอย่าหาทำ และ แผ่นดินเลือด" />
+  <meta name="theme-color" content="#f3efe7" />
+  <title>MOVIE PORTFOLIO — ผีบอกว่าอย่าหาทำ | Cinematic Scroll Experience</title>
 
-  <!-- Inline SVG favicon to prevent 404 requests -->
+  <!-- Inline SVG favicon -->
   <link rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230a0a0c'/%3E%3Crect x='4' y='4' width='56' height='56' rx='8' fill='none' stroke='%232f5d5a' stroke-width='2'/%3E%3Cpath d='M22 18 L48 32 L22 46 Z' fill='%239b1c1c'/%3E%3C/svg%3E" />
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23181513'/%3E%3Cpath d='M23 18 L47 32 L23 46 Z' fill='%239e1b1b'/%3E%3C/svg%3E" />
 
-  <!-- Google Fonts: Bebas Neue for cinematic display titles, Noto Sans Thai for clean Thai typography -->
+  <!-- Google Fonts: Cormorant Garamond & Noto Serif Thai for CREMA-style luxury editorial serif + Plus Jakarta Sans & Noto Sans Thai -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
 
   <link rel="stylesheet" href="css/style.css" />
@@ -27,26 +27,55 @@
 <body>
   <a class="skip-link" href="#main-content">ข้ามไปยังเนื้อหาหลัก</a>
 
-  <!-- Atmospheric Film Grain, Cursor Spotlight & Cinema Blackout Overlay -->
+  <!-- Subtle Editorial Grain & Cursor Atmosphere -->
   <div class="film-grain" aria-hidden="true"></div>
   <div class="cursor-spotlight" id="cursor-spotlight" aria-hidden="true"></div>
-  <div class="cinema-dim-overlay" aria-hidden="true"></div>
 
-  <!-- Sticky Top Navigation -->
+  <!-- Top Utility Micro-Strip (CREMA LAB editorial touch) -->
+  <div class="top-utility-bar" aria-label="ข้อมูลการฉายและติดต่อ">
+    <div class="container utility-inner">
+      <p class="utility-left">
+        <span class="utility-dot" aria-hidden="true"></span>
+        BLACK MOON PICTURES &times; DARK NIGHT STUDIO
+      </p>
+      <div class="utility-right">
+        <span>12 ธันวาคม 2569 ในโรงภาพยนตร์</span>
+        <span class="utility-sep" aria-hidden="true">&bull;</span>
+        <a href="mailto:studio@group6.com" class="utility-link">studio@group6.com</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Editorial Header -->
   <header class="site-header" id="top">
-    <div class="header-progress" aria-hidden="true"></div>
+    <div class="header-progress" id="header-progress" aria-hidden="true"></div>
     <div class="container header-inner">
-      <a href="#hero" class="brand" aria-label="MOVIE PORTFOLIO หน้าแรก">
-        <span class="brand-mark" aria-hidden="true"></span>
+      <a href="#story" class="brand" aria-label="MOVIE PORTFOLIO หน้าแรก">
         <span class="brand-text">MOVIE PORTFOLIO</span>
       </a>
 
+      <nav class="primary-nav" id="primary-nav" aria-label="เมนูหลัก">
+        <ul class="nav-list">
+          <li><a class="nav-link is-active" href="#story" data-section="story">Story</a></li>
+          <li><a class="nav-link" href="#posters" data-section="posters">Posters</a></li>
+          <li><a class="nav-link" href="#teasers" data-section="teasers">Teasers</a></li>
+          <li><a class="nav-link" href="#featured" data-section="featured">Featured</a></li>
+          <li><a class="nav-link" href="#about" data-section="about">Creator</a></li>
+          <li><a class="nav-link" href="#contact" data-section="contact">Contact</a></li>
+        </ul>
+      </nav>
+
       <div class="header-actions">
-        <button type="button" class="cinema-toggle" id="cinema-mode-btn" aria-pressed="false"
-          aria-label="เปิดโหมดโรงภาพยนตร์ (ปิดไฟรอบข้าง)">
-          <span class="cinema-toggle-dot" aria-hidden="true"></span>
-          <span class="cinema-toggle-label">LIGHTS OFF</span>
+        <button type="button" class="theme-toggle" id="cinema-mode-btn" aria-pressed="false"
+          aria-label="สลับเป็นโหมดมืดโรงภาพยนตร์ (Lights Off)">
+          <span class="theme-toggle-dot" aria-hidden="true"></span>
+          <span class="theme-toggle-label">LIGHTS OFF</span>
         </button>
+
+        <a href="#teasers" class="header-cta-pill">
+          <span>ชมทีเซอร์</span>
+          <span class="pill-arrow" aria-hidden="true">&rarr;</span>
+        </a>
 
         <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="primary-nav"
           aria-label="เปิดเมนูนำทาง">
@@ -55,119 +84,232 @@
           <span class="nav-toggle-bar" aria-hidden="true"></span>
         </button>
       </div>
-
-      <nav class="primary-nav" id="primary-nav" aria-label="เมนูหลัก">
-        <ul class="nav-list">
-          <li><a class="nav-link" href="#about" data-section="about">About</a></li>
-          <li><a class="nav-link" href="#posters" data-section="posters">Posters</a></li>
-          <li><a class="nav-link" href="#teasers" data-section="teasers">Teasers</a></li>
-          <li><a class="nav-link" href="#featured" data-section="featured">Featured</a></li>
-          <li><a class="nav-link" href="#contact" data-section="contact">Contact</a></li>
-        </ul>
-      </nav>
     </div>
   </header>
 
   <main id="main-content">
-    <!-- 1. Hero Section -->
-    <section class="hero" id="hero" aria-labelledby="hero-title">
-      <div class="hero-bg-layer" id="hero-parallax" aria-hidden="true">
-        <img src="assets/images/hero-bg.jpg" alt="" width="1920" height="1080" class="hero-bg-image" decoding="async"
-          fetchpriority="high" />
-        <div class="hero-fog hero-fog--one"></div>
-        <div class="hero-fog hero-fog--two"></div>
-        <canvas class="hero-particles" id="hero-particles" aria-hidden="true"></canvas>
-      </div>
-      <div class="hero-vignette" aria-hidden="true"></div>
-
-      <div class="container hero-content">
-        <p class="hero-kicker reveal" data-reveal="fade-in">
-          CINEMA &amp; KEY ART ARCHIVE
-        </p>
-        <h1 class="hero-title reveal" id="hero-title" data-reveal="fade-up" style="--reveal-delay: 120ms">
-          MOVIE PORTFOLIO
-        </h1>
-        <span class="hero-lens-flare reveal" data-reveal="fade-in" style="--reveal-delay: 240ms"
-          aria-hidden="true"></span>
-        <p class="hero-subtitle reveal" data-reveal="fade-up" style="--reveal-delay: 340ms">
-          รวมผลงานโปสเตอร์และทีเซอร์ภาพยนตร์
-        </p>
-        <div class="hero-actions reveal" data-reveal="fade-up" style="--reveal-delay: 460ms">
-          <a href="#posters" class="btn btn-primary">ชมคลังโปสเตอร์</a>
-          <a href="#teasers" class="btn btn-ghost">รับชมทีเซอร์</a>
-        </div>
-      </div>
-
-      <a href="#about" class="scroll-indicator" aria-label="เลื่อนลงไปยังส่วนแนะนำผู้สร้าง">
-        <span class="scroll-indicator-text">SCROLL DOWN</span>
-        <span class="scroll-indicator-arrow" aria-hidden="true"></span>
-      </a>
-    </section>
-
-    <!-- 2. About Section -->
-    <section class="section about" id="about" aria-labelledby="about-heading">
-      <div class="container">
-        <div class="section-header reveal" data-reveal="fade-up">
-          <p class="section-eyebrow">01 / CREATOR</p>
-          <h2 class="section-title" id="about-heading">ABOUT THE DIRECTOR</h2>
-          <span class="section-accent-line" aria-hidden="true"></span>
+    <!-- =========================================================================
+         1. CREMA-STYLE 5-STAGE SCROLL-DRIVEN GHOST SHOWCASE
+         (Scroll-scrubbed choreography: Pouring Crimson Mist -> Ritual Vortex ->
+          Rising Apparition with Curved Text -> Crimson Blood Pool Dip ->
+          Levitating Finale with Floating Ribbons)
+         ========================================================================= -->
+    <section class="scrolly-showcase" id="story" aria-label="ประสบการณ์แอนิเมชัน ผีบอกว่าอย่าหาทำ">
+      <div class="scrolly-sticky" id="scrolly-sticky">
+        <!-- Studio Radial Backdrop & Dynamic Mood Glow -->
+        <div class="stage-backdrop" id="stage-backdrop" aria-hidden="true">
+          <div class="stage-radial-light"></div>
+          <div class="stage-crimson-halo" id="stage-crimson-halo"></div>
         </div>
 
-        <div class="about-grid">
-          <div class="about-portrait-wrap">
-            <div class="about-portrait-frame reveal" data-reveal="zoom-in">
-              <img src="assets/images/creator-portrait.jpg"
-                alt="ภาพพอร์ตเทรตผู้กำกับและนักออกแบบโปสเตอร์ภาพยนตร์ในสตูดิโอแสงโทนมืด" width="800" height="800"
-                loading="lazy" decoding="async" class="about-portrait-img" />
+        <!-- Back 60fps Canvas: Pouring Blood Stream, Swirl Vortex, Back Smoke & Back Ribbons -->
+        <canvas class="stage-canvas stage-canvas--back" id="scrolly-canvas-back" aria-hidden="true"></canvas>
+
+        <!-- Choreographed Visual Props Stage (Right / Center-Right Focus) -->
+        <div class="stage-visual-layer" id="stage-visual-layer" aria-hidden="true">
+          <!-- Antique Thai Silver Ritual Bowl (Back Layer, z=1) -->
+          <div class="prop-bowl prop-bowl--back" id="prop-bowl-back">
+            <img src="assets/images/ritual-bowl.png" alt="" width="1024" height="1024" class="prop-bowl-img"
+              decoding="async" fetchpriority="high" />
+          </div>
+
+          <!-- Mid 60fps Canvas (z=2): Pouring Crimson Stream & Swirling Pool INSIDE the Silver Bowl Cavity -->
+          <canvas class="stage-canvas stage-canvas--mid" id="scrolly-canvas-mid" aria-hidden="true"></canvas>
+
+          <!-- Ghost Centerpiece Rig (z=3): Emerges from inside crimson bowl -> Rises -> Dips -> Levitates -->
+          <div class="prop-ghost-mask" id="prop-ghost-mask">
+            <div class="prop-ghost-rig" id="prop-ghost-rig">
+              <div class="prop-ghost-aura" id="prop-ghost-aura"></div>
+              <img src="assets/images/ghost-transparent.png" alt="ผีนางรำเปื้อนเลือดจากภาพยนตร์ ผีบอกว่าอย่าหาทำ"
+                width="1024" height="1024" class="prop-ghost-img" decoding="async" fetchpriority="high" />
+              <!-- Subtle pulsing crimson eyes glow synced with scroll chapters -->
+              <div class="prop-ghost-eyes-glow" id="prop-ghost-eyes-glow"></div>
             </div>
-            <p class="about-badge reveal" data-reveal="fade-up" style="--reveal-delay: 180ms">
-              DARK NIGHT VISUALS • BANGKOK
-            </p>
           </div>
 
-          <div class="about-copy">
-            <h3 class="about-lead reveal" data-reveal="fade-up" style="--reveal-delay: 120ms">
-              ถ่ายทอดอารมณ์ภาพยนตร์ผ่านภาพนิ่งและจังหวะการเล่าเรื่อง
-            </h3>
-            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 260ms">
-              พอร์ตโฟลิโอนี้รวบรวมผลงานการออกแบบ Key Visual โปสเตอร์ภาพยนตร์ และการตัดต่อทีเซอร์
-              ครอบคลุมทั้งแนวสยองขวัญเชิงบรรยากาศ (Horror) อย่าง “ผีบอกว่าอย่าหาทำ”
-              ไปจนถึงมหากาพย์อิงประวัติศาสตร์–สงคราม–ดราม่าอย่าง “แผ่นดินเลือด”
-            </p>
-            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 400ms">
-              ทุกโปรเจกต์เริ่มต้นจากการวางองค์ประกอบภาพหลัก (Key Art Concept)
-              การออกแบบโทนสีและแสงเงาเฉพาะตัวของแต่ละเรื่อง
-              ไปจนถึงจังหวะการตัดต่อภาพและเสียงเพื่อสร้างแรงดึงดูดก่อนก้าวเข้าสู่โรงภาพยนตร์
-            </p>
-            <dl class="about-stats">
-              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 480ms">
-                <dt>POSTER WORKS</dt>
-                <dd>02</dd>
-              </div>
-              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 620ms">
-                <dt>TEASER REELS</dt>
-                <dd>02</dd>
-              </div>
-              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 760ms">
-                <dt>FOCUS GENRE</dt>
-                <dd>HORROR / WAR DRAMA</dd>
-              </div>
-            </dl>
+          <!-- Antique Thai Silver Ritual Bowl (Front Engraved Rim Occlusion Layer, z=4) -->
+          <div class="prop-bowl prop-bowl--front" id="prop-bowl-front">
+            <img src="assets/images/ritual-bowl-front.png" alt="" width="1024" height="1024" class="prop-bowl-img"
+              decoding="async" fetchpriority="high" />
           </div>
+
+          <!-- Curved Orbital Editorial Text Accent (Sweeping cleanly OUTSIDE ghost crown & shoulders) -->
+          <div class="prop-curved-badge" id="prop-curved-badge">
+            <svg viewBox="0 0 420 420" class="curved-badge-svg" aria-hidden="true">
+              <defs>
+                <!-- Wide upper-right outer halo arc (never touches crown or torso) -->
+                <path id="ghost-arc-right" d="M 225,24 A 186,186 0 0,1 394,235" />
+                <!-- Wide upper-left outer halo arc (cleanly frames left silhouette) -->
+                <path id="ghost-arc-left" d="M 26,235 A 186,186 0 0,1 195,24" />
+              </defs>
+              <text class="curved-badge-text">
+                <textPath href="#ghost-arc-right" startOffset="50%" text-anchor="middle">
+                  DON'T LOOK BACK &bull; อย่าหันหลังกลับ
+                </textPath>
+              </text>
+              <text class="curved-badge-text curved-badge-text--sub">
+                <textPath href="#ghost-arc-left" startOffset="50%" text-anchor="middle">
+                  CURSED IN SILENCE &bull; ผีบอกว่าอย่าหาทำ
+                </textPath>
+              </text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Front 60fps Canvas: Glossy Liquid Blood Pool Surface, Ripples, Splashes & Foreground Ribbons -->
+        <canvas class="stage-canvas stage-canvas--front" id="scrolly-canvas-front" aria-hidden="true"></canvas>
+
+        <!-- Editorial Left-Column Chapter Copy (5 Smooth Scroll-Synced Chapters) -->
+        <div class="container scrolly-content-wrap">
+          <div class="scrolly-chapters" id="scrolly-chapters">
+            <!-- Chapter 01 (0% - 20%): Equivalent to "MADE TO MELT SLOWLY" -->
+            <article class="story-chapter is-active" data-chapter="0">
+              <p class="chapter-eyebrow">THAI HORROR EXPERIENCE &bull; 01</p>
+              <h1 class="chapter-title">
+                <span class="title-line">BORN TO</span>
+                <span class="title-line">HAUNT</span>
+                <span class="title-line">SLOWLY</span>
+              </h1>
+              <p class="chapter-body">
+                <strong>ผีบอกว่าอย่าหาทำ</strong> — เริ่มต้นจากความคึกคะนองของกลุ่มเพื่อน 4 คน
+                ที่ก้าวเข้าสู่บ้านร้างกลางหมู่บ้าน โดยไม่รู้ว่าขันอาคมโบราณกำลังปลุกคำสาปให้ตื่นขึ้นอย่างช้าๆ
+              </p>
+              <div class="chapter-actions">
+                <button type="button" class="pill-btn pill-btn--dark" data-scroll-chapter="1">
+                  <span>เข้าสู่พิธีกรรม</span>
+                  <span class="pill-btn-icon" aria-hidden="true">&darr;</span>
+                </button>
+                <a href="#posters" class="pill-btn pill-btn--outline">ชมคลังโปสเตอร์</a>
+              </div>
+            </article>
+
+            <!-- Chapter 02 (20% - 42%): Equivalent to "CHURNED COLD" -->
+            <article class="story-chapter" data-chapter="1">
+              <p class="chapter-eyebrow">THE SUMMONING &bull; 02</p>
+              <h2 class="chapter-title">
+                <span class="title-line">CHILLED</span>
+                <span class="title-line">TO THE</span>
+                <span class="title-line">BONE</span>
+              </h2>
+              <p class="chapter-body">
+                หมอกโลหิตหมุนวนในขันเงินโบราณ เสียงกระซิบปริศนาเริ่มเรียกชื่อทีละคนท่ามกลางความเงียบสงัด
+                ก่อนที่ดวงตาสีเลือดจะจ้องมองกลับมาอย่างเยือกเย็น
+              </p>
+              <div class="chapter-actions">
+                <button type="button" class="pill-btn pill-btn--dark" data-scroll-chapter="2">
+                  <span>อย่าหยุดเลื่อน</span>
+                  <span class="pill-btn-icon" aria-hidden="true">&darr;</span>
+                </button>
+              </div>
+            </article>
+
+            <!-- Chapter 03 (42% - 64%): Equivalent to "SWIRLED TO ORDER" -->
+            <article class="story-chapter" data-chapter="2">
+              <p class="chapter-eyebrow">THE APPARITION &bull; 03</p>
+              <h2 class="chapter-title">
+                <span class="title-line">RISING</span>
+                <span class="title-line">FROM THE</span>
+                <span class="title-line">SHADOW</span>
+              </h2>
+              <p class="chapter-body">
+                ผีนางรำในชุดไทยสีเลือดค่อยๆ ปรากฏร่างขึ้นจากเงามืด พร้อมรอยยิ้มเปื้อนเลือดที่ไม่มีวันลบเลือน
+                ทุกอย่างไม่ได้เป็นเพียงเรื่องล้อเล่นอีกต่อไป
+              </p>
+              <div class="chapter-actions">
+                <a href="#posters" class="pill-btn pill-btn--dark">
+                  <span>ดูโปสเตอร์ฉบับเต็ม</span>
+                  <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
+                </a>
+              </div>
+            </article>
+
+            <!-- Chapter 04 (64% - 84%): Equivalent to "DIPPED BY HAND" -->
+            <article class="story-chapter" data-chapter="3">
+              <p class="chapter-eyebrow">CRIMSON CURSE &bull; 04</p>
+              <h2 class="chapter-title">
+                <span class="title-line">DIPPED</span>
+                <span class="title-line">IN</span>
+                <span class="title-line">CRIMSON</span>
+              </h2>
+              <p class="chapter-body">
+                คำสาปอาบโลหิตที่ฝังรากลึกในผืนดินบ้านร้าง สิ่งที่พวกเขาปลุกขึ้นมาจะฉุดรั้งทุกชีวิตให้จมดิ่งลงสู่ห้วงมืด
+                และไม่ยอมให้ใครกลับออกไปอีกเลย
+              </p>
+              <div class="chapter-actions">
+                <a href="#teasers" class="pill-btn pill-btn--dark">
+                  <span>ชมทีเซอร์ 01:21</span>
+                  <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
+                </a>
+              </div>
+            </article>
+
+            <!-- Chapter 05 (84% - 100%): Equivalent to "FROM CREAM TO CRAVE" -->
+            <article class="story-chapter" data-chapter="4">
+              <p class="chapter-eyebrow">12 ธันวาคม 2569 ในโรงภาพยนตร์ &bull; 05</p>
+              <h2 class="chapter-title">
+                <span class="title-line">FROM DARE</span>
+                <span class="title-line">TO</span>
+                <span class="title-line">DESPAIR</span>
+              </h2>
+              <p class="chapter-body">
+                <strong>“ตอนแรกก็ไม่เชื่อ... ตอนนี้ไม่กล้ากลับบ้าน”</strong> — สำรวจคลังโปสเตอร์ Key Visual
+                และทีเซอร์ภาพยนตร์อย่างเป็นทางการทั้ง 2 เรื่องด้านล่าง
+              </p>
+              <div class="chapter-actions">
+                <a href="#teasers" class="pill-btn pill-btn--crimson">
+                  <span>รับชมทีเซอร์ตอนนี้</span>
+                  <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
+                </a>
+                <a href="#posters" class="pill-btn pill-btn--outline">ดูโปสเตอร์ทั้งหมด</a>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <!-- Minimal Right-Edge Chapter Navigation Rail -->
+        <nav class="scrolly-rail" id="scrolly-rail" aria-label="เลือกบทของแอนิเมชัน">
+          <button type="button" class="rail-dot is-active" data-scroll-chapter="0" aria-label="บทที่ 1: ปลุกคำสาป">
+            <span class="rail-num">01</span>
+            <span class="rail-bar"></span>
+          </button>
+          <button type="button" class="rail-dot" data-scroll-chapter="1" aria-label="บทที่ 2: เสียงกระซิบ">
+            <span class="rail-num">02</span>
+            <span class="rail-bar"></span>
+          </button>
+          <button type="button" class="rail-dot" data-scroll-chapter="2" aria-label="บทที่ 3: ร่างจากเงามืด">
+            <span class="rail-num">03</span>
+            <span class="rail-bar"></span>
+          </button>
+          <button type="button" class="rail-dot" data-scroll-chapter="3" aria-label="บทที่ 4: คำสาปสีเลือด">
+            <span class="rail-num">04</span>
+            <span class="rail-bar"></span>
+          </button>
+          <button type="button" class="rail-dot" data-scroll-chapter="4" aria-label="บทที่ 5: บทสรุปความหลอน">
+            <span class="rail-num">05</span>
+            <span class="rail-bar"></span>
+          </button>
+        </nav>
+
+        <!-- Scroll Prompt Cue (Fades out smoothly as user begins scrolling) -->
+        <div class="scrolly-cue" id="scrolly-cue" aria-hidden="true">
+          <span class="scrolly-cue-text">SCROLL TO SUMMON</span>
+          <span class="scrolly-cue-line"></span>
         </div>
       </div>
     </section>
 
-    <!-- 3. Poster Gallery Section -->
+    <!-- =========================================================================
+         2. POSTER GALLERY SECTION (Unified Luxury Editorial Styling)
+         ========================================================================= -->
     <section class="section posters" id="posters" aria-labelledby="posters-heading">
       <div class="container">
         <div class="section-header reveal" data-reveal="fade-up">
-          <p class="section-eyebrow">02 / KEY ART ARCHIVE</p>
+          <p class="section-eyebrow">01 / KEY ART ARCHIVE</p>
           <h2 class="section-title" id="posters-heading">POSTER GALLERY</h2>
           <span class="section-accent-line" aria-hidden="true"></span>
         </div>
-        <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 140ms">
-          คลิกที่โปสเตอร์เพื่อเปิดดูภาพขนาดเต็ม พร้อมรองรับการเลื่อนด้วยคีย์บอร์ดและการปัดหน้าจอบนมือถือ
+        <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 120ms">
+          คลิกที่โปสเตอร์เพื่อเปิดดูภาพขนาดเต็มพร้อมระบบ Zoom รองรับคีย์บอร์ดและการปัดหน้าจอบนมือถือ
         </p>
 
         <!-- Populated dynamically from MOVIES array in js/main.js -->
@@ -181,15 +323,17 @@
       </div>
     </section>
 
-    <!-- 4. Teaser Section -->
+    <!-- =========================================================================
+         3. OFFICIAL TEASERS SECTION
+         ========================================================================= -->
     <section class="section teasers" id="teasers" aria-labelledby="teasers-heading">
       <div class="container">
         <div class="section-header reveal" data-reveal="fade-up">
-          <p class="section-eyebrow">03 / MOTION &amp; SOUND</p>
+          <p class="section-eyebrow">02 / MOTION &amp; SOUND</p>
           <h2 class="section-title" id="teasers-heading">OFFICIAL TEASERS</h2>
           <span class="section-accent-line" aria-hidden="true"></span>
         </div>
-        <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 140ms">
+        <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 120ms">
           ตัวอย่างภาพยนตร์สัดส่วน 16:9 โหลดไฟล์วิดีโอเฉพาะเมื่อกดเล่นเพื่อความเร็วสูงสุดในการเปิดหน้าเว็บ
         </p>
 
@@ -198,11 +342,13 @@
       </div>
     </section>
 
-    <!-- 5. Featured Project Section -->
+    <!-- =========================================================================
+         4. FEATURED PROJECT SPOTLIGHT SECTION
+         ========================================================================= -->
     <section class="section featured" id="featured" aria-labelledby="featured-heading">
       <div class="container">
         <div class="section-header reveal" data-reveal="fade-up">
-          <p class="section-eyebrow">04 / SPOTLIGHT RELEASE</p>
+          <p class="section-eyebrow">03 / SPOTLIGHT RELEASE</p>
           <h2 class="section-title" id="featured-heading">FEATURED PROJECT</h2>
           <span class="section-accent-line" aria-hidden="true"></span>
         </div>
@@ -214,7 +360,65 @@
       </div>
     </section>
 
-    <!-- 6. Contact Section -->
+    <!-- =========================================================================
+         5. ABOUT THE DIRECTOR SECTION
+         ========================================================================= -->
+    <section class="section about" id="about" aria-labelledby="about-heading">
+      <div class="container">
+        <div class="section-header reveal" data-reveal="fade-up">
+          <p class="section-eyebrow">04 / CREATOR</p>
+          <h2 class="section-title" id="about-heading">ABOUT THE DIRECTOR</h2>
+          <span class="section-accent-line" aria-hidden="true"></span>
+        </div>
+
+        <div class="about-grid">
+          <div class="about-portrait-wrap">
+            <div class="about-portrait-frame reveal" data-reveal="zoom-in">
+              <img src="assets/images/creator-portrait.jpg"
+                alt="ภาพพอร์ตเทรตผู้กำกับและนักออกแบบโปสเตอร์ภาพยนตร์ในสตูดิโอแสงโทนมืด" width="800" height="800"
+                loading="lazy" decoding="async" class="about-portrait-img" />
+            </div>
+            <p class="about-badge reveal" data-reveal="fade-up" style="--reveal-delay: 160ms">
+              DARK NIGHT VISUALS &bull; BANGKOK
+            </p>
+          </div>
+
+          <div class="about-copy">
+            <h3 class="about-lead reveal" data-reveal="fade-up" style="--reveal-delay: 100ms">
+              ถ่ายทอดอารมณ์ภาพยนตร์ผ่านภาพนิ่งและจังหวะการเล่าเรื่อง
+            </h3>
+            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 220ms">
+              พอร์ตโฟลิโอนี้รวบรวมผลงานการออกแบบ Key Visual โปสเตอร์ภาพยนตร์ และการตัดต่อทีเซอร์
+              ครอบคลุมทั้งแนวสยองขวัญเชิงบรรยากาศ (Horror) อย่าง “ผีบอกว่าอย่าหาทำ”
+              ไปจนถึงมหากาพย์อิงประวัติศาสตร์–สงคราม–ดราม่าอย่าง “แผ่นดินเลือด”
+            </p>
+            <p class="about-text reveal" data-reveal="fade-up" style="--reveal-delay: 320ms">
+              ทุกโปรเจกต์เริ่มต้นจากการวางองค์ประกอบภาพหลัก (Key Art Concept)
+              การออกแบบโทนสีและแสงเงาเฉพาะตัวของแต่ละเรื่อง
+              ไปจนถึงจังหวะการตัดต่อภาพและเสียงเพื่อสร้างแรงดึงดูดก่อนก้าวเข้าสู่โรงภาพยนตร์
+            </p>
+            <dl class="about-stats">
+              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 380ms">
+                <dt>POSTER WORKS</dt>
+                <dd>02</dd>
+              </div>
+              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 480ms">
+                <dt>TEASER REELS</dt>
+                <dd>02</dd>
+              </div>
+              <div class="stat-item reveal" data-reveal="fade-up" style="--reveal-delay: 580ms">
+                <dt>FOCUS GENRE</dt>
+                <dd>HORROR / WAR</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         6. CONTACT SECTION
+         ========================================================================= -->
     <section class="section contact" id="contact" aria-labelledby="contact-heading">
       <div class="container">
         <div class="section-header reveal" data-reveal="fade-up">
@@ -224,48 +428,33 @@
         </div>
 
         <div class="contact-card reveal" data-reveal="zoom-in">
-          <p class="contact-cta-label reveal" data-reveal="fade-up" style="--reveal-delay: 140ms">
+          <p class="contact-cta-label reveal" data-reveal="fade-up" style="--reveal-delay: 120ms">
             LET'S WORK TOGETHER
           </p>
-          <h3 class="contact-headline reveal" data-reveal="fade-up" style="--reveal-delay: 280ms">
+          <h3 class="contact-headline reveal" data-reveal="fade-up" style="--reveal-delay: 220ms">
             พร้อมร่วมสร้างงานโปสเตอร์และทีเซอร์ภาพยนตร์เรื่องต่อไปของคุณ
           </h3>
-          <p class="contact-desc reveal" data-reveal="fade-up" style="--reveal-delay: 420ms">
+          <p class="contact-desc reveal" data-reveal="fade-up" style="--reveal-delay: 320ms">
             ติดต่อสอบถามงานออกแบบ Key Visual โปสเตอร์ภาพยนตร์ ทีเซอร์ประชาสัมพันธ์ หรือร่วมงานด้านภาพยนตร์อิสระ
             ที่คุณกัณฑ์ณภัทร
           </p>
 
-          <div class="contact-links reveal" data-reveal="fade-up" style="--reveal-delay: 560ms">
-            <a href="mailto:studio@group6.com" class="btn btn-primary contact-email-btn">
-              studio@group6.com
+          <div class="contact-links reveal" data-reveal="fade-up" style="--reveal-delay: 420ms">
+            <a href="mailto:studio@group6.com" class="pill-btn pill-btn--crimson">
+              <span>studio@group6.com</span>
+              <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
             </a>
-            <button type="button" class="btn btn-ghost" id="copy-email-btn" data-email="studio@group6.com">
+            <button type="button" class="pill-btn pill-btn--outline" id="copy-email-btn" data-email="studio@group6.com">
               คัดลอกอีเมล
             </button>
           </div>
 
-          <ul class="social-links reveal" data-reveal="fade-up" style="--reveal-delay: 700ms"
+          <ul class="social-links reveal" data-reveal="fade-up" style="--reveal-delay: 520ms"
             aria-label="ช่องทางโซเชียลมีเดีย">
-            <li>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-link">
-                Instagram
-              </a>
-            </li>
-            <li>
-              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="social-link">
-                YouTube
-              </a>
-            </li>
-            <li>
-              <a href="https://vimeo.com" target="_blank" rel="noopener noreferrer" class="social-link">
-                Vimeo
-              </a>
-            </li>
-            <li>
-              <a href="https://behance.net" target="_blank" rel="noopener noreferrer" class="social-link">
-                Behance
-              </a>
-            </li>
+            <li><a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="social-link">Instagram</a></li>
+            <li><a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="social-link">YouTube</a></li>
+            <li><a href="https://vimeo.com" target="_blank" rel="noopener noreferrer" class="social-link">Vimeo</a></li>
+            <li><a href="https://behance.net" target="_blank" rel="noopener noreferrer" class="social-link">Behance</a></li>
           </ul>
         </div>
       </div>
@@ -276,9 +465,9 @@
   <footer class="site-footer">
     <div class="container footer-inner">
       <p class="footer-copy">
-        &copy; 2026 MOVIE PORTFOLIO.
+        &copy; 2026 MOVIE PORTFOLIO &bull; BLACK MOON PICTURES &times; HERITAGE FLAME STUDIO
       </p>
-      <a href="#hero" class="back-to-top" id="back-to-top" aria-label="กลับขึ้นด้านบนสุด">
+      <a href="#story" class="back-to-top" id="back-to-top" aria-label="กลับขึ้นด้านบนสุด">
         BACK TO TOP <span aria-hidden="true">&uarr;</span>
       </a>
     </div>
@@ -306,7 +495,8 @@
           <h2 class="lightbox-title" id="lightbox-title"></h2>
           <p class="lightbox-synopsis" id="lightbox-synopsis"></p>
           <p class="lightbox-counter" id="lightbox-counter"></p>
-          <button type="button" class="btn btn-ghost lightbox-zoom-btn" id="lightbox-zoom" aria-pressed="false">
+          <button type="button" class="pill-btn pill-btn--outline lightbox-zoom-btn" id="lightbox-zoom"
+            aria-pressed="false">
             ขยายดูรายละเอียด (Zoom)
           </button>
         </figcaption>
@@ -320,14 +510,6 @@
 
   <!-- Accessible Live Toast Feedback -->
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-
-  <!-- Peekaboo Ghost Overlay (Fixed Bottom-Right, Scroll-Triggered) -->
-  <aside class="peekaboo-ghost" id="peekaboo-ghost" aria-label="ผีหลอนขอบจอ" aria-hidden="true">
-    <div class="peekaboo-ghost-wrap">
-      <div class="peekaboo-ghost-glow"></div>
-      <img src="assets/images/ghost-transparent.png" alt="ผีบอกว่าอย่าหาทำ Peekaboo Ghost" class="peekaboo-ghost-img" />
-    </div>
-  </aside>
 </body>
 
 </html>

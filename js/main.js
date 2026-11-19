@@ -1,13 +1,17 @@
 /**
- * MOVIE PORTFOLIO — Main Application Script
+ * MOVIE PORTFOLIO — CREMA-Inspired Horror Scrollytelling & Portfolio Engine
  * ---------------------------------------------------------------------------
- * HOW TO ADD A NEW MOVIE:
- * 1. Place a 2:3 poster image inside `assets/posters/`.
- * 2. (Optional) Place a 16:9 teaser thumbnail in `assets/images/` and an MP4
- *    video in `assets/teasers/` (or use a YouTube URL / video ID).
- * 3. Add a new object to the `MOVIES` array below. The Poster Gallery,
- *    Teaser Section, Lightbox, and Featured Project render automatically from
- *    this single list.
+ * 1. 5-Stage Smooth Scroll-Scrubbed Ghost Choreography (`initGhostScrollytelling`):
+ *    - Stage 1 (0.00–0.22): Crimson blood stream pours into antique Thai silver bowl
+ *    - Stage 2 (0.22–0.44): Swirl vortex summoning; Ghost emerges from inside bowl rim
+ *    - Stage 3 (0.44–0.64): Opposing parallax — bowl lifts out, full Ghost rises with curved orbital text
+ *    - Stage 4 (0.64–0.84): Ghost plunges into glossy liquid crimson blood pool with ripples & splash
+ *    - Stage 5 (0.84–1.00): Ghost rises out & levitates framed by 3D wrap-around crimson silk ribbons
+ * 2. Complete Movie Portfolio Modules:
+ *    - Poster Gallery + 3D Magnetic Tilt + Fullscreen Zoom Lightbox
+ *    - Lazy-loaded 16:9 Official Teasers (MP4 / YouTube)
+ *    - Featured Project Switcher + About + Copy Email Toast
+ *    - LIGHTS OFF / GALLERY LIGHT Theme Toggle
  * ---------------------------------------------------------------------------
  */
 
@@ -15,7 +19,6 @@
 
 /**
  * Single source of truth for all movies, posters, and teasers.
- * Set `featured: true` on one item to showcase it in the Featured Project section.
  */
 const MOVIES = [
   {
@@ -27,7 +30,7 @@ const MOVIES = [
     posterPath: 'assets/posters/messageImage_1794368583295.jpg',
     posterAlt: 'โปสเตอร์ภาพยนตร์ ผีบอกว่าอย่าหาทำ แนวสยองขวัญ ผีนางรำเปื้อนเลือดในบ้านร้างและกลุ่มเพื่อนสี่คน',
     teaserPath: 'assets/teasers/ผีบอกว่าอย่าหาทำ.mp4',
-    teaserType: 'mp4', // 'mp4' for local video file, or 'youtube' for YouTube embed URL/ID
+    teaserType: 'mp4',
     teaserThumb: 'assets/images/teaser-01-thumb.jpg',
     teaserDuration: '01:21',
     teaserTitle: 'ผีบอกว่าอย่าหาทำ — Official Teaser',
@@ -71,15 +74,43 @@ const MOVIES = [
 
 const REDUCED_MOTION_QUERY = window.matchMedia('(prefers-reduced-motion: reduce)');
 let revealObserver = null;
-let lightboxState = {
+let toastTimer = null;
+const lightboxState = {
   isOpen: false,
   currentIndex: 0,
   lastTrigger: null
 };
 
-/**
- * Safely escape HTML text when inserting into DOM attributes or templates.
- */
+/* ==========================================================================
+   MATH & UTILITY HELPERS
+   ========================================================================== */
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function invLerp(v, start, end) {
+  if (end === start) return 0;
+  return clamp((v - start) / (end - start), 0, 1);
+}
+
+function easeOutCubic(t) {
+  const u = 1 - clamp(t, 0, 1);
+  return 1 - u * u * u;
+}
+
+function easeInOutCubic(t) {
+  const x = clamp(t, 0, 1);
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
+function easeInOutSine(t) {
+  return -(Math.cos(Math.PI * clamp(t, 0, 1)) - 1) / 2;
+}
+
 function safeAssetUrl(pathStr) {
   return encodeURI(String(pathStr ?? ''));
 }
@@ -93,62 +124,872 @@ function escapeHTML(value) {
     .replaceAll("'", '&#39;');
 }
 
-/**
- * Extract a clean YouTube video ID from either a raw ID or full YouTube URL.
- */
 function parseYouTubeId(input) {
   const raw = String(input ?? '').trim();
-  if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) {
-    return raw;
-  }
+  if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
   try {
     const url = new URL(raw);
-    if (url.hostname.includes('youtu.be')) {
-      return url.pathname.replace('/', '').split('/')[0];
-    }
-    if (url.searchParams.has('v')) {
-      return url.searchParams.get('v');
-    }
+    if (url.hostname.includes('youtu.be')) return url.pathname.replace('/', '').split('/')[0];
+    if (url.searchParams.has('v')) return url.searchParams.get('v');
     const parts = url.pathname.split('/').filter(Boolean);
     const embedIdx = parts.indexOf('embed');
-    if (embedIdx !== -1 && parts[embedIdx + 1]) {
-      return parts[embedIdx + 1];
-    }
+    if (embedIdx !== -1 && parts[embedIdx + 1]) return parts[embedIdx + 1];
   } catch {
-    // Fall through to raw return
+    // fallback
   }
   return raw;
 }
 
-/**
- * Compute grid column count for automatic row-based stagger delays.
- */
+/* ==========================================================================
+   1. CREMA-STYLE 5-STAGE SCROLL-DRIVEN GHOST CHOREOGRAPHY ENGINE
+   ========================================================================== */
+function initGhostScrollytelling() {
+  const showcase = document.getElementById('story');
+  const stickyEl = document.getElementById('scrolly-sticky');
+  const backCanvas = document.getElementById('scrolly-canvas-back');
+  const midCanvas = document.getElementById('scrolly-canvas-mid');
+  const frontCanvas = document.getElementById('scrolly-canvas-front');
+  const bowlBack = document.getElementById('prop-bowl-back');
+  const bowlFront = document.getElementById('prop-bowl-front');
+  const ghostMask = document.getElementById('prop-ghost-mask');
+  const ghostRig = document.getElementById('prop-ghost-rig');
+  const ghostAura = document.getElementById('prop-ghost-aura');
+  const ghostEyes = document.getElementById('prop-ghost-eyes-glow');
+  const curvedBadge = document.getElementById('prop-curved-badge');
+  const crimsonHalo = document.getElementById('stage-crimson-halo');
+  const scrollCue = document.getElementById('scrolly-cue');
+  const chapters = Array.from(document.querySelectorAll('.story-chapter'));
+  const railDots = Array.from(document.querySelectorAll('.rail-dot'));
+  const chapterTriggers = Array.from(document.querySelectorAll('[data-scroll-chapter]'));
+
+  if (!showcase || !stickyEl || !backCanvas || !midCanvas || !frontCanvas || !ghostRig) return;
+
+  const backCtx = backCanvas.getContext('2d');
+  const midCtx = midCanvas.getContext('2d');
+  const frontCtx = frontCanvas.getContext('2d');
+  if (!backCtx || !midCtx || !frontCtx) return;
+
+  // Chapter normalized anchors for click-to-jump
+  const CHAPTER_ANCHORS = [0.02, 0.29, 0.53, 0.74, 0.94];
+  const CHAPTER_BOUNDS = [0.21, 0.43, 0.64, 0.84, 1.01];
+
+  let stageW = 1280;
+  let stageH = 720;
+  let dpr = 1;
+  let targetP = 0;
+  let smoothP = 0;
+  let prevSmoothP = 0;
+  let activeChapterIdx = 0;
+  let mouseX = 0;
+  let mouseY = 0;
+  let smoothMouseX = 0;
+  let smoothMouseY = 0;
+  let isStageVisible = true;
+  let rafId = null;
+
+  // Persistent ember / crimson droplet particle pools
+  const embers = Array.from({ length: 34 }, (_, i) => ({
+    x: Math.random(),
+    y: Math.random(),
+    r: 1.2 + Math.random() * 2.6,
+    speedY: 0.0005 + Math.random() * 0.0011,
+    drift: (Math.random() - 0.5) * 0.0006,
+    phase: Math.random() * Math.PI * 2,
+    bright: i % 3 === 0
+  }));
+
+  const splashDroplets = Array.from({ length: 18 }, (_, i) => ({
+    angle: -Math.PI * 0.88 + (i / 17) * Math.PI * 0.76,
+    dist: 0.35 + Math.random() * 0.65,
+    size: 2.2 + Math.random() * 4.5,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.8 + Math.random() * 0.9
+  }));
+
+  function resizeStage() {
+    const rect = stickyEl.getBoundingClientRect();
+    stageW = Math.max(1, Math.round(rect.width));
+    stageH = Math.max(1, Math.round(rect.height));
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    backCanvas.width = Math.round(stageW * dpr);
+    backCanvas.height = Math.round(stageH * dpr);
+    midCanvas.width = Math.round(stageW * dpr);
+    midCanvas.height = Math.round(stageH * dpr);
+    frontCanvas.width = Math.round(stageW * dpr);
+    frontCanvas.height = Math.round(stageH * dpr);
+  }
+
+  function computeTargetScrollProgress() {
+    const rect = showcase.getBoundingClientRect();
+    const headerOffset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 68;
+    const scrollableDistance = Math.max(1, showcase.offsetHeight - (window.innerHeight - headerOffset));
+    const scrolled = headerOffset - rect.top;
+    targetP = clamp(scrolled / scrollableDistance, 0, 1);
+  }
+
+  function jumpToChapter(idx) {
+    const clampedIdx = clamp(idx, 0, CHAPTER_ANCHORS.length - 1);
+    const headerOffset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 68;
+    const scrollableDistance = Math.max(1, showcase.offsetHeight - (window.innerHeight - headerOffset));
+    const showcaseTop = showcase.getBoundingClientRect().top + window.scrollY;
+    const destY = showcaseTop - headerOffset + CHAPTER_ANCHORS[clampedIdx] * scrollableDistance;
+    window.scrollTo({ top: Math.max(0, destY), behavior: 'smooth' });
+  }
+
+  chapterTriggers.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.getAttribute('data-scroll-chapter'));
+      if (Number.isInteger(idx)) jumpToChapter(idx);
+    });
+  });
+
+  // Mouse parallax tracking (desktop fine pointer)
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+  if (finePointer.matches) {
+    window.addEventListener(
+      'pointermove',
+      (e) => {
+        if (e.pointerType !== 'mouse') return;
+        mouseX = (e.clientX / (window.innerWidth || 1) - 0.5) * 2;
+        mouseY = (e.clientY / (window.innerHeight || 1) - 0.5) * 2;
+      },
+      { passive: true }
+    );
+  }
+
+  function updateChapterUI(p) {
+    let idx = 0;
+    for (let i = 0; i < CHAPTER_BOUNDS.length; i++) {
+      if (p < CHAPTER_BOUNDS[i]) {
+        idx = i;
+        break;
+      }
+      idx = CHAPTER_BOUNDS.length - 1;
+    }
+
+    if (idx !== activeChapterIdx) {
+      activeChapterIdx = idx;
+      chapters.forEach((ch, i) => {
+        ch.classList.toggle('is-active', i === idx);
+        ch.classList.toggle('is-passed', i < idx);
+      });
+      railDots.forEach((dot, i) => {
+        dot.classList.toggle('is-active', i === idx);
+      });
+    }
+
+    if (scrollCue) {
+      scrollCue.classList.toggle('is-hidden', p > 0.045);
+    }
+  }
+
+  /* ------------------------------------------------------------------------
+     CANVAS DRAWING ROUTINES (60FPS FLUID, VORTEX, BLOOD POOL & 3D RIBBONS)
+     ------------------------------------------------------------------------ */
+
+  /**
+   * Stage 1 & 2: Glossy pouring crimson blood & mist stream into the antique bowl
+   */
+  function drawPouringStream(ctx, cx, bowlMouthY, p, time, isDark) {
+    const enterT = easeOutCubic(invLerp(p, 0.0, 0.06));
+    const exitT = 1 - easeInOutCubic(invLerp(p, 0.34, 0.48));
+    const alpha = Math.max(0.85, enterT) * exitT;
+    if (alpha <= 0.01) return;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Stream descends smoothly from top (y = -20) directly into bowl interior liquid center
+    const streamTopY = -20;
+    const streamEndY = bowlMouthY + 6;
+    const segments = 28;
+    const baseWidth = Math.min(stageW * 0.035, 38) * lerp(1.0, 0.62, invLerp(p, 0.2, 0.44));
+
+    // Swirling glossy crimson blood pool INSIDE the antique silver bowl cavity
+    const poolRx = Math.min(stageW * 0.145, 196);
+    const poolRy = poolRx * 0.46;
+    const poolGrad = ctx.createRadialGradient(cx, bowlMouthY + 4, 8, cx, bowlMouthY + 8, poolRx);
+    poolGrad.addColorStop(0, '#a8141c');
+    poolGrad.addColorStop(0.48, '#6a0a10');
+    poolGrad.addColorStop(0.84, '#360407');
+    poolGrad.addColorStop(1, 'rgba(28, 3, 5, 0)');
+    ctx.beginPath();
+    ctx.ellipse(cx, bowlMouthY + 6, poolRx, poolRy, 0, 0, Math.PI * 2);
+    ctx.fillStyle = poolGrad;
+    ctx.fill();
+
+    // Concentric churning liquid ripples inside the silver bowl (strongest in Stage 2)
+    const churnIntensity = 0.55 + 0.45 * easeInOutSine(invLerp(p, 0.12, 0.36));
+    for (let r = 0; r < 4; r++) {
+      const wavePhase = ((time * 0.72 + r * 0.25 + p * 3.0) % 1);
+      const rx = poolRx * (0.14 + wavePhase * 0.8);
+      const ry = poolRy * (0.14 + wavePhase * 0.8);
+      ctx.beginPath();
+      ctx.ellipse(cx, bowlMouthY + 5, rx, ry, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 175, 170, ${(1 - wavePhase) * 0.48 * churnIntensity})`;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    }
+
+    // Helper to build undulating viscous ribbon polygon
+    function drawRibbonLayer(widthScale, offsetX, fillStyle, blurPx) {
+      ctx.save();
+      if (blurPx > 0) ctx.filter = `blur(${blurPx}px)`;
+      ctx.beginPath();
+
+      const leftPts = [];
+      const rightPts = [];
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const y = lerp(streamTopY, streamEndY, t);
+        // Sinuous pouring curve converging dead-center into the bowl interior!
+        const damp = 1 - Math.pow(t, 1.5);
+        const sway =
+          Math.sin(t * 4.2 - time * 2.8 - p * 18) * (15 * damp) +
+          Math.cos(t * 2.1 + time * 1.4) * (5 * damp);
+        // Taper wider at top, slender mid-stream, glossy splash flare at impact point inside bowl
+        const profile = (1.3 - t * 0.5 + Math.pow(t, 5) * 1.1) * baseWidth * widthScale;
+        const px = cx + sway + offsetX;
+        leftPts.push([px - profile * 0.5, y]);
+        rightPts.push([px + profile * 0.5, y]);
+      }
+
+      ctx.moveTo(leftPts[0][0], leftPts[0][1]);
+      for (let i = 1; i < leftPts.length; i++) {
+        ctx.lineTo(leftPts[i][0], leftPts[i][1]);
+      }
+      for (let i = rightPts.length - 1; i >= 0; i--) {
+        ctx.lineTo(rightPts[i][0], rightPts[i][1]);
+      }
+      ctx.closePath();
+      ctx.fillStyle = fillStyle;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Soft eerie crimson mist halo around stream
+    const mistGrad = ctx.createLinearGradient(cx, streamTopY, cx, streamEndY);
+    mistGrad.addColorStop(0, 'rgba(140, 18, 22, 0.08)');
+    mistGrad.addColorStop(0.5, 'rgba(155, 22, 26, 0.22)');
+    mistGrad.addColorStop(1, 'rgba(110, 12, 16, 0.34)');
+    drawRibbonLayer(2.1, 0, mistGrad, 14);
+
+    // Core viscous deep blood stream
+    const coreGrad = ctx.createLinearGradient(cx - baseWidth, 0, cx + baseWidth, 0);
+    coreGrad.addColorStop(0, '#3a0508');
+    coreGrad.addColorStop(0.35, '#8c1118');
+    coreGrad.addColorStop(0.58, '#c21e26');
+    coreGrad.addColorStop(0.85, '#59080c');
+    coreGrad.addColorStop(1, '#260305');
+    drawRibbonLayer(1.0, 0, coreGrad, 0);
+
+    // Glossy liquid specular highlight ribbon inside stream
+    const specGrad = ctx.createLinearGradient(cx, streamTopY, cx, streamEndY);
+    specGrad.addColorStop(0, 'rgba(255, 210, 205, 0.15)');
+    specGrad.addColorStop(0.5, isDark ? 'rgba(255, 175, 170, 0.48)' : 'rgba(255, 232, 226, 0.62)');
+    specGrad.addColorStop(1, 'rgba(255, 195, 190, 0.35)');
+    drawRibbonLayer(0.24, -baseWidth * 0.14, specGrad, 1);
+
+    // Bright glossy splash crown right where stream strikes liquid inside the bowl
+    const splashGrad = ctx.createRadialGradient(cx, streamEndY, 2, cx, streamEndY, baseWidth * 1.15);
+    splashGrad.addColorStop(0, 'rgba(255, 210, 205, 0.55)');
+    splashGrad.addColorStop(0.45, 'rgba(178, 24, 30, 0.48)');
+    splashGrad.addColorStop(1, 'rgba(120, 14, 18, 0)');
+    ctx.beginPath();
+    ctx.ellipse(cx, streamEndY, baseWidth * 1.15, baseWidth * 0.44, 0, 0, Math.PI * 2);
+    ctx.fillStyle = splashGrad;
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  /**
+   * Stage 2–3: Rotating sacred occult mist rings behind the summoning Ghost
+   */
+  function drawOccultVortex(ctx, cx, cy, p, time, isDark) {
+    const fadeIn = easeOutCubic(invLerp(p, 0.18, 0.32));
+    const fadeOut = 1 - easeInOutCubic(invLerp(p, 0.52, 0.68));
+    const alpha = fadeIn * fadeOut;
+    if (alpha <= 0.01) return;
+
+    const radius = Math.min(stageW * 0.22, 235) * lerp(0.82, 1.12, invLerp(p, 0.2, 0.58));
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(time * 0.22 + p * Math.PI * 1.4);
+    ctx.globalAlpha = alpha * (isDark ? 0.48 : 0.34);
+
+    // Outer dashed sacred circle
+    ctx.beginPath();
+    ctx.setLineDash([12, 10]);
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = isDark ? 'rgba(210, 52, 52, 0.65)' : 'rgba(135, 24, 24, 0.55)';
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
+
+    // Inner counter-rotating fine gold/crimson ring
+    ctx.rotate(-time * 0.48 - p * Math.PI * 2.1);
+    ctx.setLineDash([4, 14]);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.82, 0, Math.PI * 2);
+    ctx.strokeStyle = isDark ? 'rgba(204, 166, 108, 0.55)' : 'rgba(140, 106, 56, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Soft swirling crimson mist arcs
+    ctx.setLineDash([]);
+    for (let i = 0; i < 3; i++) {
+      const a0 = (i * Math.PI * 2) / 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * (0.65 + i * 0.14), a0, a0 + Math.PI * 0.72);
+      ctx.strokeStyle = 'rgba(155, 22, 26, 0.32)';
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * Stage 4: Glossy Liquid Crimson Blood Pool (Replaces Chocolate Dip Pool in clip 00:04–00:05)
+   * Returns exact waterline Y coordinate so the Ghost clips seamlessly beneath the liquid!
+   */
+  function getBloodPoolState(p) {
+    const rise = easeInOutCubic(invLerp(p, 0.60, 0.72));
+    const recede = easeInOutCubic(invLerp(p, 0.82, 0.93));
+    const level = clamp(rise - recede, 0, 1);
+    // Pool surface rises from 108% height up to 72% height on desktop (leaving clean contrast under Chapter 04)
+    const peakSurfaceRatio = stageW <= 900 ? 0.57 : 0.72;
+    const surfaceY = lerp(stageH * 1.08, stageH * peakSurfaceRatio, level);
+    return { level, surfaceY };
+  }
+
+  function drawBloodPoolBack(ctx, poolState, p, time) {
+    if (poolState.level <= 0.005) return;
+    const { level, surfaceY } = poolState;
+
+    ctx.save();
+    ctx.globalAlpha = clamp(level * 1.4, 0, 1);
+
+    // Back horizon of the crimson pool (slightly higher behind the Ghost for 3D depth)
+    const backY = surfaceY - 18 * level;
+    const grad = ctx.createLinearGradient(0, backY, 0, stageH);
+    grad.addColorStop(0, '#2b0406');
+    grad.addColorStop(0.35, '#4d080c');
+    grad.addColorStop(1, '#120203');
+
+    ctx.beginPath();
+    ctx.moveTo(0, stageH);
+    for (let x = 0; x <= stageW; x += 24) {
+      const w =
+        Math.sin(x * 0.0065 + time * 1.6 + p * 8) * 7 * level +
+        Math.cos(x * 0.012 - time * 1.1) * 4 * level;
+      ctx.lineTo(x, backY + w);
+    }
+    ctx.lineTo(stageW, stageH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawBloodPoolFront(ctx, cx, poolState, p, velocity, time, isDark) {
+    if (poolState.level <= 0.005) return;
+    const { level, surfaceY } = poolState;
+
+    ctx.save();
+    ctx.globalAlpha = clamp(level * 1.35, 0, 1);
+
+    // Undulating foreground glossy crimson liquid mass
+    const waveBoost = 1 + Math.min(Math.abs(velocity) * 24, 1.8);
+    const wavePts = [];
+    const step = 18;
+    for (let x = 0; x <= stageW + step; x += step) {
+      const distFromGhost = Math.abs(x - cx);
+      const dipRipple =
+        Math.exp(-distFromGhost / (stageW * 0.24)) *
+        Math.cos(distFromGhost * 0.032 - time * 5.2 - p * 30) *
+        9 *
+        level *
+        waveBoost;
+      const ambientWave =
+        Math.sin(x * 0.0085 - time * 2.1 + p * 12) * 8 * level +
+        Math.sin(x * 0.019 + time * 1.4) * 3.5 * level;
+      wavePts.push([x, surfaceY + ambientWave + dipRipple]);
+    }
+
+    // Main glossy crimson-obsidian liquid fill
+    const bodyGrad = ctx.createLinearGradient(0, surfaceY - 10, 0, stageH);
+    bodyGrad.addColorStop(0, '#780e14');
+    bodyGrad.addColorStop(0.14, '#56080d');
+    bodyGrad.addColorStop(0.45, '#2f0407');
+    bodyGrad.addColorStop(1, '#110203');
+
+    ctx.beginPath();
+    ctx.moveTo(0, stageH + 10);
+    wavePts.forEach(([x, y]) => ctx.lineTo(x, y));
+    ctx.lineTo(stageW + step, stageH + 10);
+    ctx.closePath();
+    ctx.fillStyle = bodyGrad;
+    ctx.fill();
+
+    // Specular wet rim crest along the wave line (chocolate/blood glass sheen!)
+    ctx.beginPath();
+    wavePts.forEach(([x, y], i) => {
+      if (i === 0) ctx.moveTo(x, y + 1);
+      else ctx.lineTo(x, y + 1);
+    });
+    const rimGrad = ctx.createLinearGradient(cx - stageW * 0.35, 0, cx + stageW * 0.35, 0);
+    rimGrad.addColorStop(0, 'rgba(255, 160, 155, 0.05)');
+    rimGrad.addColorStop(0.35, 'rgba(255, 190, 185, 0.55)');
+    rimGrad.addColorStop(0.5, isDark ? 'rgba(255, 110, 110, 0.85)' : 'rgba(255, 225, 220, 0.78)');
+    rimGrad.addColorStop(0.65, 'rgba(255, 190, 185, 0.5)');
+    rimGrad.addColorStop(1, 'rgba(255, 160, 155, 0.05)');
+    ctx.strokeStyle = rimGrad;
+    ctx.lineWidth = 2.6;
+    ctx.stroke();
+
+    // Concentric glossy elliptical splash ripples right around the submerged Ghost
+    const dipActivity = Math.sin(invLerp(p, 0.64, 0.88) * Math.PI);
+    for (let r = 0; r < 4; r++) {
+      const rp = (time * 0.65 + r * 0.25 + p * 4.5) % 1;
+      const rx = (52 + rp * Math.min(stageW * 0.26, 260)) * level;
+      const ry = rx * 0.16;
+      ctx.beginPath();
+      ctx.ellipse(cx, surfaceY + 12 + rp * 18, rx, ry, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 185, 180, ${(1 - rp) * 0.42 * dipActivity})`;
+      ctx.lineWidth = 1.8 * (1 - rp * 0.5);
+      ctx.stroke();
+    }
+
+    // Subtle horizontal wet specular reflection bands across pool surface
+    for (let s = 0; s < 3; s++) {
+      const sy = surfaceY + 34 + s * 34;
+      if (sy > stageH) continue;
+      const sw = (stageW * 0.18 - s * 28) * level;
+      const sx = cx + Math.sin(time * 0.9 + s * 2.1) * 35;
+      const sGrad = ctx.createLinearGradient(sx - sw, sy, sx + sw, sy);
+      sGrad.addColorStop(0, 'rgba(255, 165, 160, 0)');
+      sGrad.addColorStop(0.5, `rgba(255, 170, 165, ${0.14 - s * 0.03})`);
+      sGrad.addColorStop(1, 'rgba(255, 165, 160, 0)');
+      ctx.fillStyle = sGrad;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, Math.max(10, sw), 3.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Dynamic splashing crimson droplets arcing upward during the dip
+    if (dipActivity > 0.08) {
+      splashDroplets.forEach((d) => {
+        const cycle = (time * d.speed * 0.55 + d.phase) % 1;
+        const spread = d.dist * Math.min(stageW * 0.19, 195);
+        const dx = cx + Math.cos(d.angle) * spread * (0.45 + cycle * 0.85);
+        const arcHeight = Math.sin(cycle * Math.PI) * (55 + d.dist * 75) * dipActivity;
+        const dy = surfaceY + 4 - arcHeight;
+        const dAlpha = Math.sin(cycle * Math.PI) * 0.82 * dipActivity;
+
+        ctx.beginPath();
+        ctx.arc(dx, dy, d.size * (1 - cycle * 0.3), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(150, 18, 24, ${dAlpha})`;
+        ctx.fill();
+
+        // Tiny glossy dot highlight
+        ctx.beginPath();
+        ctx.arc(dx - d.size * 0.28, dy - d.size * 0.28, d.size * 0.28, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 220, 215, ${dAlpha * 0.7})`;
+        ctx.fill();
+      });
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * Stage 5: 3D Depth-Layered Floating Crimson Silk / Blood Ribbons
+   * (Replaces the floating chocolate & cream curls orbiting the finished cone in clip 00:06!)
+   */
+  function drawOrbitingRibbons(ctx, cx, cy, p, time, layer /* 'back' | 'front' */, isDark) {
+    const reveal = easeOutCubic(invLerp(p, 0.79, 0.92));
+    if (reveal <= 0.01) return;
+
+    const scaleR = Math.min(stageW * 0.21, 220);
+    const configs =
+      layer === 'back'
+        ? [
+            { yOff: -0.26, rx: 1.08, ry: 0.26, tilt: -0.28, width: 15, phase: 0.4, color: '#5c090e' },
+            { yOff: 0.18, rx: 1.18, ry: 0.24, tilt: 0.22, width: 12, phase: 2.3, color: '#3b0508' }
+          ]
+        : [
+            { yOff: -0.04, rx: 1.04, ry: 0.28, tilt: -0.18, width: 16, phase: 1.2, color: '#8f1319' },
+            { yOff: 0.34, rx: 0.95, ry: 0.22, tilt: 0.16, width: 11, phase: 3.7, color: '#690b10' }
+          ];
+
+    ctx.save();
+    ctx.globalAlpha = reveal * (isDark ? 0.92 : 0.88);
+
+    configs.forEach((cfg) => {
+      const centerX = cx;
+      const centerY = cy + cfg.yOff * scaleR;
+      const startAngle = layer === 'back' ? Math.PI * 1.05 : Math.PI * 0.06;
+      const endAngle = layer === 'back' ? Math.PI * 1.95 : Math.PI * 0.94;
+      const steps = 36;
+      const topEdge = [];
+      const botEdge = [];
+
+      for (let i = 0; i <= steps; i++) {
+        const u = i / steps;
+        const theta = lerp(startAngle, endAngle, u) + Math.sin(time * 0.9 + cfg.phase) * 0.08;
+        const wobble = Math.sin(u * Math.PI * 2.5 - time * 1.8 + cfg.phase) * 8;
+        const lx = Math.cos(theta) * scaleR * cfg.rx;
+        const ly = Math.sin(theta) * scaleR * cfg.ry + wobble;
+
+        // Rotate by tilt
+        const cosT = Math.cos(cfg.tilt);
+        const sinT = Math.sin(cfg.tilt);
+        const rx = centerX + lx * cosT - ly * sinT;
+        const ry = centerY + lx * sinT + ly * cosT;
+
+        // Calligraphic taper (pointed ends, lush center)
+        const thick = Math.sin(u * Math.PI) * cfg.width * reveal;
+        topEdge.push([rx, ry - thick * 0.5]);
+        botEdge.push([rx, ry + thick * 0.5]);
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(topEdge[0][0], topEdge[0][1]);
+      for (let i = 1; i < topEdge.length; i++) ctx.lineTo(topEdge[i][0], topEdge[i][1]);
+      for (let i = botEdge.length - 1; i >= 0; i--) ctx.lineTo(botEdge[i][0], botEdge[i][1]);
+      ctx.closePath();
+
+      const grad = ctx.createLinearGradient(centerX - scaleR, centerY, centerX + scaleR, centerY);
+      grad.addColorStop(0, 'rgba(55, 5, 8, 0.25)');
+      grad.addColorStop(0.35, cfg.color);
+      grad.addColorStop(0.55, '#b51c24');
+      grad.addColorStop(0.8, cfg.color);
+      grad.addColorStop(1, 'rgba(35, 3, 5, 0.2)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Thin wet specular sheen along ribbon top edge
+      ctx.beginPath();
+      for (let i = 3; i < topEdge.length - 3; i++) {
+        const [x, y] = topEdge[i];
+        if (i === 3) ctx.moveTo(x, y + 2);
+        else ctx.lineTo(x, y + 2);
+      }
+      ctx.strokeStyle = isDark ? 'rgba(255, 175, 170, 0.42)' : 'rgba(255, 225, 220, 0.52)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+    });
+
+    ctx.restore();
+  }
+
+  /**
+   * Subtle floating embers & spectral dust particles across the studio stage
+   */
+  function drawAmbientEmbers(ctx, p, time, isDark) {
+    const intensity = lerp(0.35, 0.95, p);
+    ctx.save();
+    embers.forEach((em) => {
+      em.y -= em.speedY * (0.7 + intensity * 0.8);
+      em.x += em.drift + Math.sin(time + em.phase) * 0.00018;
+      if (em.y < -0.05) {
+        em.y = 1.05;
+        em.x = 0.25 + Math.random() * 0.72;
+      }
+      if (em.x < 0) em.x = 1;
+      if (em.x > 1) em.x = 0;
+
+      const flicker = 0.5 + 0.5 * Math.sin(time * 2.4 + em.phase);
+      const alpha = (0.14 + flicker * 0.34) * intensity;
+
+      ctx.beginPath();
+      ctx.arc(em.x * stageW, em.y * stageH, em.r, 0, Math.PI * 2);
+      if (em.bright) {
+        ctx.fillStyle = isDark
+          ? `rgba(235, 65, 58, ${alpha * 1.25})`
+          : `rgba(155, 22, 24, ${alpha * 1.05})`;
+      } else {
+        ctx.fillStyle = isDark
+          ? `rgba(218, 185, 130, ${alpha * 0.7})`
+          : `rgba(80, 68, 60, ${alpha * 0.45})`;
+      }
+      ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  /* ------------------------------------------------------------------------
+     MAIN 60FPS ANIMATION LOOP (DOM TRANSFORMS + DUAL CANVAS RENDER)
+     ------------------------------------------------------------------------ */
+  function renderFrame(nowMs) {
+    rafId = null;
+    if (!isStageVisible || REDUCED_MOTION_QUERY.matches) return;
+
+    const time = nowMs * 0.001;
+
+    // Silky damped scroll interpolation (gives exact Lenis/GSAP inertia feel)
+    smoothP += (targetP - smoothP) * 0.085;
+    if (Math.abs(targetP - smoothP) < 0.00008) smoothP = targetP;
+    const velocity = smoothP - prevSmoothP;
+    prevSmoothP = smoothP;
+
+    smoothMouseX += (mouseX - smoothMouseX) * 0.06;
+    smoothMouseY += (mouseY - smoothMouseY) * 0.06;
+
+    const p = smoothP;
+    const isMobile = stageW <= 900;
+    const isDark = document.documentElement.classList.contains('cinema-mode');
+    const stageCenterX = stageW * (isMobile ? 0.5 : 0.63);
+    const stageCenterY = stageH * (isMobile ? 0.34 : 0.52);
+
+    // Update active editorial chapter & right-hand rail
+    updateChapterUI(p);
+
+    // Subtle mouse 3D tilt offsets (desktop only)
+    const mxPx = isMobile ? 0 : smoothMouseX * 14;
+    const myPx = isMobile ? 0 : smoothMouseY * 10;
+    const mRot = isMobile ? 0 : smoothMouseX * 2.4;
+
+    /* ------------------------------------------------------------------
+       A. ANTIQUE THAI SILVER RITUAL BOWL CHOREOGRAPHY (Stages 1 -> 3)
+       ------------------------------------------------------------------ */
+    const bowlExitT = easeInOutCubic(invLerp(p, 0.41, 0.59));
+    const bowlStage2T = easeInOutSine(invLerp(p, 0.16, 0.40));
+    const bowlBaseY = isMobile ? 42 : 76;
+    const bowlY = lerp(bowlBaseY, bowlBaseY - 22, bowlStage2T) - bowlExitT * (stageH * 0.85);
+    const bowlScale = lerp(1.06, 1.0, invLerp(p, 0, 0.2)) * lerp(1.0, 1.06, bowlStage2T) * lerp(1.0, 0.84, bowlExitT);
+    const bowlRot = lerp(0, -2.5, bowlStage2T) - bowlExitT * 6 + mRot * 0.45;
+    const bowlOpacity = clamp(1 - easeInOutCubic(invLerp(p, 0.46, 0.59)), 0, 1);
+
+    const bowlTransform = `translate3d(calc(-50% + ${(mxPx * 0.55).toFixed(1)}px), calc(-50% + ${(
+      bowlY +
+      myPx * 0.4
+    ).toFixed(1)}px), 0) scale(${bowlScale.toFixed(4)}) rotate(${bowlRot.toFixed(2)}deg)`;
+
+    if (bowlBack && bowlFront) {
+      bowlBack.style.transform = bowlTransform;
+      bowlBack.style.opacity = bowlOpacity.toFixed(3);
+      bowlFront.style.transform = bowlTransform;
+      bowlFront.style.opacity = bowlOpacity.toFixed(3);
+    }
+
+    // Exact screen Y of antique bowl inner liquid center (matching prop-bowl top: 56% / 34% + bowlY)
+    const bowlAnchorY = stageH * (isMobile ? 0.34 : 0.56);
+    const bowlSizePx = bowlBack ? bowlBack.offsetHeight || 480 : 480;
+    const bowlMouthY = bowlAnchorY + bowlY + myPx * 0.4 - bowlSizePx * 0.045 * bowlScale;
+
+    /* ------------------------------------------------------------------
+       B. GHOST CENTERPIECE CHOREOGRAPHY (Continuous C1 Smooth Across 5 Stages!)
+       ------------------------------------------------------------------ */
+    // Stage 1 (0 -> 0.22): Materializes deep inside bowl rim
+    const s1 = easeInOutSine(invLerp(p, 0.0, 0.22));
+    // Stage 2 (0.22 -> 0.43): Rises up out of bowl swirling vortex into chilling close-up
+    const s2 = easeInOutCubic(invLerp(p, 0.22, 0.43));
+    // Stage 3 (0.43 -> 0.63): Full majestic figure emerges as bowl lifts away!
+    const s3 = easeInOutCubic(invLerp(p, 0.43, 0.63));
+    // Stage 4 (0.63 -> 0.78): Plunges downward into glossy crimson blood pool!
+    const s4Dip = easeInOutCubic(invLerp(p, 0.65, 0.78));
+    // Stage 5 (0.80 -> 0.94): Rises heroically back up out of blood & levitates!
+    const s5Rise = easeInOutCubic(invLerp(p, 0.80, 0.94));
+
+    // Piecewise continuous Y offset (px relative to stageCenterY)
+    const ghostYStart = isMobile ? 64 : 118;
+    const ghostYStage1 = isMobile ? 36 : 74;
+    const ghostYStage2 = isMobile ? 2 : 12;
+    const ghostYStage3 = isMobile ? 12 : 18;
+    const ghostYDip = isMobile ? 100 : 196;
+    const ghostYFinale = isMobile ? 10 : 8;
+
+    let ghostY = lerp(ghostYStart, ghostYStage1, s1);
+    ghostY = lerp(ghostY, ghostYStage2, s2);
+    ghostY = lerp(ghostY, ghostYStage3, s3);
+    ghostY = lerp(ghostY, ghostYDip, s4Dip);
+    ghostY = lerp(ghostY, ghostYFinale, s5Rise);
+
+    // Gentle weightless levitation bobbing in Stage 3 & Stage 5
+    const floatWeight = clamp(s3 * (1 - s4Dip * 0.85) + s5Rise, 0, 1);
+    const levitateY = Math.sin(time * 1.9) * 8.5 * floatWeight;
+
+    // Piecewise continuous Scale
+    let ghostScale = lerp(0.54, 0.72, s1);
+    ghostScale = lerp(ghostScale, 1.06, s2);
+    ghostScale = lerp(ghostScale, isMobile ? 1.02 : 1.15, s3);
+    ghostScale = lerp(ghostScale, isMobile ? 1.08 : 1.24, s4Dip);
+    ghostScale = lerp(ghostScale, isMobile ? 1.02 : 1.16, s5Rise);
+
+    // Subtle dramatic tilt across chapters
+    let ghostRot = lerp(-3.5, -1.5, s1);
+    ghostRot = lerp(ghostRot, 1.6, s2);
+    ghostRot = lerp(ghostRot, -1.2, s3);
+    ghostRot = lerp(ghostRot, 3.8, s4Dip);
+    ghostRot = lerp(ghostRot, 0, s5Rise);
+    ghostRot += Math.sin(time * 1.3) * 0.8 * floatWeight + mRot;
+
+    // Opacity & initial misty emergence blur
+    const ghostOpacity = clamp(lerp(0.14, 0.62, s1) + s2 * 0.38, 0, 1);
+    const ghostBlur = Math.max(0, lerp(3.5, 0, invLerp(p, 0.04, 0.28)));
+
+    ghostRig.style.transform = `translate3d(calc(-50% + ${mxPx.toFixed(1)}px), calc(-50% + ${(
+      ghostY +
+      levitateY +
+      myPx
+    ).toFixed(1)}px), 0) scale(${ghostScale.toFixed(4)}) rotate(${ghostRot.toFixed(2)}deg)`;
+    ghostRig.style.opacity = ghostOpacity.toFixed(3);
+    ghostRig.style.filter = ghostBlur > 0.1 ? `blur(${ghostBlur.toFixed(2)}px)` : 'none';
+
+    // Clip Ghost lower body smoothly beneath the animated blood pool waterline during Stage 4!
+    const poolState = getBloodPoolState(p);
+    if (ghostMask) {
+      if (poolState.level > 0.02) {
+        const clipBottomPx = Math.max(0, stageH - (poolState.surfaceY + 14));
+        ghostMask.style.clipPath = `inset(0px 0px ${clipBottomPx.toFixed(1)}px 0px)`;
+      } else {
+        ghostMask.style.clipPath = 'none';
+      }
+    }
+
+    // Ghost Crimson Aura & Pulsing Red Eyes Glow
+    const eyePulse = 0.5 + 0.5 * Math.sin(time * 3.1);
+    const eyeStrength = clamp(s2 * 0.85 + s5Rise * 0.35, 0, 1) * (0.6 + eyePulse * 0.4);
+    if (ghostEyes) ghostEyes.style.opacity = eyeStrength.toFixed(3);
+    if (ghostAura) {
+      const auraOp = clamp(s2 * 0.45 + s3 * 0.35 + s5Rise * 0.35, 0, isDark ? 1 : 0.65);
+      ghostAura.style.opacity = auraOp.toFixed(3);
+    }
+    if (crimsonHalo) {
+      const haloOp = clamp(0.18 + s2 * 0.35 + s4Dip * 0.35, 0, isDark ? 0.92 : 0.48);
+      crimsonHalo.style.opacity = haloOp.toFixed(3);
+      crimsonHalo.style.transform = `translate(-50%, -50%) scale(${(0.88 + s4Dip * 0.25).toFixed(3)})`;
+    }
+
+    /* ------------------------------------------------------------------
+       C. CURVED ORBITAL TEXT BADGE (Stage 3: Framing cleanly outside crown & shoulders)
+       ------------------------------------------------------------------ */
+    if (curvedBadge) {
+      const badgeIn = easeOutCubic(invLerp(p, 0.44, 0.53));
+      const badgeOut = 1 - easeInOutCubic(invLerp(p, 0.60, 0.67));
+      const badgeOp = badgeIn * badgeOut;
+      // Gentle symmetrical sway so left & right curved arcs NEVER cross the crown or waist
+      const badgeRot = lerp(-8, 8, invLerp(p, 0.44, 0.65)) + Math.sin(time * 0.9) * 2.2;
+      const badgeScale = lerp(0.88, 1.0, badgeIn);
+      curvedBadge.style.opacity = badgeOp.toFixed(3);
+      curvedBadge.style.transform = `translate3d(calc(-50% + ${(mxPx * 0.6).toFixed(
+        1
+      )}px), calc(-50% + ${(myPx * 0.5).toFixed(1)}px), 0) scale(${badgeScale.toFixed(
+        3
+      )}) rotate(${badgeRot.toFixed(2)}deg)`;
+    }
+
+    /* ------------------------------------------------------------------
+       D. RENDER 60FPS HIDPI TRIPLE CANVASES (BACK, MID INSIDE BOWL, FRONT)
+       ------------------------------------------------------------------ */
+    backCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    midCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    frontCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    backCtx.clearRect(0, 0, stageW, stageH);
+    midCtx.clearRect(0, 0, stageW, stageH);
+    frontCtx.clearRect(0, 0, stageW, stageH);
+
+    // Back Canvas (z=1): Ambient Embers + Occult Vortex + Blood Pool Back + Stage 5 Back Ribbons
+    drawAmbientEmbers(backCtx, p, time, isDark);
+    drawOccultVortex(backCtx, stageCenterX + mxPx * 0.4, stageCenterY + ghostY * 0.35, p, time, isDark);
+    drawBloodPoolBack(backCtx, poolState, p, time);
+    drawOrbitingRibbons(backCtx, stageCenterX + mxPx, stageCenterY + ghostY + levitateY, p, time, 'back', isDark);
+
+    // Mid Canvas (z=2, BETWEEN bowl back & bowl front rim!): Pouring Blood Stream + Swirling Liquid Inside Bowl!
+    drawPouringStream(midCtx, stageCenterX + mxPx * 0.55, bowlMouthY, p, time, isDark);
+
+    // Front Canvas (z=5): Glossy Blood Pool Foreground + Ripples + Splash Droplets + Stage 5 Front Ribbons
+    drawBloodPoolFront(frontCtx, stageCenterX + mxPx, poolState, p, velocity, time, isDark);
+    drawOrbitingRibbons(frontCtx, stageCenterX + mxPx, stageCenterY + ghostY + levitateY, p, time, 'front', isDark);
+
+    rafId = window.requestAnimationFrame(renderFrame);
+  }
+
+  function ensureLoop() {
+    if (isStageVisible && !REDUCED_MOTION_QUERY.matches && rafId === null) {
+      rafId = window.requestAnimationFrame(renderFrame);
+    }
+  }
+
+  resizeStage();
+  computeTargetScrollProgress();
+  smoothP = targetP;
+
+  window.addEventListener('resize', () => {
+    resizeStage();
+    computeTargetScrollProgress();
+  }, { passive: true });
+
+  window.addEventListener('scroll', computeTargetScrollProgress, { passive: true });
+
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        isStageVisible = Boolean(entries[0]?.isIntersecting);
+        ensureLoop();
+      },
+      { threshold: 0 }
+    );
+    obs.observe(showcase);
+  }
+
+  ensureLoop();
+}
+
+/* ==========================================================================
+   2. GLOBAL SCROLL PROGRESS BAR
+   ========================================================================== */
+function initHeaderProgress() {
+  const bar = document.getElementById('header-progress');
+  if (!bar) return;
+
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const ratio = clamp(window.scrollY / maxScroll, 0, 1);
+    bar.style.transform = `scaleX(${ratio.toFixed(4)})`;
+  };
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(update);
+      }
+    },
+    { passive: true }
+  );
+  update();
+}
+
+/* ==========================================================================
+   3. POSTER GALLERY + TEASERS + FEATURED SPOTLIGHT
+   ========================================================================== */
 function getGridColumnCount(gridEl) {
   if (!gridEl) return 1;
   const computed = window.getComputedStyle(gridEl).gridTemplateColumns;
   if (!computed || computed === 'none') return 1;
-  const cols = computed.trim().split(/\s+/).length;
-  return Math.max(1, cols);
+  return Math.max(1, computed.trim().split(/\s+/).length);
 }
 
-/**
- * Assign `--reveal-delay` automatically to unrevealed poster cards per row.
- */
 function applyPosterStagger(gridEl) {
   if (!gridEl) return;
   const colCount = getGridColumnCount(gridEl);
-  const cards = gridEl.querySelectorAll('.poster-card');
-  cards.forEach((card, index) => {
+  gridEl.querySelectorAll('.poster-card').forEach((card, index) => {
     if (!card.classList.contains('is-visible')) {
       const colIndex = index % colCount;
-      card.style.setProperty('--reveal-delay', `${120 + colIndex * 180}ms`);
+      card.style.setProperty('--reveal-delay', `${100 + colIndex * 160}ms`);
     }
   });
 }
 
-/**
- * Render the 2:3 Poster Gallery grid from MOVIES.
- */
 function renderPosterGallery(movies) {
   const grid = document.getElementById('poster-grid');
   if (!grid) return;
@@ -175,7 +1016,7 @@ function renderPosterGallery(movies) {
             />
           </div>
           <div class="poster-overlay">
-            <p class="poster-meta">${escapeHTML(movie.genre)} • ${escapeHTML(movie.year)}</p>
+            <p class="poster-meta">${escapeHTML(movie.genre)} &bull; ${escapeHTML(movie.year)}</p>
             <h3 class="poster-title">${escapeHTML(movie.title)}</h3>
             ${
               movie.englishTitle
@@ -195,17 +1036,12 @@ function renderPosterGallery(movies) {
     const trigger = event.target.closest('[data-lightbox-index]');
     if (!trigger) return;
     const index = Number(trigger.getAttribute('data-lightbox-index'));
-    if (Number.isInteger(index)) {
-      openLightbox(index, trigger);
-    }
+    if (Number.isInteger(index)) openLightbox(index, trigger);
   });
 
   window.addEventListener('resize', () => applyPosterStagger(grid), { passive: true });
 }
 
-/**
- * Replace a teaser's thumbnail with a playable <video> or YouTube <iframe> only on click.
- */
 function mountTeaserPlayer(mediaEl, title) {
   if (!mediaEl || mediaEl.dataset.loaded === 'true') return;
   const videoType = (mediaEl.dataset.videoType || 'mp4').toLowerCase();
@@ -221,8 +1057,7 @@ function mountTeaserPlayer(mediaEl, title) {
     iframe.className = 'teaser-iframe-el';
     iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&rel=0`;
     iframe.title = `ตัวอย่างภาพยนตร์ ${title}`;
-    iframe.allow =
-      'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
     iframe.allowFullscreen = true;
     mediaEl.appendChild(iframe);
     return;
@@ -243,25 +1078,20 @@ function mountTeaserPlayer(mediaEl, title) {
 
   mediaEl.appendChild(video);
   video.play().catch(() => {
-    // Fallback if strict autoplay policy blocks unmuted playback on click.
     video.muted = true;
     video.play().catch(() => {});
   });
 }
 
-/**
- * Render the 16:9 Official Teasers section with lazy-loaded video players.
- */
 function renderTeaserSection(movies) {
   const list = document.getElementById('teaser-list');
   if (!list) return;
 
   const teasers = movies.filter((movie) => Boolean(movie.teaserPath));
   list.innerHTML = teasers
-    .map(
-      (movie, index) => {
-        const baseDelay = 120 + index * 200;
-        return `
+    .map((movie, index) => {
+      const baseDelay = 100 + index * 180;
+      return `
       <article class="teaser-card reveal" data-reveal="fade-up" style="--reveal-delay: ${baseDelay}ms">
         <div
           class="teaser-media"
@@ -279,28 +1109,19 @@ function renderTeaserSection(movies) {
             class="teaser-thumb"
           />
           <div class="teaser-scrim" aria-hidden="true"></div>
-          <button
-            type="button"
-            class="teaser-play-btn"
-            aria-label="เล่นทีเซอร์ ${escapeHTML(movie.title)}"
-          >
+          <button type="button" class="teaser-play-btn" aria-label="เล่นทีเซอร์ ${escapeHTML(movie.title)}">
             <span class="teaser-play-icon" aria-hidden="true"></span>
           </button>
-          ${
-            movie.teaserDuration
-              ? `<span class="teaser-duration-badge">${escapeHTML(movie.teaserDuration)}</span>`
-              : ''
-          }
+          ${movie.teaserDuration ? `<span class="teaser-duration-badge">${escapeHTML(movie.teaserDuration)}</span>` : ''}
         </div>
         <div class="teaser-body">
-          <p class="teaser-meta reveal" data-reveal="fade-up" style="--reveal-delay: ${baseDelay + 140}ms">${escapeHTML(movie.genre)} • ${escapeHTML(movie.year)}</p>
-          <h3 class="teaser-title reveal" data-reveal="fade-up" style="--reveal-delay: ${baseDelay + 260}ms">${escapeHTML(movie.teaserTitle || movie.title)}</h3>
-          <p class="teaser-synopsis reveal" data-reveal="fade-up" style="--reveal-delay: ${baseDelay + 380}ms">${escapeHTML(movie.synopsis)}</p>
+          <p class="teaser-meta">${escapeHTML(movie.genre)} &bull; ${escapeHTML(movie.year)}</p>
+          <h3 class="teaser-title">${escapeHTML(movie.teaserTitle || movie.title)}</h3>
+          <p class="teaser-synopsis">${escapeHTML(movie.synopsis)}</p>
         </div>
       </article>
-    `;
-      }
-    )
+      `;
+    })
     .join('');
 
   list.addEventListener('click', (event) => {
@@ -312,18 +1133,12 @@ function renderTeaserSection(movies) {
   });
 }
 
-/**
- * Render the Featured Project section with sequential synopsis reveal lines.
- */
 function renderFeaturedProject(movies, selectedIndex) {
   const container = document.getElementById('featured-project');
   const switcher = document.getElementById('featured-switcher');
   if (!container || movies.length === 0) return;
 
-  const defaultIndex = Math.max(
-    0,
-    movies.findIndex((movie) => Boolean(movie.featured))
-  );
+  const defaultIndex = Math.max(0, movies.findIndex((m) => Boolean(m.featured)));
   const featuredIndex =
     typeof selectedIndex === 'number' && selectedIndex >= 0 && selectedIndex < movies.length
       ? selectedIndex
@@ -354,9 +1169,7 @@ function renderFeaturedProject(movies, selectedIndex) {
         const tab = event.target.closest('[data-featured-index]');
         if (!tab) return;
         const idx = Number(tab.getAttribute('data-featured-index'));
-        if (Number.isInteger(idx)) {
-          renderFeaturedProject(movies, idx);
-        }
+        if (Number.isInteger(idx)) renderFeaturedProject(movies, idx);
       });
     }
   }
@@ -369,9 +1182,7 @@ function renderFeaturedProject(movies, selectedIndex) {
   const synopsisMarkup = lines
     .map(
       (line, idx) => `
-      <p class="featured-synopsis-line reveal" data-reveal="fade-up" style="--reveal-delay: ${
-        420 + idx * 160
-      }ms">
+      <p class="featured-synopsis-line reveal" data-reveal="fade-up" style="--reveal-delay: ${240 + idx * 120}ms">
         ${escapeHTML(line)}
       </p>
     `
@@ -384,13 +1195,10 @@ function renderFeaturedProject(movies, selectedIndex) {
     movie.releaseDate ? { label: 'กำหนดฉาย', value: movie.releaseDate } : null
   ].filter(Boolean);
 
-  const metaStartDelay = 420 + lines.length * 160;
   const metaMarkup = metaItems
     .map(
-      (item, idx) => `
-      <div class="featured-meta-row reveal" data-reveal="fade-up" style="--reveal-delay: ${
-        metaStartDelay + idx * 120
-      }ms">
+      (item) => `
+      <div class="featured-meta-row">
         <dt>${escapeHTML(item.label)}</dt>
         <dd>${escapeHTML(item.value)}</dd>
       </div>
@@ -398,51 +1206,32 @@ function renderFeaturedProject(movies, selectedIndex) {
     )
     .join('');
 
-  const actionsDelay = metaStartDelay + metaItems.length * 120 + 60;
-
   container.innerHTML = `
     <div class="featured-poster-reveal reveal" data-reveal="zoom-in">
-      <div class="featured-poster-parallax" id="featured-parallax">
-        <button
-          type="button"
-          class="featured-poster-btn"
-          id="featured-poster-trigger"
-          aria-label="ขยายดูโปสเตอร์ ${escapeHTML(movie.title)}"
-        >
-          <img
-            src="${escapeHTML(safeAssetUrl(movie.posterPath))}"
-            alt="${escapeHTML(movie.posterAlt || `โปสเตอร์ภาพยนตร์ ${movie.title}`)}"
-            width="800"
-            height="1200"
-            loading="lazy"
-            decoding="async"
-            class="featured-poster-img"
-          />
-        </button>
-      </div>
+      <button type="button" class="featured-poster-btn" id="featured-poster-trigger" aria-label="ขยายดูโปสเตอร์ ${escapeHTML(movie.title)}">
+        <img
+          src="${escapeHTML(safeAssetUrl(movie.posterPath))}"
+          alt="${escapeHTML(movie.posterAlt || `โปสเตอร์ภาพยนตร์ ${movie.title}`)}"
+          width="800"
+          height="1200"
+          loading="lazy"
+          decoding="async"
+          class="featured-poster-img"
+        />
+      </button>
     </div>
 
     <div class="featured-details">
-      <p class="featured-genre-tag reveal" data-reveal="fade-left" style="--reveal-delay: 140ms">
-        ${escapeHTML(movie.genre)}
-      </p>
-      <h3 class="featured-title reveal" data-reveal="fade-left" style="--reveal-delay: 280ms">
-        ${escapeHTML(movie.title)}
-      </h3>
-
-      <div class="featured-synopsis-group" aria-label="เรื่องย่อภาพยนตร์">
-        ${synopsisMarkup}
-      </div>
-
-      <dl class="featured-meta-list reveal" data-reveal="fade-up" style="--reveal-delay: ${
-        metaStartDelay - 60
-      }ms">
-        ${metaMarkup}
-      </dl>
-
-      <div class="featured-actions reveal" data-reveal="fade-up" style="--reveal-delay: ${actionsDelay}ms">
-        <a href="#teasers" class="btn btn-primary">รับชมทีเซอร์</a>
-        <button type="button" class="btn btn-ghost" id="featured-zoom-btn">
+      <p class="featured-genre-tag reveal" data-reveal="fade-left" style="--reveal-delay: 80ms">${escapeHTML(movie.genre)}</p>
+      <h3 class="featured-title reveal" data-reveal="fade-left" style="--reveal-delay: 160ms">${escapeHTML(movie.title)}</h3>
+      <div class="featured-synopsis-group" aria-label="เรื่องย่อภาพยนตร์">${synopsisMarkup}</div>
+      <dl class="featured-meta-list reveal" data-reveal="fade-up" style="--reveal-delay: 420ms">${metaMarkup}</dl>
+      <div class="featured-actions reveal" data-reveal="fade-up" style="--reveal-delay: 500ms">
+        <a href="#teasers" class="pill-btn pill-btn--crimson">
+          <span>รับชมทีเซอร์</span>
+          <span class="pill-btn-icon" aria-hidden="true">&rarr;</span>
+        </a>
+        <button type="button" class="pill-btn pill-btn--outline" id="featured-zoom-btn">
           ดูโปสเตอร์ขนาดเต็ม
         </button>
       </div>
@@ -451,12 +1240,8 @@ function renderFeaturedProject(movies, selectedIndex) {
 
   const posterBtn = document.getElementById('featured-poster-trigger');
   const zoomBtn = document.getElementById('featured-zoom-btn');
-  if (posterBtn) {
-    posterBtn.addEventListener('click', () => openLightbox(featuredIndex, posterBtn));
-  }
-  if (zoomBtn) {
-    zoomBtn.addEventListener('click', () => openLightbox(featuredIndex, zoomBtn));
-  }
+  if (posterBtn) posterBtn.addEventListener('click', () => openLightbox(featuredIndex, posterBtn));
+  if (zoomBtn) zoomBtn.addEventListener('click', () => openLightbox(featuredIndex, zoomBtn));
 
   if (isSwitchAction) {
     const newReveals = container.querySelectorAll('.reveal');
@@ -468,19 +1253,13 @@ function renderFeaturedProject(movies, selectedIndex) {
   }
 }
 
-/**
- * Reveal all `.reveal` elements immediately (for reduced motion or unsupported browsers).
- */
+/* ==========================================================================
+   4. SCROLL REVEAL, NAVIGATION, LIGHTBOX, CARD TILT & THEME MODE
+   ========================================================================== */
 function revealAllImmediately() {
-  document.querySelectorAll('.reveal').forEach((el) => {
-    el.classList.add('is-visible');
-    el.classList.remove('is-animating');
-  });
+  document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-visible'));
 }
 
-/**
- * Initialize IntersectionObserver-based scroll reveal animations (zero scroll listeners).
- */
 function initScrollReveal() {
   const elements = document.querySelectorAll('.reveal');
   if (elements.length === 0) return;
@@ -499,118 +1278,18 @@ function initScrollReveal() {
     (entries, observer) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
-        const target = entry.target;
-        target.classList.add('is-animating');
-        target.classList.add('is-visible');
-        observer.unobserve(target);
-
-        const cleanup = () => {
-          target.classList.remove('is-animating');
-          target.removeEventListener('transitionend', cleanup);
-        };
-        target.addEventListener('transitionend', cleanup, { once: true });
-        window.setTimeout(cleanup, 2500);
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
       });
     },
-    {
-      threshold: 0.15,
-      rootMargin: '0px 0px -60px 0px'
-    }
+    { threshold: 0.14, rootMargin: '0px 0px -50px 0px' }
   );
 
   elements.forEach((el) => {
-    if (!el.classList.contains('is-visible')) {
-      revealObserver.observe(el);
-    }
+    if (!el.classList.contains('is-visible')) revealObserver.observe(el);
   });
 }
 
-/**
- * Initialize subtle GPU parallax for the hero backdrop and featured poster
- * using IntersectionObserver + requestAnimationFrame (no scroll event listeners).
- */
-function initParallax() {
-  const heroSection = document.getElementById('hero');
-  const heroBg = document.getElementById('hero-parallax');
-  const featuredSection = document.getElementById('featured');
-
-  if (!heroBg && !featuredSection) return;
-
-  let heroVisible = true;
-  let featuredVisible = false;
-  let rafId = null;
-  let lastScrollY = -1;
-
-  function resetTransforms() {
-    if (heroBg) heroBg.style.transform = '';
-    const currentFeaturedPoster = document.getElementById('featured-parallax');
-    if (currentFeaturedPoster) currentFeaturedPoster.style.transform = '';
-  }
-
-  function updateParallaxFrame() {
-    rafId = null;
-    if (REDUCED_MOTION_QUERY.matches) {
-      resetTransforms();
-      return;
-    }
-
-    const scrollY = window.scrollY;
-    if (scrollY !== lastScrollY) {
-      lastScrollY = scrollY;
-      const vh = window.innerHeight || 800;
-
-      if (heroVisible && heroBg) {
-        const heroOffset = Math.max(-24, Math.min(48, scrollY * 0.12));
-        heroBg.style.transform = `translate3d(0, ${heroOffset.toFixed(2)}px, 0)`;
-      }
-
-      const currentFeaturedPoster = document.getElementById('featured-parallax');
-      if (featuredVisible && currentFeaturedPoster && featuredSection) {
-        const rect = featuredSection.getBoundingClientRect();
-        const centerDelta = rect.top + rect.height * 0.5 - vh * 0.5;
-        const posterOffset = Math.max(-22, Math.min(22, centerDelta * -0.045));
-        currentFeaturedPoster.style.transform = `translate3d(0, ${posterOffset.toFixed(2)}px, 0)`;
-      }
-    }
-
-    if (heroVisible || featuredVisible) {
-      rafId = window.requestAnimationFrame(updateParallaxFrame);
-    }
-  }
-
-  function ensureLoop() {
-    if (!REDUCED_MOTION_QUERY.matches && (heroVisible || featuredVisible) && rafId === null) {
-      rafId = window.requestAnimationFrame(updateParallaxFrame);
-    }
-  }
-
-  if ('IntersectionObserver' in window) {
-    const visObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.target === heroSection) {
-            heroVisible = entry.isIntersecting;
-          }
-          if (entry.target === featuredSection) {
-            featuredVisible = entry.isIntersecting;
-          }
-        });
-        lastScrollY = -1;
-        ensureLoop();
-      },
-      { threshold: 0 }
-    );
-
-    if (heroSection) visObserver.observe(heroSection);
-    if (featuredSection) visObserver.observe(featuredSection);
-  }
-
-  ensureLoop();
-}
-
-/**
- * Initialize sticky header mobile menu and active-section highlight via IntersectionObserver.
- */
 function initNavigation() {
   const toggleBtn = document.getElementById('nav-toggle');
   const nav = document.getElementById('primary-nav');
@@ -626,14 +1305,11 @@ function initNavigation() {
 
   if (toggleBtn && nav) {
     toggleBtn.addEventListener('click', () => {
-      const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-      setMenuOpen(!expanded);
+      setMenuOpen(toggleBtn.getAttribute('aria-expanded') !== 'true');
     });
 
     nav.addEventListener('click', (event) => {
-      if (event.target.closest('a')) {
-        setMenuOpen(false);
-      }
+      if (event.target.closest('a')) setMenuOpen(false);
     });
 
     document.addEventListener('keydown', (event) => {
@@ -648,11 +1324,8 @@ function initNavigation() {
     navLinks.forEach((link) => {
       const isMatch = link.getAttribute('data-section') === sectionId;
       link.classList.toggle('is-active', isMatch);
-      if (isMatch) {
-        link.setAttribute('aria-current', 'location');
-      } else {
-        link.removeAttribute('aria-current');
-      }
+      if (isMatch) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
     });
   }
 
@@ -660,24 +1333,30 @@ function initNavigation() {
     const navObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
+          if (entry.isIntersecting) setActiveSection(entry.target.id);
         });
       },
-      {
-        rootMargin: '-35% 0px -55% 0px',
-        threshold: 0
-      }
+      { rootMargin: '-30% 0px -55% 0px', threshold: 0 }
     );
-
     sections.forEach((section) => navObserver.observe(section));
   }
 }
 
-/**
- * Update Lightbox DOM for the active movie index.
- */
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.hidden = false;
+  window.requestAnimationFrame(() => toast.classList.add('is-visible'));
+  if (toastTimer !== null) window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => {
+    toast.classList.remove('is-visible');
+    window.setTimeout(() => {
+      if (!toast.classList.contains('is-visible')) toast.hidden = true;
+    }, 260);
+  }, 2400);
+}
+
 function updateLightboxView() {
   const movie = MOVIES[lightboxState.currentIndex];
   if (!movie) return;
@@ -692,51 +1371,12 @@ function updateLightboxView() {
     img.src = safeAssetUrl(movie.posterPath);
     img.alt = movie.posterAlt || `โปสเตอร์ภาพยนตร์ ${movie.title}`;
   }
-  if (meta) {
-    meta.textContent = `${movie.genre} • ${movie.year}`;
-  }
-  if (title) {
-    title.textContent = movie.englishTitle
-      ? `${movie.title} (${movie.englishTitle})`
-      : movie.title;
-  }
-  if (synopsis) {
-    synopsis.textContent = movie.synopsis || '';
-  }
-  if (counter) {
-    counter.textContent = `${lightboxState.currentIndex + 1} / ${MOVIES.length}`;
-  }
+  if (meta) meta.textContent = `${movie.genre} • ${movie.year}`;
+  if (title) title.textContent = movie.englishTitle ? `${movie.title} (${movie.englishTitle})` : movie.title;
+  if (synopsis) synopsis.textContent = movie.synopsis || '';
+  if (counter) counter.textContent = `${lightboxState.currentIndex + 1} / ${MOVIES.length}`;
 }
 
-let toastTimer = null;
-
-/**
- * Display a brief accessible status toast notification.
- */
-function showToast(message) {
-  const toast = document.getElementById('toast');
-  if (!toast) return;
-  toast.textContent = message;
-  toast.hidden = false;
-  window.requestAnimationFrame(() => {
-    toast.classList.add('is-visible');
-  });
-  if (toastTimer !== null) {
-    window.clearTimeout(toastTimer);
-  }
-  toastTimer = window.setTimeout(() => {
-    toast.classList.remove('is-visible');
-    window.setTimeout(() => {
-      if (!toast.classList.contains('is-visible')) {
-        toast.hidden = true;
-      }
-    }, 260);
-  }, 2400);
-}
-
-/**
- * Toggle poster zoom inspection state inside Lightbox.
- */
 function setLightboxZoom(zoomed) {
   const wrap = document.getElementById('lightbox-swipe-area');
   const zoomBtn = document.getElementById('lightbox-zoom');
@@ -748,9 +1388,6 @@ function setLightboxZoom(zoomed) {
   }
 }
 
-/**
- * Open fullscreen poster Lightbox.
- */
 function openLightbox(index, triggerEl) {
   const lightbox = document.getElementById('lightbox');
   const closeBtn = document.getElementById('lightbox-close');
@@ -764,15 +1401,9 @@ function openLightbox(index, triggerEl) {
   updateLightboxView();
   lightbox.hidden = false;
   document.body.style.overflow = 'hidden';
-
-  if (closeBtn) {
-    closeBtn.focus();
-  }
+  if (closeBtn) closeBtn.focus();
 }
 
-/**
- * Close fullscreen poster Lightbox and restore keyboard focus.
- */
 function closeLightbox() {
   const lightbox = document.getElementById('lightbox');
   if (!lightbox || !lightboxState.isOpen) return;
@@ -781,7 +1412,6 @@ function closeLightbox() {
   lightbox.hidden = true;
   lightboxState.isOpen = false;
   document.body.style.overflow = '';
-
   if (lightboxState.lastTrigger && typeof lightboxState.lastTrigger.focus === 'function') {
     lightboxState.lastTrigger.focus();
   }
@@ -791,16 +1421,14 @@ function closeLightbox() {
 function stepLightbox(delta) {
   if (!lightboxState.isOpen) return;
   setLightboxZoom(false);
-  lightboxState.currentIndex =
-    (lightboxState.currentIndex + delta + MOVIES.length) % MOVIES.length;
+  lightboxState.currentIndex = (lightboxState.currentIndex + delta + MOVIES.length) % MOVIES.length;
   updateLightboxView();
 }
 
-/**
- * Initialize accessible Lightbox with keyboard navigation, focus trap, and mobile swipe.
- */
 function initLightbox() {
   const lightbox = document.getElementById('lightbox');
+  if (!lightbox) return;
+
   const closeBtn = document.getElementById('lightbox-close');
   const prevBtn = document.getElementById('lightbox-prev');
   const nextBtn = document.getElementById('lightbox-next');
@@ -809,84 +1437,55 @@ function initLightbox() {
   const zoomWrap = document.getElementById('lightbox-swipe-area');
   const swipeArea = document.getElementById('lightbox-dialog');
 
-  if (!lightbox) return;
-
   if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
   if (prevBtn) prevBtn.addEventListener('click', () => stepLightbox(-1));
   if (nextBtn) nextBtn.addEventListener('click', () => stepLightbox(1));
 
   const toggleZoom = () => {
-    if (!zoomWrap) return;
-    setLightboxZoom(!zoomWrap.classList.contains('is-zoomed'));
+    if (zoomWrap) setLightboxZoom(!zoomWrap.classList.contains('is-zoomed'));
   };
   if (zoomBtn) zoomBtn.addEventListener('click', toggleZoom);
   if (zoomImg) zoomImg.addEventListener('click', toggleZoom);
 
   lightbox.addEventListener('click', (event) => {
-    if (event.target.hasAttribute('data-lightbox-close')) {
-      closeLightbox();
-    }
+    if (event.target.hasAttribute('data-lightbox-close')) closeLightbox();
   });
 
   document.addEventListener('keydown', (event) => {
     if (!lightboxState.isOpen) return;
-
     if (event.key === 'Escape') {
       event.preventDefault();
       closeLightbox();
-      return;
-    }
-    if (event.key === 'ArrowLeft') {
+    } else if (event.key === 'ArrowLeft') {
       event.preventDefault();
       stepLightbox(-1);
-      return;
-    }
-    if (event.key === 'ArrowRight') {
+    } else if (event.key === 'ArrowRight') {
       event.preventDefault();
       stepLightbox(1);
-      return;
-    }
-    if (event.key === 'Tab') {
-      const focusable = Array.from(
-        lightbox.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')
-      );
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
     }
   });
 
-  // Mobile touch swipe support
   if (swipeArea) {
-    let touchStartX = 0;
-    let touchStartY = 0;
-
+    let startX = 0;
+    let startY = 0;
     swipeArea.addEventListener(
       'touchstart',
-      (event) => {
-        if (event.touches.length !== 1) return;
-        touchStartX = event.touches[0].clientX;
-        touchStartY = event.touches[0].clientY;
+      (e) => {
+        if (e.touches.length === 1) {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }
       },
       { passive: true }
     );
-
     swipeArea.addEventListener(
       'touchend',
-      (event) => {
-        if (!lightboxState.isOpen || event.changedTouches.length !== 1) return;
-        const deltaX = event.changedTouches[0].clientX - touchStartX;
-        const deltaY = event.changedTouches[0].clientY - touchStartY;
-
-        if (Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-          stepLightbox(deltaX < 0 ? 1 : -1);
+      (e) => {
+        if (!lightboxState.isOpen || e.changedTouches.length !== 1) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+          stepLightbox(dx < 0 ? 1 : -1);
         }
       },
       { passive: true }
@@ -894,50 +1493,36 @@ function initLightbox() {
   }
 }
 
-/**
- * Subtle atmospheric spotlight following the desktop cursor using transform3d + RAF.
- */
 function initCursorSpotlight() {
   const spot = document.getElementById('cursor-spotlight');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   if (!spot || !finePointer.matches || REDUCED_MOTION_QUERY.matches) return;
 
-  let targetX = -999;
-  let targetY = -999;
-  let rafPending = false;
-
-  function renderSpot() {
-    rafPending = false;
-    if (REDUCED_MOTION_QUERY.matches) {
-      spot.classList.remove('is-active');
-      return;
-    }
-    spot.style.transform = `translate3d(${targetX}px, ${targetY}px, 0)`;
-  }
+  let tx = -999;
+  let ty = -999;
+  let pending = false;
 
   document.addEventListener(
     'pointermove',
-    (event) => {
-      if (event.pointerType !== 'mouse') return;
-      targetX = event.clientX;
-      targetY = event.clientY;
+    (e) => {
+      if (e.pointerType !== 'mouse') return;
+      tx = e.clientX;
+      ty = e.clientY;
       spot.classList.add('is-active');
-      if (!rafPending) {
-        rafPending = true;
-        window.requestAnimationFrame(renderSpot);
+      if (!pending) {
+        pending = true;
+        window.requestAnimationFrame(() => {
+          pending = false;
+          spot.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+        });
       }
     },
     { passive: true }
   );
 
-  document.addEventListener('pointerleave', () => {
-    spot.classList.remove('is-active');
-  });
+  document.addEventListener('pointerleave', () => spot.classList.remove('is-active'));
 }
 
-/**
- * Subtle 3D magnetic tilt + specular sheen tracking on poster cards (mouse only).
- */
 function initCardTilt() {
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   if (!finePointer.matches || REDUCED_MOTION_QUERY.matches) return;
@@ -946,29 +1531,22 @@ function initCardTilt() {
     let rafId = null;
     let latestEvent = null;
 
-    function updateTilt() {
-      rafId = null;
-      if (!latestEvent || REDUCED_MOTION_QUERY.matches) return;
-      const rect = card.getBoundingClientRect();
-      const px = (latestEvent.clientX - rect.left) / rect.width;
-      const py = (latestEvent.clientY - rect.top) / rect.height;
-      const tiltY = (px - 0.5) * 8;
-      const tiltX = (0.5 - py) * 8;
-
-      card.classList.add('is-tilting');
-      card.style.setProperty('--tilt-x', `${tiltX.toFixed(2)}deg`);
-      card.style.setProperty('--tilt-y', `${tiltY.toFixed(2)}deg`);
-      card.style.setProperty('--mx', `${(px * 100).toFixed(1)}%`);
-      card.style.setProperty('--my', `${(py * 100).toFixed(1)}%`);
-    }
-
     card.addEventListener(
       'pointermove',
       (event) => {
         if (event.pointerType !== 'mouse') return;
         latestEvent = event;
         if (rafId === null) {
-          rafId = window.requestAnimationFrame(updateTilt);
+          rafId = window.requestAnimationFrame(() => {
+            rafId = null;
+            if (!latestEvent) return;
+            const rect = card.getBoundingClientRect();
+            const px = (latestEvent.clientX - rect.left) / rect.width;
+            const py = (latestEvent.clientY - rect.top) / rect.height;
+            card.classList.add('is-tilting');
+            card.style.setProperty('--tilt-x', `${((0.5 - py) * 7).toFixed(2)}deg`);
+            card.style.setProperty('--tilt-y', `${((px - 0.5) * 7).toFixed(2)}deg`);
+          });
         }
       },
       { passive: true }
@@ -986,116 +1564,25 @@ function initCardTilt() {
   });
 }
 
-/**
- * Drifting ambient dust & crimson ember particles on the Hero canvas,
- * paused automatically offscreen via IntersectionObserver.
- */
-function initHeroParticles() {
-  const canvas = document.getElementById('hero-particles');
-  const hero = document.getElementById('hero');
-  if (!canvas || !hero || REDUCED_MOTION_QUERY.matches) return;
-
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  const COUNT = 26;
-  const particles = Array.from({ length: COUNT }, (_, i) => ({
-    x: Math.random(),
-    y: Math.random(),
-    r: 1 + Math.random() * 2.1,
-    vx: (Math.random() - 0.5) * 0.00025,
-    vy: -(0.00025 + Math.random() * 0.00045),
-    alpha: 0.18 + Math.random() * 0.32,
-    isRed: i % 3 === 0
-  }));
-
-  let width = 0;
-  let height = 0;
-  let visible = true;
-  let rafId = null;
-
-  function resizeCanvas() {
-    const rect = hero.getBoundingClientRect();
-    width = Math.max(1, Math.floor(rect.width));
-    height = Math.max(1, Math.floor(rect.height));
-    canvas.width = width;
-    canvas.height = height;
-  }
-
-  function tick() {
-    rafId = null;
-    if (!visible || REDUCED_MOTION_QUERY.matches) return;
-
-    ctx.clearRect(0, 0, width, height);
-    particles.forEach((p) => {
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.y < -0.05) {
-        p.y = 1.05;
-        p.x = Math.random();
-      }
-      if (p.x < -0.05) p.x = 1.05;
-      if (p.x > 1.05) p.x = -0.05;
-
-      ctx.beginPath();
-      ctx.arc(p.x * width, p.y * height, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = p.isRed
-        ? `rgba(210, 58, 58, ${p.alpha})`
-        : `rgba(110, 178, 172, ${p.alpha * 0.75})`;
-      ctx.fill();
-    });
-
-    rafId = window.requestAnimationFrame(tick);
-  }
-
-  function startLoop() {
-    if (visible && !REDUCED_MOTION_QUERY.matches && rafId === null) {
-      rafId = window.requestAnimationFrame(tick);
-    }
-  }
-
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas, { passive: true });
-
-  if ('IntersectionObserver' in window) {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        visible = Boolean(entries[0]?.isIntersecting);
-        startLoop();
-      },
-      { threshold: 0 }
-    );
-    obs.observe(hero);
-  }
-
-  startLoop();
-}
-
-/**
- * Screening Room / Lights-Off Cinema Mode toggle in header.
- */
 function initCinemaMode() {
   const btn = document.getElementById('cinema-mode-btn');
   if (!btn) return;
-  const labelEl = btn.querySelector('.cinema-toggle-label');
+  const labelEl = btn.querySelector('.theme-toggle-label');
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
 
   btn.addEventListener('click', () => {
     const isCinema = document.documentElement.classList.toggle('cinema-mode');
     btn.setAttribute('aria-pressed', String(isCinema));
     btn.setAttribute(
       'aria-label',
-      isCinema ? 'ปิดโหมดโรงภาพยนตร์ (เปิดไฟปกติ)' : 'เปิดโหมดโรงภาพยนตร์ (ปิดไฟรอบข้าง)'
+      isCinema ? 'สลับเป็นโหมดแกลเลอรีสว่าง (Lights On)' : 'สลับเป็นโหมดมืดโรงภาพยนตร์ (Lights Off)'
     );
-    if (labelEl) {
-      labelEl.textContent = isCinema ? 'LIGHTS ON' : 'LIGHTS OFF';
-    }
-    showToast(isCinema ? 'เปิดโหมดโรงภาพยนตร์ (Cinema Mode)' : 'กลับสู่โหมดแสดงผลปกติ');
+    if (labelEl) labelEl.textContent = isCinema ? 'LIGHTS ON' : 'LIGHTS OFF';
+    if (metaTheme) metaTheme.setAttribute('content', isCinema ? '#0a090c' : '#f3efe7');
+    showToast(isCinema ? 'เปิดโหมดมืดโรงภาพยนตร์ (Cinema Dark)' : 'เปิดโหมดแกลเลอรีสว่าง (Gallery Studio)');
   });
 }
 
-/**
- * One-click copy contact email button with clipboard fallback.
- */
 function initCopyEmail() {
   const copyBtn = document.getElementById('copy-email-btn');
   if (!copyBtn) return;
@@ -1123,59 +1610,9 @@ function initCopyEmail() {
   });
 }
 
-/**
- * Scroll-triggered Peekaboo Ghost animation.
- * - Shows when scrolled past Hero section (scrollY >= 500px)
- * - Tucks away smoothly when reaching near the bottom of the page (near Contact / Footer)
- * - Tucks away when scrolled back to the top Hero
- */
-function initPeekabooGhost() {
-  const ghost = document.getElementById('peekaboo-ghost');
-  if (!ghost) return;
-
-  const contactSection = document.getElementById('contact') || document.querySelector('.site-footer');
-  let ticking = false;
-
-  const handleGhostScroll = () => {
-    if (!ticking) {
-      window.requestAnimationFrame(() => {
-        const scrollY = window.scrollY || window.pageYOffset;
-        const docHeight = document.documentElement.scrollHeight;
-        const winHeight = window.innerHeight;
-        const distFromBottom = docHeight - (scrollY + winHeight);
-
-        // Near bottom of website check (approaching Contact section or within 650px of page end)
-        let isNearBottom = distFromBottom < 650;
-        if (contactSection) {
-          const contactRect = contactSection.getBoundingClientRect();
-          if (contactRect.top < winHeight + 120) {
-            isNearBottom = true;
-          }
-        }
-
-        // Visible in the active middle content, tucks away at top and near bottom
-        if (scrollY >= 500 && !isNearBottom) {
-          ghost.classList.add('is-visible');
-        } else {
-          ghost.classList.remove('is-visible');
-        }
-
-        ticking = false;
-      });
-      ticking = true;
-    }
-  };
-
-  window.addEventListener('scroll', handleGhostScroll, { passive: true });
-  window.addEventListener('resize', handleGhostScroll, { passive: true });
-  handleGhostScroll();
-}
-
-/**
- * Application bootstrap with fallback safety:
- * `js-enabled` is added only inside JS initialization so that if JS fails,
- * all `.reveal` elements stay visible by default.
- */
+/* ==========================================================================
+   APP BOOTSTRAP
+   ========================================================================== */
 function initApp() {
   try {
     document.documentElement.classList.add('js-enabled');
@@ -1184,24 +1621,21 @@ function initApp() {
     renderTeaserSection(MOVIES);
     renderFeaturedProject(MOVIES);
 
+    initGhostScrollytelling();
+    initHeaderProgress();
     initNavigation();
     initLightbox();
     initScrollReveal();
-    initParallax();
     initCursorSpotlight();
     initCardTilt();
-    initHeroParticles();
     initCinemaMode();
     initCopyEmail();
-    initPeekabooGhost();
 
     REDUCED_MOTION_QUERY.addEventListener('change', () => {
-      if (REDUCED_MOTION_QUERY.matches) {
-        revealAllImmediately();
-      }
+      if (REDUCED_MOTION_QUERY.matches) revealAllImmediately();
     });
   } catch (error) {
-    console.error('Portfolio initialization failed, showing fallback content:', error);
+    console.error('Portfolio initialization failed:', error);
     document.documentElement.classList.remove('js-enabled');
     revealAllImmediately();
   }
