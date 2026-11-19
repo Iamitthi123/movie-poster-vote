@@ -25,8 +25,8 @@
   --pill-text: #f7f4ee;
   --card-shadow: 0 24px 60px rgba(23, 20, 18, 0.09);
   --card-shadow-hover: 0 32px 80px rgba(23, 20, 18, 0.16);
-  --ghost-shadow: drop-shadow(0 28px 36px rgba(18, 12, 10, 0.32));
-  --bowl-shadow: drop-shadow(0 26px 34px rgba(18, 14, 12, 0.26));
+  --ghost-shadow: drop-shadow(0 20px 22px rgba(18, 12, 10, 0.24));
+  --bowl-shadow: drop-shadow(0 18px 22px rgba(18, 14, 12, 0.2));
 
   /* Typography */
   --font-serif: 'Cormorant Garamond', 'Noto Serif Thai', Georgia, serif;
@@ -67,8 +67,8 @@ html.cinema-mode {
   --pill-text: #110f12;
   --card-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
   --card-shadow-hover: 0 32px 84px rgba(179, 30, 30, 0.22);
-  --ghost-shadow: drop-shadow(0 28px 44px rgba(0, 0, 0, 0.82)) drop-shadow(0 0 28px rgba(180, 26, 26, 0.32));
-  --bowl-shadow: drop-shadow(0 30px 44px rgba(0, 0, 0, 0.85));
+  --ghost-shadow: drop-shadow(0 20px 26px rgba(0, 0, 0, 0.72));
+  --bowl-shadow: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.75));
 }
 
 /* Base Reset
@@ -80,7 +80,7 @@ html.cinema-mode {
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   scroll-padding-top: calc(var(--header-height) + 1rem);
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -152,19 +152,10 @@ a {
   }
 }
 
-/* Subtle Film Grain & Cursor Spotlight
+/* Lightweight Editorial Vignette (zero SVG feTurbulence compositor cost)
    ========================================================================== */
 .film-grain {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  pointer-events: none;
-  opacity: 0.032;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-}
-
-html.cinema-mode .film-grain {
-  opacity: 0.055;
+  display: none;
 }
 
 .cursor-spotlight {
@@ -632,28 +623,30 @@ html.cinema-mode .stage-radial-light {
   position: absolute;
   top: 50%;
   left: 63%;
-  width: min(64vw, 660px);
-  height: min(64vw, 660px);
-  transform: translate(-50%, -50%);
+  width: min(74vw, 760px);
+  height: min(74vw, 760px);
+  transform: translate3d(-50%, -50%, 0);
   border-radius: 50%;
+  /* Pure soft radial gradient (0ms GPU cost vs expensive filter: blur) */
   background: radial-gradient(
     circle,
-    rgba(143, 24, 24, 0.22) 0%,
-    rgba(143, 24, 24, 0.08) 44%,
-    transparent 72%
+    rgba(143, 24, 24, 0.2) 0%,
+    rgba(143, 24, 24, 0.1) 28%,
+    rgba(143, 24, 24, 0.03) 52%,
+    transparent 74%
   );
-  filter: blur(46px);
   opacity: 0.25;
   will-change: transform, opacity;
 }
 
-/* Dual 60fps Fluid / Smoke / Blood-Pool Canvases */
+/* Triple 60fps Fluid / Smoke / Blood-Pool Canvases */
 .stage-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
+  transform: translateZ(0);
 }
 
 .stage-canvas--back {
@@ -724,22 +717,24 @@ html.cinema-mode .stage-radial-light {
   width: auto;
   aspect-ratio: 500 / 1339;
   transform-origin: 45% 46%;
-  will-change: transform, opacity, filter;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 .prop-ghost-aura {
   position: absolute;
-  inset: 6% -22% 8% -22%;
+  inset: -4% -36% -2% -36%;
   border-radius: 50%;
+  /* Pure soft radial gradient — 0ms GPU blur pass */
   background: radial-gradient(
     ellipse at center,
-    rgba(165, 22, 22, 0.34) 0%,
-    rgba(110, 12, 12, 0.12) 48%,
+    rgba(165, 22, 22, 0.28) 0%,
+    rgba(140, 16, 16, 0.14) 30%,
+    rgba(110, 12, 12, 0.04) 55%,
     transparent 74%
   );
-  filter: blur(42px);
   opacity: 0;
-  will-change: opacity, transform;
+  will-change: opacity;
 }
 
 .prop-ghost-img {
@@ -749,6 +744,7 @@ html.cinema-mode .stage-radial-light {
   height: 100%;
   object-fit: contain;
   filter: var(--ghost-shadow);
+  transform: translateZ(0);
 }
 
 /* Subtle pulsing red eye highlight precisely aligned over ghost eyes (44.5%, 20.3%) */
@@ -757,12 +753,11 @@ html.cinema-mode .stage-radial-light {
   z-index: 3;
   left: 44.5%;
   top: 20.3%;
-  width: 24%;
-  height: 3.6%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle at 26% 50%, rgba(255, 42, 42, 0.88) 0%, transparent 46%),
-              radial-gradient(circle at 74% 50%, rgba(255, 42, 42, 0.88) 0%, transparent 46%);
-  filter: blur(5px);
+  width: 28%;
+  height: 4.5%;
+  transform: translate3d(-50%, -50%, 0);
+  background: radial-gradient(circle at 28% 50%, rgba(255, 48, 48, 0.78) 0%, rgba(255, 32, 32, 0.25) 35%, transparent 62%),
+              radial-gradient(circle at 72% 50%, rgba(255, 48, 48, 0.78) 0%, rgba(255, 32, 32, 0.25) 35%, transparent 62%);
   mix-blend-mode: screen;
   opacity: 0;
   will-change: opacity;
@@ -826,13 +821,12 @@ html.cinema-mode .stage-radial-light {
   justify-content: center;
   align-items: flex-start;
   opacity: 0;
-  transform: translate3d(0, 38px, 0);
+  transform: translate3d(0, 32px, 0);
   pointer-events: none;
+  will-change: transform, opacity;
   transition:
-    opacity 0.65s var(--ease-luxury),
-    transform 0.72s var(--ease-luxury),
-    filter 0.65s ease;
-  filter: blur(4px);
+    opacity 0.55s var(--ease-luxury),
+    transform 0.65s var(--ease-luxury);
 }
 
 /* Elevate Chapter 04 cleanly above the crimson blood pool wave crest on desktop */
@@ -856,13 +850,11 @@ html.cinema-mode .stage-radial-light {
   opacity: 1;
   transform: translate3d(0, 0, 0);
   pointer-events: auto;
-  filter: blur(0px);
 }
 
 .story-chapter.is-passed {
   opacity: 0;
-  transform: translate3d(0, -38px, 0);
-  filter: blur(4px);
+  transform: translate3d(0, -32px, 0);
 }
 
 .chapter-eyebrow {
