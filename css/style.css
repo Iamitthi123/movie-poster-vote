@@ -37,6 +37,7 @@
   --container-max: 1280px;
   --utility-height: 34px;
   --header-height: 68px;
+  --stage-h: 100vh;
   --section-pad-y: clamp(4.25rem, 7.5vw, 7rem);
   --radius-sm: 10px;
   --radius-md: 18px;
@@ -86,6 +87,8 @@ html {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   transition: background-color 0.55s ease, color 0.55s ease;
 }
 
@@ -524,7 +527,7 @@ html.cinema-mode .theme-toggle-dot {
 @media (min-width: 1120px) {
   .page-rail {
     position: fixed;
-    right: 1.4rem;
+    right: 0.9rem;
     top: 50%;
     transform: translateY(-50%);
     z-index: 95;
@@ -788,7 +791,7 @@ html.cinema-mode .stage-radial-light {
   left: 63.5%;
   top: 52%;
   z-index: 3;
-  height: clamp(500px, 82vh, 840px);
+  height: clamp(500px, calc(var(--stage-h) * 0.82), 840px);
   width: auto;
   aspect-ratio: 500 / 1339;
   transform-origin: 45% 46%;
@@ -1114,7 +1117,7 @@ html.cinema-mode .stage-radial-light {
 .apparition-stage {
   position: relative;
   width: clamp(320px, 38vw, 520px);
-  height: clamp(440px, 56vh, 580px);
+  height: clamp(440px, calc(var(--stage-h) * 0.56), 580px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1302,7 +1305,7 @@ html.cinema-mode .stage-radial-light {
 
 .blood-stage-banner {
   position: relative;
-  min-height: clamp(460px, 66vh, 620px);
+  min-height: clamp(460px, calc(var(--stage-h) * 0.66), 620px);
   padding-top: clamp(4.5rem, 7vw, 6.2rem);
   background-color: var(--bg-primary);
   overflow: hidden;
@@ -1346,7 +1349,7 @@ html.cinema-mode .stage-radial-light {
 
 .blood-ghost-slot {
   position: relative;
-  height: clamp(320px, 50vh, 460px);
+  height: clamp(320px, calc(var(--stage-h) * 0.5), 460px);
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -1364,7 +1367,7 @@ html.cinema-mode .stage-radial-light {
 
 .blood-ghost-rig {
   position: relative;
-  height: clamp(460px, 68vh, 660px);
+  height: clamp(460px, calc(var(--stage-h) * 0.68), 660px);
   width: auto;
   aspect-ratio: 500 / 1339;
   will-change: transform;
@@ -2188,14 +2191,14 @@ html.cinema-mode .featured[data-movie-theme='horror'] .war-sun-halo {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: clamp(460px, 64vh, 640px);
+  min-height: clamp(460px, calc(var(--stage-h) * 0.64), 640px);
   width: 100%;
 }
 
 .finale-ghost-rig {
   position: relative;
   z-index: 3;
-  height: clamp(440px, 64vh, 620px);
+  height: clamp(440px, calc(var(--stage-h) * 0.64), 620px);
   width: auto;
   aspect-ratio: 500 / 1339;
   will-change: transform, opacity;
@@ -2327,7 +2330,7 @@ html.cinema-mode .featured[data-movie-theme='horror'] .war-sun-halo {
 
 .lightbox-img {
   width: 100%;
-  max-height: 76vh;
+  max-height: min(76vh, 840px);
   object-fit: contain;
   transition: transform 0.35s var(--ease-luxury);
 }
@@ -2446,6 +2449,27 @@ html.js-enabled .reveal.is-visible {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-muted);
+}
+
+/* Portrait Phone / Tablet Desktop-Scale Normalization
+   Keeps exact 16:10 Notebook/PC proportions when mobile browsers render the
+   1366px desktop viewport on tall portrait screens (eliminates tall 235vh gap) */
+@media (max-aspect-ratio: 4/5) and (min-width: 901px) {
+  :root {
+    --stage-h: 820px;
+  }
+  .hero-scrolly {
+    height: auto;
+  }
+  .hero-sticky {
+    position: relative;
+    top: 0;
+    height: 760px;
+    min-height: 760px;
+  }
+  .scrolly-cue {
+    display: none;
+  }
 }
 
 /* Reduced Motion */

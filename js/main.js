@@ -391,6 +391,8 @@ function initAct1HeroSummoning() {
 
   let w = 1280, h = 720, dpr = 1;
   let headerOffset = 68, sectionTop = 34, scrollDist = 1100, bowlSizePx = 540;
+  let isPortraitDesktop = false;
+  let portraitElapsed = 0;
   let targetP = 0, smoothP = 0, activeBeat = 0;
   let isVisible = true, rafId = null, lastMs = 0;
 
@@ -414,13 +416,20 @@ function initAct1HeroSummoning() {
     midCanvas.width = Math.round(w * dpr);
     midCanvas.height = Math.round(h * dpr);
 
+    const vw = window.innerWidth || w;
+    const vh = window.innerHeight || h;
+    isPortraitDesktop = vw > 900 && vh > vw * 1.25;
+
     headerOffset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 68;
     sectionTop = section.getBoundingClientRect().top + window.scrollY;
-    scrollDist = Math.max(1, section.offsetHeight - (window.innerHeight - headerOffset));
+    scrollDist = isPortraitDesktop
+      ? Math.max(260, stickyEl.offsetHeight * 0.48)
+      : Math.max(1, section.offsetHeight - stickyEl.offsetHeight);
     bowlSizePx = bowlBack ? bowlBack.offsetHeight || 520 : 520;
   }
 
   function updateTarget() {
+    if (isPortraitDesktop) return;
     const scrolled = (window.scrollY || 0) - (sectionTop - headerOffset);
     targetP = clamp(scrolled / scrollDist, 0, 1);
   }
@@ -533,6 +542,15 @@ function initAct1HeroSummoning() {
     const time = nowMs * 0.001;
 
     MouseState.update(dt);
+    // On portrait phone showing desktop layout, auto-play the smooth blood-pour -> Ghost-emerge summon
+    // right in place (0 -> 0.70 over ~4.2s) so the user watches it live without cropping Act 1!
+    if (isPortraitDesktop) {
+      portraitElapsed = Math.min(4.6, portraitElapsed + dt);
+      const autoPour = invLerp(portraitElapsed, 0.4, 2.0) * 0.36;
+      const autoEmerge = easeInOutCubic(invLerp(portraitElapsed, 1.9, 4.2)) * 0.34;
+      targetP = clamp(autoPour + autoEmerge, 0, 0.7);
+    }
+
     // Extra-silky damped interpolation for buttery cinema scrubbing
     smoothP += (targetP - smoothP) * (1 - Math.exp(-8.5 * dt));
     if (Math.abs(targetP - smoothP) < 0.00004) smoothP = targetP;
@@ -547,8 +565,8 @@ function initAct1HeroSummoning() {
     const my = isMobile ? 0 : MouseState.sy * 8;
     const mRot = isMobile ? 0 : MouseState.sx * 1.8;
 
-    // Smooth beat transition right as the Ghost starts rising cleanly from the bowl
-    const beatIdx = p < 0.38 ? 0 : 1;
+    // Smooth beat transition (keep Beat 0 steady with CTA buttons on portrait phone)
+    const beatIdx = isPortraitDesktop ? 0 : (p < 0.38 ? 0 : 1);
     if (beatIdx !== activeBeat) {
       activeBeat = beatIdx;
       beats.forEach((b, i) => {
@@ -591,7 +609,7 @@ function initAct1HeroSummoning() {
 
     let ghostY = lerp(isMobile ? 145 : 225, isMobile ? 16 : 26, emerge);
     ghostY = lerp(ghostY, isMobile ? -4 : -8, handoff);
-    const levitate = Math.sin(time * 1.9) * 6.5 * handoff;
+    const levitate = Math.sin(time * 1.9) * (isPortraitDesktop ? 5.0 * emerge : 6.5 * handoff);
 
     let ghostScale = lerp(0.46, 0.74, emerge);
     ghostScale = lerp(ghostScale, isMobile ? 0.86 : 0.95, handoff);
@@ -672,6 +690,9 @@ function initAct1HeroSummoning() {
   smoothP = targetP;
 
   window.addEventListener('resize', () => { resize(); updateTarget(); }, { passive: true });
+  window.addEventListener('orientationchange', () => {
+    window.setTimeout(() => { resize(); updateTarget(); }, 140);
+  }, { passive: true });
   window.addEventListener('load', () => { resize(); updateTarget(); }, { once: true });
   window.addEventListener('scroll', updateTarget, { passive: true });
 
@@ -2028,6 +2049,10 @@ function initNavigation() {
   if ('IntersectionObserver' in window && sections.length > 0) {
     const navObserver = new IntersectionObserver(
       (entries) => {
+        if ((window.scrollY || 0) < 120) {
+          setActiveSection('story');
+          return;
+        }
         entries.forEach((entry) => {
           if (entry.isIntersecting) setActiveSection(entry.target.id);
         });
@@ -2035,6 +2060,13 @@ function initNavigation() {
       { rootMargin: '-32% 0px -52% 0px', threshold: 0 }
     );
     sections.forEach((section) => navObserver.observe(section));
+    window.addEventListener(
+      'scroll',
+      () => {
+        if ((window.scrollY || 0) < 120) setActiveSection('story');
+      },
+      { passive: true }
+    );
   }
 }
 
