@@ -391,8 +391,6 @@ function initAct1HeroSummoning() {
 
   let w = 1280, h = 720, dpr = 1;
   let headerOffset = 68, sectionTop = 34, scrollDist = 1100, bowlSizePx = 540;
-  let isPortraitDesktop = false;
-  let portraitElapsed = 0;
   let targetP = 0, smoothP = 0, activeBeat = 0;
   let isVisible = true, rafId = null, lastMs = 0;
 
@@ -416,20 +414,13 @@ function initAct1HeroSummoning() {
     midCanvas.width = Math.round(w * dpr);
     midCanvas.height = Math.round(h * dpr);
 
-    const vw = window.innerWidth || w;
-    const vh = window.innerHeight || h;
-    isPortraitDesktop = vw > 900 && vh > vw * 1.25;
-
     headerOffset = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 68;
     sectionTop = section.getBoundingClientRect().top + window.scrollY;
-    scrollDist = isPortraitDesktop
-      ? Math.max(260, stickyEl.offsetHeight * 0.48)
-      : Math.max(1, section.offsetHeight - stickyEl.offsetHeight);
+    scrollDist = Math.max(1, section.offsetHeight - stickyEl.offsetHeight);
     bowlSizePx = bowlBack ? bowlBack.offsetHeight || 520 : 520;
   }
 
   function updateTarget() {
-    if (isPortraitDesktop) return;
     const scrolled = (window.scrollY || 0) - (sectionTop - headerOffset);
     targetP = clamp(scrolled / scrollDist, 0, 1);
   }
@@ -440,10 +431,10 @@ function initAct1HeroSummoning() {
     ctx.save();
     ctx.globalAlpha = bowlAlpha;
 
-    // 1. Swirling crimson liquid pool inside the silver bowl cavity
-    const poolRx = Math.min(w * 0.145, 195) * bowlScale;
+    // 1. Swirling crimson liquid pool scaled accurately to the silver bowl cavity on ALL viewports
+    const poolRx = Math.min(bowlSizePx * 0.32, 195) * bowlScale;
     const poolRy = poolRx * 0.45;
-    const poolGrad = ctx.createRadialGradient(cx, mouthY + 4, 8, cx, mouthY + 8, poolRx);
+    const poolGrad = ctx.createRadialGradient(cx, mouthY + 4, 6, cx, mouthY + 8, poolRx);
     poolGrad.addColorStop(0, '#a8141c');
     poolGrad.addColorStop(0.48, '#6a0a10');
     poolGrad.addColorStop(0.84, '#360407');
@@ -472,7 +463,7 @@ function initAct1HeroSummoning() {
       // Top of stream glides smoothly down into the bowl like finishing a real pour!
       const streamTopY = lerp(-20, streamEndY - 6, pourDrainT);
       const segments = 24;
-      const baseWidth = Math.min(w * 0.035, 38) * lerp(1.0, 0.48, pourDrainT);
+      const baseWidth = Math.min(bowlSizePx * 0.072, 38) * lerp(1.0, 0.48, pourDrainT);
 
       function drawRibbon(widthScale, offsetX, fill) {
         ctx.beginPath();
@@ -542,15 +533,6 @@ function initAct1HeroSummoning() {
     const time = nowMs * 0.001;
 
     MouseState.update(dt);
-    // On portrait phone showing desktop layout, auto-play the smooth blood-pour -> Ghost-emerge summon
-    // right in place (0 -> 0.70 over ~4.2s) so the user watches it live without cropping Act 1!
-    if (isPortraitDesktop) {
-      portraitElapsed = Math.min(4.6, portraitElapsed + dt);
-      const autoPour = invLerp(portraitElapsed, 0.4, 2.0) * 0.36;
-      const autoEmerge = easeInOutCubic(invLerp(portraitElapsed, 1.9, 4.2)) * 0.34;
-      targetP = clamp(autoPour + autoEmerge, 0, 0.7);
-    }
-
     // Extra-silky damped interpolation for buttery cinema scrubbing
     smoothP += (targetP - smoothP) * (1 - Math.exp(-8.5 * dt));
     if (Math.abs(targetP - smoothP) < 0.00004) smoothP = targetP;
@@ -559,14 +541,14 @@ function initAct1HeroSummoning() {
     const isMobile = w <= 900;
     const isDark = document.documentElement.classList.contains('cinema-mode');
     const stageCX = w * (isMobile ? 0.5 : 0.63);
-    const stageCY = h * (isMobile ? 0.34 : 0.52);
+    const stageCY = h * (isMobile ? 0.28 : 0.52);
 
     const mx = isMobile ? 0 : MouseState.sx * 12;
     const my = isMobile ? 0 : MouseState.sy * 8;
     const mRot = isMobile ? 0 : MouseState.sx * 1.8;
 
-    // Smooth beat transition (keep Beat 0 steady with CTA buttons on portrait phone)
-    const beatIdx = isPortraitDesktop ? 0 : (p < 0.38 ? 0 : 1);
+    // Smooth beat transition right as the Ghost starts rising cleanly from the bowl
+    const beatIdx = p < 0.38 ? 0 : 1;
     if (beatIdx !== activeBeat) {
       activeBeat = beatIdx;
       beats.forEach((b, i) => {
@@ -583,9 +565,9 @@ function initAct1HeroSummoning() {
        ------------------------------------------------------------------ */
     const bowlSettleT = easeInOutSine(invLerp(p, 0.0, 0.45));
     const bowlSinkT = easeInOutCubic(invLerp(p, 0.72, 0.96));
-    const bowlStartY = isMobile ? 42 : 76;
-    const bowlMidY = isMobile ? 34 : 58;
-    const bowlY = lerp(bowlStartY, bowlMidY, bowlSettleT) + bowlSinkT * (h * 0.34);
+    const bowlStartY = isMobile ? 10 : 76;
+    const bowlMidY = isMobile ? 4 : 58;
+    const bowlY = lerp(bowlStartY, bowlMidY, bowlSettleT) + bowlSinkT * (h * (isMobile ? 0.24 : 0.34));
     const bowlScale = lerp(1.05, 1.0, bowlSettleT) * lerp(1.0, 0.86, bowlSinkT);
     const bowlRot = lerp(0, -1.5, bowlSettleT) + mRot * 0.35;
     const bowlOp = clamp(1 - easeInOutCubic(invLerp(p, 0.72, 0.93)), 0, 1);
@@ -598,7 +580,7 @@ function initAct1HeroSummoning() {
       bowlFront.style.opacity = bowlOp.toFixed(3);
     }
 
-    const bowlAnchorY = h * (isMobile ? 0.34 : 0.56);
+    const bowlAnchorY = h * (isMobile ? 0.28 : 0.56);
     const bowlMouthY = bowlAnchorY + bowlY + my * 0.4 - bowlSizePx * 0.045 * bowlScale;
 
     /* ------------------------------------------------------------------
@@ -607,12 +589,12 @@ function initAct1HeroSummoning() {
     const emerge = easeOutCubic(invLerp(p, 0.32, 0.72));
     const handoff = easeInOutCubic(invLerp(p, 0.72, 1.0));
 
-    let ghostY = lerp(isMobile ? 145 : 225, isMobile ? 16 : 26, emerge);
-    ghostY = lerp(ghostY, isMobile ? -4 : -8, handoff);
-    const levitate = Math.sin(time * 1.9) * (isPortraitDesktop ? 5.0 * emerge : 6.5 * handoff);
+    let ghostY = lerp(isMobile ? 96 : 225, isMobile ? 6 : 26, emerge);
+    ghostY = lerp(ghostY, isMobile ? -10 : -8, handoff);
+    const levitate = Math.sin(time * 1.9) * (isMobile ? 4.5 : 6.5) * handoff;
 
-    let ghostScale = lerp(0.46, 0.74, emerge);
-    ghostScale = lerp(ghostScale, isMobile ? 0.86 : 0.95, handoff);
+    let ghostScale = lerp(isMobile ? 0.54 : 0.46, isMobile ? 0.8 : 0.74, emerge);
+    ghostScale = lerp(ghostScale, isMobile ? 0.9 : 0.95, handoff);
 
     const ghostOp = clamp(invLerp(p, 0.32, 0.48), 0, 1);
     const ghostRot = lerp(-2.2, 0.5, emerge) * (1 - handoff) + mRot;
@@ -915,11 +897,11 @@ function initAct3TeasersBloodPool() {
     const isMobile = w <= 860;
     const isDark = document.documentElement.classList.contains('cinema-mode');
     const ghostCX = isMobile ? w * 0.5 : w * 0.69;
-    const surfaceY = h * (isMobile ? 0.68 : 0.66);
+    const surfaceY = isMobile ? Math.max(h - 66, h * 0.8) : h * 0.66;
 
     // Ghost dips deep into the glossy crimson pool and rises dramatically as you scroll!
     const dipArc = Math.sin(clamp(smoothProg, 0, 1) * Math.PI);
-    const ghostShiftY = lerp(175, 42, dipArc) + Math.sin(time * 1.8) * 6;
+    const ghostShiftY = lerp(isMobile ? 46 : 175, isMobile ? -12 : 42, dipArc) + Math.sin(time * 1.8) * (isMobile ? 4.5 : 6);
     const ghostRot = lerp(-3.5, 2.5, smoothProg);
     ghostRig.style.transform = `translate3d(0, ${ghostShiftY.toFixed(1)}px, 0) rotate(${ghostRot.toFixed(2)}deg)`;
 
@@ -1498,8 +1480,9 @@ function initAct4FeaturedDualTheme() {
     frontCtx.clearRect(0, 0, fw, fh);
     const isWide = bw > 860;
     const fCX = isWide ? fw * 0.2 : fw * 0.5;
-    const fCY = isWide ? fh * 0.6 : fh * 0.26;
-    draw3DOrbitRibbons(frontCtx, fCX, fCY, Math.min(fw * 0.19, 225), 0.88, time, 'front', palette, isDark);
+    const fCY = isWide ? fh * 0.6 : Math.min(430, fh * 0.38);
+    const fR = isWide ? Math.min(fw * 0.19, 225) : Math.min(fw * 0.46, 175);
+    draw3DOrbitRibbons(frontCtx, fCX, fCY, fR, 0.88, time, 'front', palette, isDark);
 
     rafId = window.requestAnimationFrame(render);
   }
@@ -1531,6 +1514,7 @@ function initAct6ContactFinale() {
   const section = document.getElementById('contact');
   const backCanvas = document.getElementById('finale-canvas-back');
   const frontCanvas = document.getElementById('finale-canvas-front');
+  const ghostStage = document.getElementById('finale-ghost-stage');
   const ghostRig = document.getElementById('finale-ghost-rig');
   const ghostEyes = document.getElementById('finale-eyes-glow');
 
@@ -1540,6 +1524,7 @@ function initAct6ContactFinale() {
   if (!backCtx || !frontCtx) return;
 
   let w = 1280, h = 680, dpr = 1;
+  let stageCX = 920, stageCY = 380;
   let isVisible = false, rafId = null, lastMs = 0;
 
   const embers = Array.from({ length: 24 }, (_, i) => ({
@@ -1560,6 +1545,15 @@ function initAct6ContactFinale() {
     backCanvas.height = Math.round(h * dpr);
     frontCanvas.width = Math.round(w * dpr);
     frontCanvas.height = Math.round(h * dpr);
+
+    if (ghostStage) {
+      const stRect = ghostStage.getBoundingClientRect();
+      stageCX = (stRect.left - rect.left) + stRect.width * 0.5;
+      stageCY = (stRect.top - rect.top) + stRect.height * 0.5;
+    } else {
+      stageCX = w >= 960 ? w * 0.74 : w * 0.5;
+      stageCY = w >= 960 ? h * 0.56 : h * 0.74;
+    }
   }
 
   function render(nowMs) {
@@ -1589,9 +1583,9 @@ function initAct6ContactFinale() {
     ghostRig.style.opacity = clamp(0.18 + enterP * 0.82, 0, 1).toFixed(3);
     if (ghostEyes) ghostEyes.style.opacity = (0.55 + 0.4 * Math.sin(time * 3.0)).toFixed(3);
 
-    const gCX = isWide ? w * 0.74 + mx : w * 0.5;
-    const gCY = isWide ? h * 0.56 + levY : h * 0.74 + levY;
-    const rScale = Math.min(w * (isWide ? 0.19 : 0.34), 240);
+    const gCX = stageCX + mx;
+    const gCY = stageCY + levY;
+    const rScale = Math.min(w * (isWide ? 0.19 : 0.36), 240);
 
     const crimsonPalette = {
       deep: '#3b0508',
@@ -1640,6 +1634,7 @@ function initAct6ContactFinale() {
   if ('IntersectionObserver' in window) {
     new IntersectionObserver((entries) => {
       isVisible = Boolean(entries[0]?.isIntersecting);
+      if (isVisible) resize();
       start();
     }, { threshold: 0 }).observe(section);
   }

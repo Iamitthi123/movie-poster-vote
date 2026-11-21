@@ -494,16 +494,36 @@ html.cinema-mode .theme-toggle-dot {
   top: var(--header-height);
   left: 0;
   right: 0;
-  padding: 1.25rem 1.5rem 1.75rem;
-  background-color: var(--bg-primary);
+  padding: 1rem 1.25rem 1.4rem;
+  background-color: var(--bg-glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border-subtle);
   box-shadow: var(--card-shadow);
 }
 
 .primary-nav.is-open .nav-list {
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.9rem;
+  align-items: stretch;
+  gap: 0.25rem;
+}
+
+.primary-nav.is-open .nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.94rem;
+}
+
+.primary-nav.is-open .nav-link.is-active {
+  background-color: rgba(143, 24, 24, 0.08);
+  color: var(--accent-crimson-bright);
+}
+
+.primary-nav.is-open .nav-link::after {
+  display: none;
 }
 
 @media (min-width: 960px) {
@@ -961,46 +981,131 @@ html.cinema-mode .stage-radial-light {
 }
 
 @media (max-width: 900px) {
+  :root {
+    --header-height: 60px;
+    --section-pad-y: 3.75rem;
+  }
+  .top-utility-bar {
+    min-height: 30px;
+    font-size: 0.64rem;
+    letter-spacing: 0.09em;
+  }
+  .utility-inner {
+    justify-content: center;
+  }
   .hero-scrolly {
-    height: 165vh;
+    height: 205vh;
+    height: 205svh;
+  }
+  .hero-sticky {
+    height: calc(100vh - var(--header-height));
+    height: calc(100svh - var(--header-height));
+    min-height: 580px;
+  }
+  .stage-backdrop {
+    background: radial-gradient(
+      ellipse 95% 60% at 50% 28%,
+      var(--stage-radial-inner) 0%,
+      var(--stage-radial-outer) 100%
+    );
   }
   .prop-bowl {
     left: 50%;
-    top: 34%;
-    width: min(76vw, 390px);
+    top: 28%;
+    width: min(64vw, 275px);
   }
   .prop-ghost-rig {
     left: 50%;
-    top: 34%;
-    height: min(56vh, 460px);
+    top: 28%;
+    height: min(44vh, 345px);
+    height: min(44svh, 345px);
   }
   .stage-crimson-halo {
     left: 50%;
-    top: 34%;
+    top: 28%;
+    width: min(82vw, 340px);
+    height: min(82vw, 340px);
   }
   .hero-content-wrap {
     align-items: flex-end;
-    padding-bottom: 2rem;
+    justify-content: center;
+    padding-bottom: 3.9rem;
+  }
+  .hero-content-wrap::before {
+    content: '';
+    position: absolute;
+    left: -1rem;
+    right: -1rem;
+    bottom: 0;
+    height: 56%;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      var(--bg-primary) 54%,
+      rgba(243, 239, 231, 0.88) 76%,
+      transparent 100%
+    );
+  }
+  html.cinema-mode .hero-content-wrap::before {
+    background: linear-gradient(
+      to top,
+      var(--bg-primary) 54%,
+      rgba(10, 9, 12, 0.88) 76%,
+      transparent 100%
+    );
   }
   .hero-chapters {
     width: 100%;
-    min-height: 250px;
-    padding: 1.35rem 1.4rem;
-    border-radius: var(--radius-md);
-    background: linear-gradient(to top, var(--bg-glass) 80%, transparent 100%);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-subtle);
+    max-width: 420px;
+    min-height: 255px;
+    padding: 0;
+    background: none;
+    border: none;
+    backdrop-filter: none;
   }
   .story-chapter {
-    inset: 1.35rem 1.4rem;
+    inset: 0;
+    justify-content: flex-end;
+    align-items: center;
+    text-align: center;
+  }
+  .chapter-eyebrow {
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.55rem;
   }
   .chapter-title {
-    font-size: clamp(2.1rem, 8.6vw, 3.1rem);
-    margin-bottom: 0.65rem;
+    font-size: clamp(2.15rem, 9.8vw, 3rem);
+    line-height: 0.94;
+    margin-bottom: 0.7rem;
   }
   .chapter-body {
-    font-size: 0.88rem;
-    margin-bottom: 1rem;
+    max-width: 34ch;
+    font-size: 0.87rem;
+    line-height: 1.62;
+    margin-bottom: 1.15rem;
+  }
+  .chapter-actions {
+    justify-content: center;
+    gap: 0.6rem;
+  }
+  .chapter-actions .pill-btn {
+    min-height: 42px;
+    padding: 0.55rem 1.15rem;
+    font-size: 0.8rem;
+  }
+  .scrolly-cue {
+    bottom: 0.55rem;
+    gap: 0.25rem;
+  }
+  .scrolly-cue-text {
+    font-size: 0.56rem;
+    letter-spacing: 0.18em;
+    white-space: nowrap;
+  }
+  .scrolly-cue-line {
+    height: 12px;
   }
 }
 
@@ -2451,25 +2556,307 @@ html.js-enabled .reveal.is-visible {
   color: var(--text-muted);
 }
 
-/* Portrait Phone / Tablet Desktop-Scale Normalization
-   Keeps exact 16:10 Notebook/PC proportions when mobile browsers render the
-   1366px desktop viewport on tall portrait screens (eliminates tall 235vh gap) */
-@media (max-aspect-ratio: 4/5) and (min-width: 901px) {
-  :root {
-    --stage-h: 820px;
+/* ==========================================================================
+   BESPOKE FLAGSHIP MOBILE POLISH (Acts 2–6 + Lightbox on Phones & Tablets)
+   Keeps Desktop >= 960px 100% untouched while crafting an A24-grade mobile UI!
+   ========================================================================== */
+@media (max-width: 899px) {
+  .section-header {
+    text-align: center;
+    margin-inline: auto;
+    margin-bottom: 1rem;
   }
-  .hero-scrolly {
-    height: auto;
+  .section-eyebrow {
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
   }
-  .hero-sticky {
-    position: relative;
-    top: 0;
-    height: 760px;
-    min-height: 760px;
+  .section-title {
+    font-size: clamp(2.1rem, 9.2vw, 3rem);
+    line-height: 0.98;
   }
-  .scrolly-cue {
-    display: none;
+  .section-accent-line {
+    margin-inline: auto;
+    margin-top: 0.85rem;
+    transform-origin: center center;
   }
+  .section-intro {
+    text-align: center;
+    margin-inline: auto;
+    margin-bottom: 1.35rem;
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  /* Act 2: Posters Apparition & Gallery */
+  .posters-hero-band {
+    gap: 0.85rem;
+    margin-bottom: 1.75rem;
+  }
+  .posters-badges {
+    justify-content: center;
+    gap: 0.45rem;
+  }
+  .meta-chip {
+    font-size: 0.72rem;
+    padding: 0.34rem 0.78rem;
+  }
+  .apparition-stage {
+    width: min(84vw, 315px);
+    height: min(84vw, 325px);
+  }
+  .curved-badge-text {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+  }
+  .poster-grid {
+    gap: 1.5rem;
+  }
+  .poster-overlay {
+    padding: 2.2rem 1.25rem 1.2rem;
+  }
+  .poster-title {
+    font-size: 1.55rem;
+  }
+
+  /* Act 3: Teasers Blood Pool Stage — Eliminates giant 12rem desktop gap! */
+  .blood-stage-banner {
+    min-height: 0;
+    padding-top: 3.25rem;
+    padding-bottom: 0;
+  }
+  .blood-stage-inner {
+    gap: 0;
+  }
+  .blood-stage-copy {
+    padding-bottom: 0;
+  }
+  .blood-ghost-slot {
+    height: 255px;
+    margin-top: -0.25rem;
+  }
+  .blood-ghost-mask {
+    inset: -36px -60px -100px -60px;
+  }
+  .blood-ghost-rig {
+    height: 365px;
+  }
+  .teasers-deck {
+    padding-top: 2rem;
+    padding-bottom: 3.75rem;
+  }
+  .teaser-list {
+    gap: 1.5rem;
+  }
+  .teaser-play-btn {
+    width: 58px;
+    height: 58px;
+  }
+  .teaser-play-icon {
+    border-width: 9px 0 9px 16px;
+  }
+  .teaser-body {
+    padding: 1.25rem 1.25rem 1.45rem;
+  }
+  .teaser-title {
+    font-size: 1.32rem;
+  }
+  .teaser-synopsis {
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+
+  /* Act 4: Bloodland War Hero Stage & Spotlight */
+  .war-hero-band {
+    gap: 1.75rem;
+    margin-bottom: 2.4rem;
+    padding-bottom: 2rem;
+  }
+  .war-switcher-wrap {
+    align-items: center !important;
+    width: 100%;
+  }
+  .featured-switcher {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+    width: 100%;
+    max-width: 360px;
+  }
+  .featured-tab {
+    padding: 0.58rem 0.5rem;
+    font-size: 0.76rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .war-stage {
+    width: min(88vw, 330px);
+  }
+  .war-curved-badge {
+    width: 102%;
+  }
+  .war-heroes-rig {
+    width: 82%;
+  }
+  .war-ignite-hint {
+    bottom: -0.45rem;
+    font-size: 0.58rem;
+    padding: 0.3rem 0.75rem;
+  }
+  .featured-layout {
+    gap: 1.75rem;
+  }
+  .featured-poster-reveal {
+    max-width: 320px;
+    width: 100%;
+    margin-inline: auto;
+  }
+  .featured-details {
+    text-align: center;
+  }
+  .featured-genre-tag {
+    font-size: 0.68rem;
+  }
+  .featured-title {
+    font-size: clamp(1.9rem, 8.2vw, 2.5rem);
+    margin-bottom: 0.85rem;
+  }
+  .featured-synopsis-line {
+    font-size: 0.9rem;
+  }
+  .featured-synopsis-line:first-child {
+    font-size: 1.12rem;
+  }
+  .featured-meta-list {
+    text-align: left;
+    margin-bottom: 1.5rem;
+    padding: 1rem 0;
+    gap: 0.75rem;
+  }
+  .featured-meta-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+    font-size: 0.86rem;
+  }
+  .featured-meta-row dt {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .featured-actions {
+    justify-content: center;
+    gap: 0.65rem;
+  }
+
+  /* Act 5: About Director */
+  .about-grid {
+    gap: 1.85rem;
+  }
+  .about-portrait-wrap {
+    max-width: 310px;
+    width: 100%;
+    margin-inline: auto;
+    text-align: center;
+  }
+  .about-copy {
+    text-align: center;
+  }
+  .about-lead {
+    font-size: clamp(1.42rem, 6.2vw, 1.85rem);
+    margin-bottom: 0.9rem;
+  }
+  .about-text {
+    font-size: 0.9rem;
+    text-align: left;
+  }
+  .about-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    text-align: center;
+  }
+  .about-stats .stat-item:last-child {
+    grid-column: 1 / -1;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .stat-item dd {
+    font-size: 1.65rem;
+  }
+
+  /* Act 6: Contact & Levitating Ghost Finale */
+  .contact--finale {
+    padding-block: 3.75rem 3.25rem;
+  }
+  .finale-grid {
+    gap: 2rem;
+  }
+  .contact-card--split {
+    padding: 1.85rem 1.35rem;
+    text-align: center;
+    border-radius: var(--radius-md);
+  }
+  .contact-headline {
+    font-size: clamp(1.65rem, 7.2vw, 2.2rem);
+  }
+  .contact-desc {
+    margin-inline: auto;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+  .contact-links {
+    justify-content: center;
+    margin-bottom: 1.65rem;
+  }
+  .social-links {
+    justify-content: center;
+    gap: 0.75rem 1.05rem;
+    padding-top: 1.25rem;
+  }
+  .social-link {
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+  }
+  .finale-ghost-stage {
+    min-height: 410px;
+  }
+  .finale-ghost-rig {
+    height: 365px;
+  }
+  .finale-tagline {
+    font-size: 0.98rem;
+  }
+
+  /* Footer & Mobile Lightbox */
+  .footer-inner {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  .lightbox {
+    padding: 0.75rem;
+  }
+  .lightbox-dialog {
+    flex-direction: column;
+    gap: 0;
+  }
+  .lightbox-figure {
+    padding: 0.5rem 0.5rem 3.75rem;
+    gap: 1.15rem;
+  }
+  .lightbox-img {
+    max-height: 54vh;
+  }
+  .lightbox-prev,
+  .lightbox-next {
+    position: fixed;
+    bottom: 1rem;
+    z-index: 6;
+  }
+  .lightbox-prev { left: 1.25rem; }
+  .lightbox-next { right: 1.25rem; }
 }
 
 /* Reduced Motion */
