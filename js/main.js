@@ -43,8 +43,7 @@ const MOVIES = [
       'ตอนแรกก็ไม่เชื่อ... ตอนนี้ไม่กล้ากลับบ้าน',
       'เมื่อกลุ่มเพื่อน 4 คน ตัดสินใจเข้าไปลองของในบ้านร้างกลางหมู่บ้าน พวกเขาคิดว่าทุกอย่างเป็นเพียงเรื่องล้อเล่น...',
       'จนกระทั่งมีเสียงปริศนากระซิบเรียกชื่อทีละคน และสิ่งที่พวกเขาปลุกขึ้นมา กลับไม่ยอมให้ใครกลับออกไปอีกเลย'
-    ],
-    featured: true
+    ]
   },
   {
     id: 'bloodland',
@@ -70,7 +69,8 @@ const MOVIES = [
       'เมื่อแม่ทัพหนุ่มต้องนำกองทัพปกป้องแผ่นดินจากศัตรูผู้รุกราน',
       'ท่ามกลางเปลวไฟสงครามและชะตากรรมของอาณาจักรที่กำลังสั่นคลอน',
       'เขาต้องเลือกระหว่างหน้าที่ต่อบ้านเมืองกับหญิงที่เขารัก'
-    ]
+    ],
+    featured: true
   }
 ];
 
@@ -1030,44 +1030,154 @@ function initAct3TeasersBloodPool() {
 }
 
 /* ==========================================================================
-   ACT 4: FEATURED PROJECT — DUAL-THEME 3D RIBBONS & SPARKS SPOTLIGHT!
-   (Smoothly morphs between Horror Crimson Blood Ribbons <-> War Gold Flame Sparks!)
+   ACT 4: FEATURED PROJECT — BLOODLAND WAR HERO STAGE & DUAL-THEME SPOTLIGHT
+   (General & Noble Lady cutout with scroll-scrubbed battle rings, 3D mouse
+    parallax, steel blade glint, click-to-ignite battlefield ember bursts,
+    and smooth dual-theme morphing: Golden War Flame <-> Crimson Horror!)
    ========================================================================== */
 function initAct4FeaturedDualTheme() {
   const section = document.getElementById('featured');
   const backCanvas = document.getElementById('featured-canvas-back');
   const frontCanvas = document.getElementById('featured-canvas-front');
+  const warStage = document.getElementById('war-stage');
+  const warRig = document.getElementById('war-heroes-rig');
+  const warSun = document.getElementById('war-sun-halo');
+  const warRingOuter = document.getElementById('war-ring-outer');
+  const warRingInner = document.getElementById('war-ring-inner');
+  const warBadge = document.getElementById('war-curved-badge');
+  const warFrontCanvas = document.getElementById('war-stage-front');
+
   if (!section || !backCanvas || !frontCanvas) return;
 
   const backCtx = backCanvas.getContext('2d', { alpha: true });
   const frontCtx = frontCanvas.getContext('2d', { alpha: true });
+  const warCtx = warFrontCanvas ? warFrontCanvas.getContext('2d', { alpha: true }) : null;
   if (!backCtx || !frontCtx) return;
 
-  let bw = 1280, bh = 720, fw = 1200, fh = 600, dpr = 1;
+  let bw = 1280, bh = 1100, fw = 1200, fh = 600, ww = 540, wh = 540, dpr = 1;
+  let warSecCX = 920, warSecCY = 320, warSecR = 230;
+  let posterSecCX = 320, posterSecCY = 820;
+  let rigBoxX = 50, rigBoxY = 60, rigBoxW = 420, rigBoxH = 426;
+
   let isVisible = false, rafId = null, lastMs = 0;
-  let targetTheme = 0; // 0 = horror crimson, 1 = war molten gold
-  let smoothTheme = 0;
+  let targetTheme = 1; // 1 = war molten gold (default), 0 = horror crimson
+  let smoothTheme = 1;
+  let isWarHover = false;
+  let hoverBoost = 0;
+  let ignitePulse = 0;
+  let bladeBurstT = -1; // >= 0..1 while a click-triggered blade sweep runs
+  let lastToastAt = 0;
+
+  const burstParticles = [];
 
   setFeaturedCanvasTheme = (themeName) => {
     targetTheme = themeName === 'war' ? 1 : 0;
     section.dataset.movieTheme = themeName === 'war' ? 'war' : 'horror';
   };
 
-  const sparks = Array.from({ length: 34 }, (_, i) => ({
+  const sparks = Array.from({ length: 38 }, (_, i) => ({
     x: Math.random(),
     y: Math.random(),
     r: 1.3 + Math.random() * 2.8,
     vy: 0.04 + Math.random() * 0.09,
-    vx: (Math.random() - 0.5) * 0.05,
+    vx: (Math.random() - 0.5) * 0.055,
     phase: Math.random() * Math.PI * 2,
     isHero: i % 2 === 0
   }));
 
+  const fgWarEmbers = Array.from({ length: 12 }, (_, i) => ({
+    x: 0.14 + Math.random() * 0.72,
+    y: 0.2 + Math.random() * 0.78,
+    r: 1.2 + Math.random() * 2.1,
+    vy: 0.09 + Math.random() * 0.14,
+    vx: 0.02 + (Math.random() - 0.35) * 0.06,
+    phase: Math.random() * Math.PI * 2,
+    gold: i % 3 !== 0
+  }));
+
+  function spawnWarBurst() {
+    ignitePulse = 1;
+    bladeBurstT = 0;
+    const originX = rigBoxX + rigBoxW * 0.52;
+    const originY = rigBoxY + rigBoxH * 0.72;
+    for (let i = 0; i < 28; i++) {
+      const angle = -Math.PI * 0.92 + Math.random() * Math.PI * 0.84 + (Math.random() - 0.5) * 0.45;
+      const speed = 95 + Math.random() * 220;
+      burstParticles.push({
+        x: originX + (Math.random() - 0.5) * rigBoxW * 0.32,
+        y: originY + (Math.random() - 0.5) * rigBoxH * 0.22,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 45,
+        r: 1.6 + Math.random() * 2.8,
+        life: 1,
+        decay: 0.75 + Math.random() * 0.7,
+        isGold: i % 3 !== 0
+      });
+    }
+  }
+
+  function handleWarStageIgnite() {
+    spawnWarBurst();
+    const warIdx = MOVIES.findIndex((m) => m.theme === 'war');
+    if (warIdx !== -1 && targetTheme < 0.5) {
+      renderFeaturedProject(MOVIES, warIdx);
+    }
+    const now = performance.now();
+    if (now - lastToastAt > 2200) {
+      lastToastAt = now;
+      showToast('จุดประกายเปลวไฟแห่งสมรภูมิ — แผ่นดินเลือด');
+    }
+  }
+
+  if (warStage) {
+    warStage.addEventListener('pointerenter', () => { isWarHover = true; }, { passive: true });
+    warStage.addEventListener('pointerleave', () => { isWarHover = false; }, { passive: true });
+    warStage.addEventListener('click', handleWarStageIgnite);
+    warStage.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleWarStageIgnite();
+      }
+    });
+  }
+
+  function drawStarGlint(ctx, x, y, radius, alpha, rotRad, coreColor, glowColor) {
+    if (alpha <= 0.01) return;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotRad);
+    ctx.globalAlpha = alpha;
+
+    const g = ctx.createRadialGradient(0, 0, 0.5, 0, 0, radius * 1.15);
+    g.addColorStop(0, coreColor);
+    g.addColorStop(0.35, glowColor);
+    g.addColorStop(1, 'rgba(255,210,120,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 1.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Crisp 4-point cinema lens star
+    ctx.beginPath();
+    const spikes = [
+      [0, -radius * 1.55], [radius * 0.14, -radius * 0.14],
+      [radius * 1.55, 0], [radius * 0.14, radius * 0.14],
+      [0, radius * 1.55], [-radius * 0.14, radius * 0.14],
+      [-radius * 1.55, 0], [-radius * 0.14, -radius * 0.14]
+    ];
+    ctx.moveTo(spikes[0][0], spikes[0][1]);
+    for (let i = 1; i < spikes.length; i++) ctx.lineTo(spikes[i][0], spikes[i][1]);
+    ctx.closePath();
+    ctx.fillStyle = coreColor;
+    ctx.fill();
+    ctx.restore();
+  }
+
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    const bRect = section.getBoundingClientRect();
-    bw = Math.max(1, Math.round(bRect.width));
-    bh = Math.max(1, Math.round(bRect.height));
+    const sRect = section.getBoundingClientRect();
+    bw = Math.max(1, Math.round(sRect.width));
+    bh = Math.max(1, Math.round(sRect.height));
     backCanvas.width = Math.round(bw * dpr);
     backCanvas.height = Math.round(bh * dpr);
 
@@ -1078,6 +1188,32 @@ function initAct4FeaturedDualTheme() {
       fh = Math.max(1, Math.round(fRect.height));
       frontCanvas.width = Math.round(fw * dpr);
       frontCanvas.height = Math.round(fh * dpr);
+
+      const isWide = bw > 860;
+      posterSecCX = (fRect.left - sRect.left) + (isWide ? fw * 0.22 : fw * 0.5);
+      posterSecCY = (fRect.top - sRect.top) + (isWide ? fh * 0.54 : fh * 0.28);
+    }
+
+    if (warStage && warFrontCanvas) {
+      const wRect = warFrontCanvas.getBoundingClientRect();
+      ww = Math.max(1, Math.round(wRect.width));
+      wh = Math.max(1, Math.round(wRect.height));
+      warFrontCanvas.width = Math.round(ww * dpr);
+      warFrontCanvas.height = Math.round(wh * dpr);
+
+      const stRect = warStage.getBoundingClientRect();
+      warSecCX = (stRect.left - sRect.left) + stRect.width * 0.5;
+      warSecCY = (stRect.top - sRect.top) + stRect.height * 0.54;
+      warSecR = Math.min(stRect.width * 0.52, 260);
+
+      if (warRig) {
+        const insetX = warStage.clientWidth * 0.1;
+        const insetY = warStage.clientHeight * 0.1;
+        rigBoxX = warRig.offsetLeft + insetX;
+        rigBoxY = warRig.offsetTop + insetY;
+        rigBoxW = Math.max(1, warRig.offsetWidth);
+        rigBoxH = Math.max(1, warRig.offsetHeight);
+      }
     }
   }
 
@@ -1090,75 +1226,256 @@ function initAct4FeaturedDualTheme() {
     lastMs = nowMs;
     const time = nowMs * 0.001;
     const isDark = document.documentElement.classList.contains('cinema-mode');
+    const isDesktop = (window.innerWidth || 1200) > 860;
 
-    // Smoothly morph palette between Crimson Horror (0) and Molten War Gold (1)!
+    MouseState.update(dt);
+
+    // Smoothly morph palette between Crimson Horror (0) and Molten War Gold (1)
     smoothTheme += (targetTheme - smoothTheme) * (1 - Math.exp(-5.5 * dt));
-    const t = smoothTheme;
-
-    const palette = {
-      deep: lerpRGB([56, 5, 8], [88, 42, 6], t),
-      dark: lerpRGB([96, 10, 14], [148, 86, 16], t),
-      mid: lerpRGB([148, 18, 24], [198, 126, 28], t),
-      bright: lerpRGB([198, 32, 38], [248, 194, 84], t),
-      fadeEdge: lerpRGB([55, 5, 8], [95, 52, 10], t, 0.16),
-      specular: lerpRGB([255, 195, 190], [255, 244, 196], t, isDark ? 0.52 : 0.6)
-    };
-
-    // Subtle scroll-scrubbed parallax on Featured Poster
-    const posterWrap = document.getElementById('featured-parallax');
-    if (posterWrap) {
-      const sRect = section.getBoundingClientRect();
-      const vh = window.innerHeight || 800;
-      const delta = clamp((sRect.top + sRect.height * 0.5 - vh * 0.5) / vh, -1, 1);
-      posterWrap.style.transform = `translate3d(0, ${(delta * -22).toFixed(1)}px, 0)`;
+    hoverBoost += ((isWarHover ? 1 : 0) - hoverBoost) * (1 - Math.exp(-6.0 * dt));
+    ignitePulse = Math.max(0, ignitePulse - dt * 1.15);
+    if (bladeBurstT >= 0) {
+      bladeBurstT += dt * 1.65;
+      if (bladeBurstT > 1) bladeBurstT = -1;
     }
 
-    // Back Canvas: Ambient Theme Glow + Drifting Sparks/Embers + Back 3D Ribbons
+    const t = smoothTheme;
+    const energy = 1 + hoverBoost * 0.35 + ignitePulse * 0.9;
+
+    const palette = {
+      deep: lerpRGB([56, 5, 8], [92, 44, 6], t),
+      dark: lerpRGB([96, 10, 14], [156, 88, 16], t),
+      mid: lerpRGB([148, 18, 24], [208, 134, 28], t),
+      bright: lerpRGB([198, 32, 38], [252, 202, 92], t),
+      fadeEdge: lerpRGB([55, 5, 8], [98, 54, 10], t, 0.14),
+      specular: lerpRGB([255, 195, 190], [255, 246, 204], t, isDark ? 0.58 : 0.68)
+    };
+
+    const vh = window.innerHeight || 800;
+    const sRect = section.getBoundingClientRect();
+
+    // 1. Scroll-Scrubbed & 3D Parallax Choreography for Bloodland Heroes Stage
+    let heroShiftX = 0;
+    let heroShiftY = 0;
+    if (warStage && warRig) {
+      const stRect = warStage.getBoundingClientRect();
+      const warProg = invLerp(vh - stRect.top, -40, stRect.height + vh * 0.85);
+      const riseY = lerp(42, -16, easeInOutSine(invLerp(warProg, 0.0, 0.78)));
+      const breatheY = Math.sin(time * 1.55) * 4.5;
+      const heroScale = lerp(0.92, 1.015, easeOutCubic(invLerp(warProg, 0.04, 0.5))) + hoverBoost * 0.025 + ignitePulse * 0.02;
+
+      const mx = isDesktop ? MouseState.sx * (10 + hoverBoost * 6) : 0;
+      const my = isDesktop ? MouseState.sy * (6 + hoverBoost * 4) : 0;
+      const rotY = isDesktop ? MouseState.sx * (4.2 + hoverBoost * 2.5) : 0;
+      const rotX = isDesktop ? -MouseState.sy * (2.6 + hoverBoost * 1.5) : 0;
+
+      heroShiftX = mx;
+      heroShiftY = riseY + breatheY + my * 0.6;
+
+      warRig.style.transform = `translate3d(${heroShiftX.toFixed(1)}px, ${heroShiftY.toFixed(1)}px, 0) scale(${heroScale.toFixed(4)}) rotateY(${rotY.toFixed(2)}deg) rotateX(${rotX.toFixed(2)}deg)`;
+      warRig.style.opacity = clamp(invLerp(warProg, 0.0, 0.18), 0.2, 1).toFixed(3);
+
+      if (warSun) {
+        const sunScale = 1 + hoverBoost * 0.08 + ignitePulse * 0.22 + Math.sin(time * 2.1) * 0.03;
+        const sunOp = clamp(0.68 + hoverBoost * 0.2 + ignitePulse * 0.32, 0, 1);
+        warSun.style.transform = `translate3d(calc(-50% + ${(-mx * 0.55).toFixed(1)}px), calc(-50% + ${(-my * 0.45).toFixed(1)}px), 0) scale(${sunScale.toFixed(3)})`;
+        warSun.style.opacity = sunOp.toFixed(3);
+      }
+
+      if (warRingOuter) {
+        warRingOuter.style.transform = `translate3d(calc(-50% + ${(-mx * 0.35).toFixed(1)}px), -50%, 0) rotate(${(time * 8 + warProg * 65 + ignitePulse * 18).toFixed(1)}deg)`;
+      }
+      if (warRingInner) {
+        warRingInner.style.transform = `translate3d(calc(-50% + ${(mx * 0.28).toFixed(1)}px), -50%, 0) rotate(${(-time * 12 - warProg * 90 - ignitePulse * 24).toFixed(1)}deg)`;
+      }
+      if (warBadge) {
+        const badgeRot = lerp(-9, 9, warProg) + Math.sin(time * 0.8) * 1.8;
+        warBadge.style.transform = `translate3d(-50%, -50%, 0) rotate(${badgeRot.toFixed(2)}deg)`;
+      }
+    }
+
+    // 2. Subtle scroll-scrubbed parallax on Featured Poster below
+    const posterWrap = document.getElementById('featured-parallax');
+    if (posterWrap) {
+      const delta = clamp((sRect.top + sRect.height * 0.65 - vh * 0.5) / vh, -1, 1);
+      posterWrap.style.transform = `translate3d(0, ${(delta * -20).toFixed(1)}px, 0)`;
+    }
+
+    // 3. Back Canvas: Dual-Focus Ambient Halos + Rising Battlefield Sparks + Back 3D Ribbons
     backCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     backCtx.clearRect(0, 0, bw, bh);
 
-    const isWide = bw > 860;
-    const posterCX = isWide ? bw * 0.25 : bw * 0.5;
-    const posterCY = isWide ? bh * 0.58 : bh * 0.36;
-    const ribbonR = Math.min(bw * (isWide ? 0.21 : 0.4), 250);
-
-    // Theme Ambient Radial Halo behind Featured Poster
-    const haloGrad = backCtx.createRadialGradient(posterCX, posterCY, 20, posterCX, posterCY, ribbonR * 1.45);
-    haloGrad.addColorStop(0, lerpRGB([155, 22, 26], [218, 146, 36], t, isDark ? 0.28 : 0.15));
-    haloGrad.addColorStop(0.55, lerpRGB([120, 14, 18], [180, 96, 20], t, isDark ? 0.1 : 0.05));
-    haloGrad.addColorStop(1, 'rgba(0,0,0,0)');
-    backCtx.fillStyle = haloGrad;
+    // Halo behind Bloodland Heroes Stage (top)
+    const warHalo = backCtx.createRadialGradient(warSecCX, warSecCY, 18, warSecCX, warSecCY, warSecR * 1.75);
+    warHalo.addColorStop(0, lerpRGB([165, 24, 28], [228, 152, 38], t, (isDark ? 0.26 : 0.14) * energy));
+    warHalo.addColorStop(0.55, lerpRGB([120, 14, 18], [185, 92, 20], t, (isDark ? 0.1 : 0.05) * energy));
+    warHalo.addColorStop(1, 'rgba(0,0,0,0)');
+    backCtx.fillStyle = warHalo;
     backCtx.fillRect(0, 0, bw, bh);
 
-    // Rising Embers (Red Mist in Horror Mode -> Hot Golden War Sparks in War Mode!)
-    const speedBoost = lerp(0.85, 1.85, t);
+    // Halo behind Spotlight Poster (bottom)
+    const posterR = Math.min(bw * (bw > 860 ? 0.21 : 0.4), 245);
+    const pHalo = backCtx.createRadialGradient(posterSecCX, posterSecCY, 20, posterSecCX, posterSecCY, posterR * 1.45);
+    pHalo.addColorStop(0, lerpRGB([155, 22, 26], [218, 146, 36], t, isDark ? 0.24 : 0.12));
+    pHalo.addColorStop(0.55, lerpRGB([120, 14, 18], [180, 96, 20], t, isDark ? 0.09 : 0.04));
+    pHalo.addColorStop(1, 'rgba(0,0,0,0)');
+    backCtx.fillStyle = pHalo;
+    backCtx.fillRect(0, 0, bw, bh);
+
+    // Rising Embers (Fiery Stretched Golden War Sparks in War Mode <-> Eerie Crimson Embers in Horror Mode)
+    const speedBoost = lerp(0.85, 1.9, t) * (1 + ignitePulse * 0.85);
     sparks.forEach((sp) => {
       sp.y -= sp.vy * dt * speedBoost;
-      sp.x += (sp.vx + Math.sin(time * (1.2 + t) + sp.phase) * 0.02) * dt;
+      sp.x += (sp.vx + Math.sin(time * (1.2 + t) + sp.phase) * 0.022) * dt;
       if (sp.y < -0.04) { sp.y = 1.04; sp.x = Math.random(); }
       if (sp.x < 0) sp.x = 1;
       if (sp.x > 1) sp.x = 0;
 
-      const flick = 0.5 + 0.5 * Math.sin(time * (2.6 + t * 2) + sp.phase);
-      const alpha = (0.18 + flick * 0.45) * (isDark ? 1.15 : 0.9);
+      const flick = 0.5 + 0.5 * Math.sin(time * (2.6 + t * 2.2) + sp.phase);
+      const alpha = (0.18 + flick * 0.46) * (isDark ? 1.15 : 0.9);
       backCtx.beginPath();
-      // In war mode, draw stretched fiery spark streaks; in horror mode, eerie round embers
-      if (t > 0.5 && sp.isHero) {
-        backCtx.ellipse(sp.x * bw, sp.y * bh, sp.r * 0.65, sp.r * 2.1, 0.25, 0, Math.PI * 2);
+      if (t > 0.45 && sp.isHero) {
+        backCtx.ellipse(sp.x * bw, sp.y * bh, sp.r * 0.62, sp.r * 2.25, 0.28, 0, Math.PI * 2);
       } else {
         backCtx.arc(sp.x * bw, sp.y * bh, sp.r, 0, Math.PI * 2);
       }
       backCtx.fillStyle = sp.isHero
-        ? lerpRGB([210, 38, 42], [250, 182, 58], t, alpha)
-        : lerpRGB([140, 22, 26], [230, 108, 28], t, alpha * 0.8);
+        ? lerpRGB([210, 38, 42], [252, 188, 62], t, alpha)
+        : lerpRGB([140, 22, 26], [232, 108, 28], t, alpha * 0.82);
       backCtx.fill();
     });
 
-    draw3DOrbitRibbons(backCtx, posterCX, posterCY, ribbonR, 0.92, time, 'back', palette, isDark);
+    // Back 3D ribbons wrapping behind BOTH the Bloodland Heroes AND the Spotlight Poster
+    draw3DOrbitRibbons(backCtx, warSecCX, warSecCY + 16, warSecR * 0.92, 0.94, time, 'back', palette, isDark);
+    draw3DOrbitRibbons(backCtx, posterSecCX, posterSecCY, posterR, 0.9, time + 1.1, 'back', palette, isDark);
 
-    // Front Canvas: Delicate Foreground 3D Ribbon Crossing Lower Poster Corner (stays clear of text column)
+    // 4. Dedicated War Heroes Foreground Canvas: 3D Banner Ribbons, Steel Blade Glint & Burst Sparks!
+    if (warCtx && ww > 1 && wh > 1) {
+      warCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      warCtx.clearRect(0, 0, ww, wh);
+
+      // Sweeping Foreground 3D Molten-Gold / Crimson War-Banner Ribbons anchoring lower mist dissolve
+      draw3DOrbitRibbons(
+        warCtx,
+        ww * 0.5 + heroShiftX * 0.35,
+        wh * 0.76 + heroShiftY * 0.25,
+        Math.min(ww * 0.38, 225),
+        0.92,
+        time * 1.08,
+        'front',
+        palette,
+        isDark
+      );
+
+      // Steel Blade Glint gliding diagonally down the General's bloody sword!
+      const autoCycle = (time % 4.2) / 4.2;
+      const autoGlint = autoCycle < 0.28 ? easeInOutSine(autoCycle / 0.28) : -1;
+      const activeGlint = bladeBurstT >= 0 ? easeOutCubic(bladeBurstT) : autoGlint;
+
+      if (activeGlint >= 0 && activeGlint <= 1) {
+        const bladeStartX = rigBoxX + rigBoxW * 0.375 + heroShiftX;
+        const bladeStartY = rigBoxY + rigBoxH * 0.802 + heroShiftY;
+        const bladeEndX = rigBoxX + rigBoxW * 0.645 + heroShiftX;
+        const bladeEndY = rigBoxY + rigBoxH * 0.916 + heroShiftY;
+
+        const gx = lerp(bladeStartX, bladeEndX, activeGlint);
+        const gy = lerp(bladeStartY, bladeEndY, activeGlint);
+        const glintEnv = Math.sin(activeGlint * Math.PI);
+        const glintAlpha = clamp(glintEnv * (bladeBurstT >= 0 ? 0.98 : 0.82), 0, 1);
+
+        // Diagonal metallic flash streak along the blade edge
+        warCtx.save();
+        warCtx.globalAlpha = glintAlpha * 0.62;
+        const streakGrad = warCtx.createLinearGradient(bladeStartX, bladeStartY, bladeEndX, bladeEndY);
+        streakGrad.addColorStop(0, 'rgba(255,245,215,0)');
+        streakGrad.addColorStop(clamp(activeGlint - 0.14, 0, 1), 'rgba(255,240,200,0)');
+        streakGrad.addColorStop(activeGlint, 'rgba(255,252,240,0.95)');
+        streakGrad.addColorStop(clamp(activeGlint + 0.14, 0, 1), 'rgba(255,205,120,0)');
+        streakGrad.addColorStop(1, 'rgba(255,245,215,0)');
+        warCtx.strokeStyle = streakGrad;
+        warCtx.lineWidth = bladeBurstT >= 0 ? 4.2 : 2.8;
+        warCtx.lineCap = 'round';
+        warCtx.beginPath();
+        warCtx.moveTo(bladeStartX, bladeStartY);
+        warCtx.lineTo(bladeEndX, bladeEndY);
+        warCtx.stroke();
+        warCtx.restore();
+
+        drawStarGlint(
+          warCtx,
+          gx,
+          gy,
+          (bladeBurstT >= 0 ? 22 : 15) * (0.65 + glintEnv * 0.45),
+          glintAlpha,
+          0.38 + activeGlint * 0.4,
+          'rgba(255, 253, 244, 0.96)',
+          lerpRGB([255, 110, 105], [255, 208, 108], t, 0.55)
+        );
+      }
+
+      // Subtle Golden Armor Medallion Shimmer on Click Ignite
+      if (ignitePulse > 0.08) {
+        drawStarGlint(
+          warCtx,
+          rigBoxX + rigBoxW * 0.675 + heroShiftX,
+          rigBoxY + rigBoxH * 0.375 + heroShiftY,
+          16 * ignitePulse,
+          ignitePulse * 0.85,
+          time * 1.4,
+          'rgba(255, 248, 220, 0.92)',
+          'rgba(248, 184, 68, 0.5)'
+        );
+      }
+
+      // Foreground drifting war embers (in front of General & Lady for 3D depth)
+      fgWarEmbers.forEach((em) => {
+        em.y -= em.vy * dt * (0.85 + hoverBoost * 0.65 + ignitePulse * 1.2);
+        em.x += (em.vx + Math.sin(time * 2.1 + em.phase) * 0.03) * dt;
+        if (em.y < 0.04 || em.x > 0.96 || em.x < 0.04) {
+          em.y = 0.88 + Math.random() * 0.1;
+          em.x = 0.16 + Math.random() * 0.68;
+        }
+        const fl = 0.45 + 0.55 * Math.sin(time * 3.4 + em.phase);
+        const a = (0.28 + fl * 0.52) * (isDark ? 1.05 : 0.88);
+        warCtx.beginPath();
+        warCtx.ellipse(em.x * ww, em.y * wh, em.r * 0.58, em.r * 2.0, 0.32, 0, Math.PI * 2);
+        warCtx.fillStyle = em.gold
+          ? lerpRGB([235, 62, 66], [255, 204, 88], t, a)
+          : lerpRGB([175, 28, 32], [238, 118, 34], t, a * 0.85);
+        warCtx.fill();
+      });
+
+      // Interactive Click-Burst Battlefield Sparks
+      for (let i = burstParticles.length - 1; i >= 0; i--) {
+        const bp = burstParticles[i];
+        bp.x += bp.vx * dt;
+        bp.y += bp.vy * dt;
+        bp.vx *= Math.exp(-1.9 * dt);
+        bp.vy += (120 - 180) * dt; // hot embers float upward slightly
+        bp.life -= bp.decay * dt;
+        if (bp.life <= 0) {
+          burstParticles.splice(i, 1);
+          continue;
+        }
+        const a = clamp(bp.life, 0, 1);
+        const angle = Math.atan2(bp.vy, bp.vx);
+        warCtx.save();
+        warCtx.translate(bp.x, bp.y);
+        warCtx.rotate(angle);
+        warCtx.beginPath();
+        warCtx.ellipse(0, 0, bp.r * (1.8 + a), bp.r * 0.65, 0, 0, Math.PI * 2);
+        warCtx.fillStyle = bp.isGold
+          ? `rgba(255, 212, 98, ${a})`
+          : `rgba(235, 76, 42, ${a * 0.92})`;
+        warCtx.fill();
+        warCtx.restore();
+      }
+    }
+
+    // 5. Front Canvas on Spotlight Card Shell: Delicate Foreground 3D Ribbon Crossing Lower Poster Corner
     frontCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     frontCtx.clearRect(0, 0, fw, fh);
+    const isWide = bw > 860;
     const fCX = isWide ? fw * 0.2 : fw * 0.5;
     const fCY = isWide ? fh * 0.6 : fh * 0.26;
     draw3DOrbitRibbons(frontCtx, fCX, fCY, Math.min(fw * 0.19, 225), 0.88, time, 'front', palette, isDark);
@@ -1180,6 +1497,7 @@ function initAct4FeaturedDualTheme() {
   if ('IntersectionObserver' in window) {
     new IntersectionObserver((entries) => {
       isVisible = Boolean(entries[0]?.isIntersecting);
+      if (isVisible) resize();
       start();
     }, { threshold: 0 }).observe(section);
   }

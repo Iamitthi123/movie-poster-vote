@@ -328,27 +328,81 @@
     </section>
 
     <!-- =========================================================================
-         ACT 4: FEATURED PROJECT — DUAL-THEME 3D RIBBONS & SPARKS SPOTLIGHT
-         (Switches live 3D Canvas ribbons & embers dynamically per movie tab:
-          ผีบอกว่าอย่าหาทำ = Crimson Blood Ribbons | แผ่นดินเลือด = Molten Gold War Sparks!)
+         ACT 4: FEATURED PROJECT — BLOODLAND WAR HERO STAGE & DUAL-THEME SPOTLIGHT
+         (Showcases General & Noble Lady cutout with scroll-scrubbed battle rings,
+          curved orbital text, 3D molten gold/crimson ribbons, sword blade glint,
+          and click-to-ignite battlefield sparks — morphing live between both films!)
          ========================================================================= -->
-    <section class="section featured" id="featured" data-movie-theme="horror" aria-labelledby="featured-heading">
+    <section class="section featured" id="featured" data-movie-theme="war" aria-labelledby="featured-heading">
       <!-- Live 60fps Dual-Theme 3D Canvas Backdrop -->
       <canvas class="featured-canvas featured-canvas--back" id="featured-canvas-back" aria-hidden="true"></canvas>
 
       <div class="container featured-container">
-        <div class="featured-top-bar">
-          <div class="section-header reveal" data-reveal="fade-up">
-            <p class="section-eyebrow">ACT 04 &bull; SPOTLIGHT RELEASE</p>
-            <h2 class="section-title" id="featured-heading">FEATURED PROJECT</h2>
-            <span class="section-accent-line" data-scroll-line aria-hidden="true"></span>
+        <!-- Split Editorial Hero Showcase: Copy + Switcher (Left) & Bloodland Heroes Stage (Right) -->
+        <div class="war-hero-band" id="war-hero-band">
+          <div class="war-copy-col">
+            <div class="section-header reveal" data-reveal="fade-up">
+              <p class="section-eyebrow">ACT 04 &bull; SPOTLIGHT RELEASE</p>
+              <h2 class="section-title" id="featured-heading">
+                FORGED IN<br />BLOOD &amp; GOLD
+              </h2>
+              <span class="section-accent-line" data-scroll-line aria-hidden="true"></span>
+            </div>
+
+            <p class="section-intro reveal" data-reveal="fade-up" style="--reveal-delay: 100ms">
+              <strong>แผ่นดินเลือด : มหาศึกแห่งแผ่นดิน</strong> — แม่ทัพผู้ถือดาบเปื้อนเลือดท่ามกลางสมรภูมิเพลิง
+              เคียงข้างสตรีผู้แบกรับชะตาแห่งราชสำนัก สลับแท็บเพื่อเปลี่ยนธีมริบบิ้น 3 มิติและประกายไฟของทั้ง 2 เรื่องได้ทันที
+            </p>
+
+            <!-- Interactive Movie Theme Switcher -->
+            <div class="featured-switcher-wrap war-switcher-wrap reveal" data-reveal="fade-up" style="--reveal-delay: 160ms">
+              <span class="featured-theme-pill" id="featured-theme-badge">GOLDEN WAR FLAME THEME</span>
+              <div class="featured-switcher" id="featured-switcher" role="tablist"
+                aria-label="เลือกดูรายละเอียดและธีมแอนิเมชันของภาพยนตร์เด่น"></div>
+            </div>
           </div>
 
-          <!-- Interactive Movie Theme Switcher -->
-          <div class="featured-switcher-wrap reveal" data-reveal="fade-up" style="--reveal-delay: 100ms">
-            <span class="featured-theme-pill" id="featured-theme-badge">CRIMSON HORROR THEME</span>
-            <div class="featured-switcher" id="featured-switcher" role="tablist"
-              aria-label="เลือกดูรายละเอียดและธีมแอนิเมชันของภาพยนตร์เด่น"></div>
+          <!-- Monumental Cutout Showcase: General & Noble Lady (Bloodland) -->
+          <div class="war-heroes-col">
+            <div class="war-stage" id="war-stage" role="button" tabindex="0"
+              aria-label="แม่ทัพและสตรีแห่งแผ่นดินเลือด — คลิกเพื่อจุดประกายไฟสงครามและเลือกธีมแผ่นดินเลือด">
+              <div class="war-sun-halo" id="war-sun-halo" aria-hidden="true"></div>
+              <div class="war-ring war-ring--outer" id="war-ring-outer" aria-hidden="true"></div>
+              <div class="war-ring war-ring--inner" id="war-ring-inner" aria-hidden="true"></div>
+
+              <div class="war-curved-badge" id="war-curved-badge" aria-hidden="true">
+                <svg viewBox="0 0 460 460" class="curved-badge-svg" aria-hidden="true">
+                  <defs>
+                    <path id="war-arc-right" d="M 244,24 A 206,206 0 0,1 434,252" />
+                    <path id="war-arc-left" d="M 26,252 A 206,206 0 0,1 216,24" />
+                  </defs>
+                  <text class="curved-badge-text war-curved-text">
+                    <textPath href="#war-arc-right" startOffset="50%" text-anchor="middle">
+                      BLOODLAND &bull; มหาศึกแห่งแผ่นดิน
+                    </textPath>
+                  </text>
+                  <text class="curved-badge-text war-curved-text--sub">
+                    <textPath href="#war-arc-left" startOffset="50%" text-anchor="middle">
+                      DUTY OR LOVE &bull; แผ่นดินเลือด
+                    </textPath>
+                  </text>
+                </svg>
+              </div>
+
+              <div class="war-heroes-rig" id="war-heroes-rig">
+                <img src="assets/images/bloodland-heroes.png"
+                  alt="แม่ทัพหนุ่มถือดาบเปื้อนเลือดและหญิงสาวถือม้วนราชโองการ จากภาพยนตร์ แผ่นดินเลือด"
+                  width="563" height="572" loading="lazy" decoding="async" class="war-heroes-img" />
+              </div>
+
+              <!-- Foreground 60fps Canvas: 3D War Ribbons, Steel Blade Glint & Click-Burst Sparks -->
+              <canvas class="war-stage-canvas" id="war-stage-front" aria-hidden="true"></canvas>
+
+              <span class="war-ignite-hint" aria-hidden="true">
+                <span class="war-ignite-dot"></span>
+                CLICK TO IGNITE WAR FLAME
+              </span>
+            </div>
           </div>
         </div>
 
@@ -501,7 +555,7 @@
 
       <figure class="lightbox-figure">
         <div class="lightbox-image-wrap" id="lightbox-swipe-area">
-          <img src="" alt="" width="800" height="1200" class="lightbox-img" id="lightbox-img" />
+          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/%3E" alt="" width="800" height="1200" class="lightbox-img" id="lightbox-img" />
         </div>
         <figcaption class="lightbox-caption">
           <p class="lightbox-meta" id="lightbox-meta"></p>
