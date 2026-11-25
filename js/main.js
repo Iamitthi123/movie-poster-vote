@@ -597,7 +597,8 @@ function initAct1HeroSummoning() {
     ghostScale = lerp(ghostScale, isMobile ? 0.9 : 0.95, handoff);
 
     const ghostOp = clamp(invLerp(p, 0.32, 0.48), 0, 1);
-    const ghostRot = lerp(-2.2, 0.5, emerge) * (1 - handoff) + mRot;
+    const danceSway = Math.sin(time * 1.45) * 1.35 * emerge;
+    const ghostRot = lerp(-2.2, 0.5, emerge) * (1 - handoff) + danceSway + mRot;
 
     ghostRig.style.transform = `translate3d(calc(-50% + ${mx.toFixed(1)}px), calc(-50% + ${(ghostY + levitate + my).toFixed(1)}px), 0) scale(${ghostScale.toFixed(4)}) rotate(${ghostRot.toFixed(2)}deg)`;
     ghostRig.style.opacity = ghostOp.toFixed(3);
@@ -762,12 +763,13 @@ function initScrollScrubbedSections() {
       const prog = invLerp(vh - rect.top, 0, rect.height + vh);
 
       if (apparitionGhost) {
-        const riseY = lerp(52, -38, easeInOutSine(invLerp(prog, 0.0, 0.65)));
+        const riseY = lerp(52, -36, easeInOutSine(invLerp(prog, 0.0, 0.65)));
         const levitate = Math.sin(time * 1.9) * 7;
-        const rot = lerp(-3.5, 2.5, prog) + (isDesktop ? MouseState.sx * 2.0 : 0);
+        const pointScale = lerp(0.94, 1.04, easeOutCubic(invLerp(prog, 0.08, 0.52)));
+        const rot = lerp(-3.0, 2.2, prog) + (isDesktop ? MouseState.sx * 2.0 : 0);
         const mx = isDesktop ? MouseState.sx * 10 : 0;
         const op = clamp(invLerp(prog, 0.02, 0.22), 0.15, 1);
-        apparitionGhost.style.transform = `translate3d(${mx.toFixed(1)}px, ${(riseY + levitate).toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg)`;
+        apparitionGhost.style.transform = `translate3d(${mx.toFixed(1)}px, ${(riseY + levitate).toFixed(1)}px, 0) scale(${pointScale.toFixed(4)}) rotate(${rot.toFixed(2)}deg)`;
         apparitionGhost.style.opacity = op.toFixed(3);
       }
 
@@ -1574,10 +1576,10 @@ function initAct6ContactFinale() {
     const enterP = easeOutCubic(invLerp(vh - rect.top, 40, vh * 0.72));
 
     // Gentle weightless levitation + subtle mouse 3D tilt (never overlaps Contact Card on left!)
-    const levY = Math.sin(time * 1.85) * 9;
+    const levY = Math.sin(time * 1.65) * 11.5;
     const slideY = lerp(55, 0, enterP);
     const mx = isWide ? MouseState.sx * 10 : 0;
-    const rot = (isWide ? MouseState.sx * 2.0 : 0) + Math.sin(time * 1.2) * 0.9;
+    const rot = (isWide ? MouseState.sx * 2.0 : 0) + Math.sin(time * 1.15) * 1.1;
 
     ghostRig.style.transform = `translate3d(${mx.toFixed(1)}px, ${(slideY + levY).toFixed(1)}px, 0) rotate(${rot.toFixed(2)}deg)`;
     ghostRig.style.opacity = clamp(0.18 + enterP * 0.82, 0, 1).toFixed(3);
